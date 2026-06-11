@@ -181,6 +181,18 @@ footer{max-width:1100px;margin:80px auto 0;padding:56px 40px 56px;border-top:1px
 .f-principle{font-size:11px;color:var(--txt3);line-height:1.6;font-style:italic;max-width:220px;margin:0 auto;}
 .f-meta{text-align:right;font-family:var(--mono);font-size:10px;color:var(--txt3);line-height:2;}
 
+.quiz-cell{cursor:default;}
+.quiz-btn{display:inline-flex;align-items:center;justify-content:center;width:100%;padding:11px 16px;border-radius:7px;font-size:12px;font-weight:500;font-family:var(--sans);border:none;cursor:pointer;transition:opacity .2s,transform .15s;letter-spacing:.02em;}
+.quiz-btn.bl{background:var(--blue2);color:var(--blue);}
+.quiz-btn.bl:hover{opacity:.8;transform:translateY(-1px);}
+.quiz-btn.tl{background:var(--teal2);color:var(--teal);}
+.quiz-btn.tl:hover{opacity:.8;transform:translateY(-1px);}
+.q-opt{display:block;width:100%;text-align:left;padding:9px 13px;border-radius:6px;font-size:12px;font-family:var(--sans);border:1px solid var(--border2);background:transparent;color:var(--txt2);cursor:pointer;transition:background .15s,border-color .15s;line-height:1.4;}
+.q-opt:hover:not(:disabled){background:var(--bg3);color:var(--txt);}
+.q-opt.correct{background:rgba(46,196,182,.12);border-color:var(--teal);color:var(--teal);}
+.q-opt.wrong{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.4);color:rgba(239,68,68,.8);}
+.q-opt:disabled{cursor:default;}
+
 @media(max-width:760px){
 footer{grid-template-columns:1fr;text-align:center;}
 .f-meta{text-align:center;}
@@ -371,6 +383,37 @@ footer{grid-template-columns:1fr;text-align:center;}
     <span class="pc-cta">View project <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13L13 3M13 3H7M13 3V9"/></svg></span>
   </a>
 
+  <!-- TRADE QUIZ CELL -->
+  <div class="pc bl quiz-cell" id="trade-quiz-cell">
+    <div class="pc-idx">Quiz</div>
+    <div class="pc-ico bl">🧠</div>
+    <h3 class="pc-ttl">Test Your Knowledge</h3>
+    <p class="pc-body" style="margin-bottom:20px;">10 questions across all five trade projects. How well do you understand the concepts?</p>
+
+    <div id="tq-start">
+      <button class="quiz-btn bl" onclick="startQuiz('t')">Start Trade Quiz</button>
+    </div>
+
+    <div id="tq-body" style="display:none;">
+      <div id="tq-progress-wrap" style="margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span id="tq-num" style="font-family:var(--mono);font-size:10px;color:var(--txt3);"></span>
+          <span id="tq-score-live" style="font-family:var(--mono);font-size:10px;color:var(--blue);"></span>
+        </div>
+        <div style="height:2px;background:var(--border2);border-radius:1px;"><div id="tq-bar" style="height:2px;background:var(--blue);border-radius:1px;width:0%;transition:width .4s ease;"></div></div>
+      </div>
+      <p id="tq-q" style="font-size:13px;font-weight:500;line-height:1.6;margin-bottom:16px;min-height:52px;"></p>
+      <div id="tq-opts" style="display:flex;flex-direction:column;gap:7px;"></div>
+      <p id="tq-fb" style="font-size:12px;margin-top:12px;min-height:18px;font-family:var(--mono);"></p>
+    </div>
+
+    <div id="tq-result" style="display:none;text-align:center;padding:16px 0;">
+      <div id="tq-score-big" style="font-size:48px;font-weight:200;color:var(--blue);font-family:var(--mono);line-height:1;margin-bottom:8px;"></div>
+      <p style="font-size:12px;color:var(--txt2);margin-bottom:20px;" id="tq-verdict"></p>
+      <button class="quiz-btn bl" onclick="startQuiz('t')">Retry</button>
+    </div>
+  </div>
+
 </div>
 
 <div class="div-full" style="margin-top:0;"></div>
@@ -426,12 +469,43 @@ footer{grid-template-columns:1fr;text-align:center;}
 
   <a class="pc tl" href="wp.html">
     <div class="pc-idx">05 / 05</div>
-    <div class="pc-ico tl">👥</div>
-    <h3 class="pc-ttl">Workforce Planning</h3>
-    <p class="pc-body">Matching staff levels to fluctuating demand is a multi-period resource allocation problem: too few workers and service quality collapses; too many and fixed costs destroy margins. This project formulates workforce planning as a linear program with shift, overtime, and coverage constraints — converting an intuitive scheduling problem into an optimized, evidence-based model.</p>
-    <div class="pc-tags"><span class="tag tl">Multi-period LP</span><span class="tag tl">Demand Coverage</span><span class="tag tl">Cost Minimization</span></div>
+    <div class="pc-ico tl">🏭</div>
+    <h3 class="pc-ttl">Warehouse Heuristics</h3>
+    <p class="pc-body">Assigning goods to warehouse locations and routing pick paths is a combinatorial allocation problem too large for exact solvers. Heuristic methods — greedy assignment, nearest-neighbour routing, local search improvement — find near-optimal warehouse layouts and picking sequences quickly, demonstrating how practical evidence-based shortcuts outperform exhaustive search under real time constraints.</p>
+    <div class="pc-tags"><span class="tag tl">Heuristic Methods</span><span class="tag tl">Warehouse Routing</span><span class="tag tl">Near-Optimal Allocation</span></div>
     <span class="pc-cta">View project <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13L13 3M13 3H7M13 3V9"/></svg></span>
   </a>
+
+  <!-- MGMT QUIZ CELL -->
+  <div class="pc tl quiz-cell" id="mgmt-quiz-cell">
+    <div class="pc-idx">Quiz</div>
+    <div class="pc-ico tl">🧠</div>
+    <h3 class="pc-ttl">Test Your Knowledge</h3>
+    <p class="pc-body" style="margin-bottom:20px;">10 questions across all five management science projects. Can you identify the right method?</p>
+
+    <div id="mq-start">
+      <button class="quiz-btn tl" onclick="startQuiz('m')">Start Mgmt Quiz</button>
+    </div>
+
+    <div id="mq-body" style="display:none;">
+      <div id="mq-progress-wrap" style="margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span id="mq-num" style="font-family:var(--mono);font-size:10px;color:var(--txt3);"></span>
+          <span id="mq-score-live" style="font-family:var(--mono);font-size:10px;color:var(--teal);"></span>
+        </div>
+        <div style="height:2px;background:var(--border2);border-radius:1px;"><div id="mq-bar" style="height:2px;background:var(--teal);border-radius:1px;width:0%;transition:width .4s ease;"></div></div>
+      </div>
+      <p id="mq-q" style="font-size:13px;font-weight:500;line-height:1.6;margin-bottom:16px;min-height:52px;"></p>
+      <div id="mq-opts" style="display:flex;flex-direction:column;gap:7px;"></div>
+      <p id="mq-fb" style="font-size:12px;margin-top:12px;min-height:18px;font-family:var(--mono);"></p>
+    </div>
+
+    <div id="mq-result" style="display:none;text-align:center;padding:16px 0;">
+      <div id="mq-score-big" style="font-size:48px;font-weight:200;color:var(--teal);font-family:var(--mono);line-height:1;margin-bottom:8px;"></div>
+      <p style="font-size:12px;color:var(--txt2);margin-bottom:20px;" id="mq-verdict"></p>
+      <button class="quiz-btn tl" onclick="startQuiz('m')">Retry</button>
+    </div>
+  </div>
 
 </div>
 
@@ -518,6 +592,96 @@ const ro=new IntersectionObserver(entries=>{
   entries.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';ro.unobserve(e.target);}});
 },{threshold:.07});
 revEls.forEach(el=>ro.observe(el));
+
+/* QUIZ DATA */
+const TQ=[
+  {q:"The gravity model predicts that trade between two countries increases as their economic size grows and decreases as the distance between them increases. Which variable most closely represents 'economic size' in this model?",opts:["Population density","GDP","Geographic area","Currency strength"],a:1},
+  {q:"Country A can produce wine and cloth more efficiently than Country B. According to Ricardo's theory of comparative advantage, trade should still occur because:",opts:["Country A needs raw materials","Country B has lower opportunity cost in one good","Distance reduces trade volume","Larger economies always import more"],a:1},
+  {q:"The Heckscher-Ohlin theorem predicts that a labour-abundant country will export goods that are:",opts:["Capital-intensive","Land-intensive","Labour-intensive","Technology-intensive"],a:2},
+  {q:"When economies of scale are present, what happens to the average cost of production as output increases?",opts:["It rises","It stays constant","It falls","It becomes unpredictable"],a:2},
+  {q:"A country operating in autarky is best described as one that:",opts:["Trades only with neighbouring countries","Relies solely on domestic production with no international trade","Specializes in a single export good","Uses fixed exchange rates"],a:1},
+  {q:"In the gravity model, if the distance between two trading partners doubles (all else equal), what happens to predicted trade volume?",opts:["It doubles","It halves","It falls to one quarter","It stays the same"],a:1},
+  {q:"Comparative advantage is based on which of the following concepts?",opts:["Absolute productivity","Opportunity cost","Total factor productivity","Import quotas"],a:1},
+  {q:"The 'deadweight loss' in autarky refers to:",opts:["Government spending on imports","The welfare gains foregone by not trading","The cost of enforcing tariffs","Transport costs between countries"],a:1},
+  {q:"Economies of scale combined with systems thinking are most likely to lead to which global trade pattern?",opts:["Each country producing a wide variety of goods","Concentration of production in a few locations with large markets","Equal distribution of industries across countries","Higher tariffs between trading partners"],a:1},
+  {q:"A country with an abundance of capital relative to labour will, according to the Heckscher-Ohlin model, have a comparative advantage in producing goods that are:",opts:["Labour-intensive","Resource-intensive","Capital-intensive","Land-intensive"],a:2}
+];
+
+const MQ=[
+  {q:"In a binary decision problem, each decision variable can take the value:",opts:["Any real number","Any integer","0 or 1 only","Any positive number"],a:2},
+  {q:"The simplex method in linear programming moves toward the optimal solution by:",opts:["Randomly sampling the feasible region","Evaluating all possible solutions","Moving along edges between corner points of the feasible region","Splitting the problem into sub-problems"],a:2},
+  {q:"In branch and bound, 'pruning' a branch means:",opts:["Solving a sub-problem to optimality","Discarding a sub-problem whose bound cannot beat the current best solution","Adding a new constraint","Rounding a fractional solution down"],a:1},
+  {q:"The Travelling Salesman Problem (TSP) is classified as NP-hard because:",opts:["It involves continuous variables","The number of possible solutions grows exponentially with the number of cities","It cannot be solved with integer programming","It requires floating-point arithmetic"],a:1},
+  {q:"In the Warehouse Heuristics project, a greedy heuristic assigns goods to locations by:",opts:["Evaluating all possible assignments","Making the locally best choice at each step without backtracking","Using branch and bound","Solving a linear program"],a:1},
+  {q:"When rounding the solution of an LP relaxation to obtain an integer solution, the result:",opts:["Is always feasible and optimal","May be infeasible or sub-optimal","Is guaranteed to be better than branch and bound","Has no relationship to the true integer optimum"],a:1},
+  {q:"The feasible region in a linear programming problem is defined by:",opts:["The objective function alone","The set of all points satisfying all constraints simultaneously","The optimal solution point","The corner point with the highest objective value"],a:1},
+  {q:"A nearest-neighbour heuristic for TSP starts at a city and repeatedly visits the:",opts:["Most distant unvisited city","Random unvisited city","Nearest unvisited city","City with the lowest index"],a:2},
+  {q:"In branch and bound, the 'bound' for a sub-problem provides:",opts:["The exact optimal value","An upper (or lower) limit on the best possible solution in that sub-tree","The number of feasible solutions","The depth of the tree"],a:1},
+  {q:"Which of the following best describes the objective function in a warehouse heuristic optimization?",opts:["Maximizing the number of items stored","Minimizing total pick-path distance or storage assignment cost","Maximizing warehouse floor area","Minimizing number of workers"],a:1}
+];
+
+/* QUIZ ENGINE */
+const qState={t:{qs:TQ,cur:0,score:0},m:{qs:MQ,cur:0,score:0}};
+
+function startQuiz(k){
+  const s=qState[k];
+  s.cur=0;s.score=0;
+  document.getElementById(k+'q-start').style.display='none';
+  document.getElementById(k+'q-result').style.display='none';
+  document.getElementById(k+'q-body').style.display='block';
+  renderQ(k);
+}
+
+function renderQ(k){
+  const s=qState[k];
+  const q=s.qs[s.cur];
+  const total=s.qs.length;
+  document.getElementById(k+'q-num').textContent=`Question ${s.cur+1} / ${total}`;
+  document.getElementById(k+'q-score-live').textContent=`Score: ${s.score}`;
+  document.getElementById(k+'q-bar').style.width=((s.cur/total)*100)+'%';
+  document.getElementById(k+'q-q').textContent=q.q;
+  document.getElementById(k+'q-fb').textContent='';
+  const wrap=document.getElementById(k+'q-opts');
+  wrap.innerHTML='';
+  q.opts.forEach((opt,i)=>{
+    const btn=document.createElement('button');
+    btn.className='q-opt';
+    btn.textContent=opt;
+    btn.onclick=()=>answerQ(k,i);
+    wrap.appendChild(btn);
+  });
+}
+
+function answerQ(k,chosen){
+  const s=qState[k];
+  const q=s.qs[s.cur];
+  const opts=document.getElementById(k+'q-opts').querySelectorAll('.q-opt');
+  opts.forEach((b,i)=>{
+    b.disabled=true;
+    if(i===q.a)b.classList.add('correct');
+    else if(i===chosen&&chosen!==q.a)b.classList.add('wrong');
+  });
+  const fb=document.getElementById(k+'q-fb');
+  if(chosen===q.a){s.score++;fb.style.color='var(--teal)';fb.textContent='✓ Correct!';}
+  else{fb.style.color='rgba(239,68,68,.8)';fb.textContent='✗ The correct answer is: '+q.opts[q.a];}
+  document.getElementById(k+'q-score-live').textContent=`Score: ${s.score}`;
+  setTimeout(()=>{
+    s.cur++;
+    if(s.cur<s.qs.length){renderQ(k);}
+    else{showResult(k);}
+  },1400);
+}
+
+function showResult(k){
+  const s=qState[k];
+  document.getElementById(k+'q-body').style.display='none';
+  document.getElementById(k+'q-result').style.display='block';
+  document.getElementById(k+'q-score-big').textContent=s.score+'/'+s.qs.length;
+  const pct=s.score/s.qs.length;
+  const verdicts=['Keep reviewing the concepts!','Good effort — revisit a few topics.','Solid understanding!','Excellent! You have mastered these concepts.'];
+  const vi=pct<.5?0:pct<.7?1:pct<.9?2:3;
+  document.getElementById(k+'q-verdict').textContent=verdicts[vi];
+}
 
 /* SEC NUMBER PARALLAX */
 window.addEventListener('scroll',()=>{

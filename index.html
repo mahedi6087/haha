@@ -3,191 +3,533 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Mahedi Portfolio</title>
-
+<title>Mahedi Hasan — IBM Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial, sans-serif;
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+--bg:#070b14;
+--bg2:#0d1422;
+--bg3:#111b2e;
+--bg4:#162035;
+--surface:#0f1928;
+--border:#1c2d44;
+--border2:#243650;
+--gold:#c8a84b;
+--gold2:#e8c96e;
+--gold3:rgba(200,168,75,.14);
+--gold4:rgba(200,168,75,.06);
+--txt:#dde8ff;
+--txt2:#7a95bc;
+--txt3:#3d5270;
+--blue:#5b9cf8;
+--blue2:rgba(91,156,248,.1);
+--blue3:rgba(91,156,248,.04);
+--teal:#2ec4b6;
+--teal2:rgba(46,196,182,.1);
+--mono:'JetBrains Mono',monospace;
+--sans:'Inter',sans-serif;
 }
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--txt);overflow-x:hidden;cursor:none;}
 
-body{
-    background:#f4f4f4;
-    color:#333;
-}
+/* CURSOR */
+#cur{position:fixed;width:8px;height:8px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .18s,height .18s;mix-blend-mode:screen;}
+#cur-r{position:fixed;width:32px;height:32px;border:1px solid rgba(200,168,75,.35);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s cubic-bezier(.25,.8,.25,1),height .3s cubic-bezier(.25,.8,.25,1),border-color .2s;}
+body.h #cur{width:5px;height:5px;}
+body.h #cur-r{width:52px;height:52px;border-color:rgba(200,168,75,.65);}
 
-header{
-    background:#0f172a;
-    color:white;
-    padding:40px;
-    text-align:center;
-}
+/* HERO */
+#hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 40px 80px;overflow:hidden;}
+#c{position:absolute;inset:0;}
 
-header h1{
-    margin-bottom:10px;
-}
+/* Grid overlay */
+.grid-overlay{position:absolute;inset:0;background-image:linear-gradient(rgba(200,168,75,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(200,168,75,.025) 1px,transparent 1px);background-size:72px 72px;mask-image:radial-gradient(ellipse 90% 70% at 50% 50%,black 30%,transparent 100%);}
 
-nav{
-    background:#1e293b;
-    padding:15px;
-    text-align:center;
-}
+/* Orb */
+.orb{position:absolute;border-radius:50%;pointer-events:none;}
+.orb1{width:700px;height:700px;background:radial-gradient(circle,rgba(200,168,75,.055) 0%,transparent 65%);top:50%;left:50%;transform:translate(-50%,-50%);}
+.orb2{width:400px;height:400px;background:radial-gradient(circle,rgba(91,156,248,.04) 0%,transparent 70%);top:20%;right:10%;}
+.orb3{width:300px;height:300px;background:radial-gradient(circle,rgba(46,196,182,.035) 0%,transparent 70%);bottom:15%;left:8%;}
 
-nav a{
-    color:white;
-    text-decoration:none;
-    margin:0 15px;
-    font-weight:bold;
-}
+/* Globe */
+.globe-wrap{position:absolute;right:-60px;top:50%;transform:translateY(-52%);z-index:1;pointer-events:none;}
+@media(max-width:960px){.globe-wrap{opacity:.08;right:-120px;}}
+@media(max-width:680px){.globe-wrap{display:none;}}
 
-section{
-    padding:40px;
-}
+.hc{position:relative;z-index:2;max-width:700px;}
 
-.section-title{
-    text-align:center;
-    margin-bottom:30px;
-}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.28em;color:var(--gold);text-transform:uppercase;margin-bottom:36px;display:flex;align-items:center;justify-content:center;gap:16px;opacity:0;animation:up .8s .15s ease both;}
+.eyebrow i{width:36px;height:1px;background:var(--gold);opacity:.45;display:inline-block;}
 
-.projects{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-    gap:20px;
-}
+.h-name{font-size:clamp(56px,9vw,104px);font-weight:200;letter-spacing:-.035em;line-height:.95;margin-bottom:16px;opacity:0;animation:up .9s .3s ease both;}
+.h-name b{font-weight:600;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 
-.card{
-    background:white;
-    border-radius:10px;
-    padding:20px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.1);
-    transition:0.3s;
-}
+.h-degree{font-family:var(--mono);font-size:12px;color:var(--txt3);letter-spacing:.1em;margin-bottom:10px;opacity:0;animation:up .7s .45s ease both;}
+.h-ibm{display:inline-flex;align-items:center;gap:10px;background:var(--gold3);border:1px solid rgba(200,168,75,.2);border-radius:24px;padding:7px 18px;font-size:12px;font-weight:500;color:var(--gold2);margin-bottom:44px;opacity:0;animation:up .7s .55s ease both;}
+.h-ibm span{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s ease-in-out infinite;}
 
-.card:hover{
-    transform:translateY(-5px);
-}
+.h-line{width:1px;height:52px;background:linear-gradient(var(--gold),transparent);margin:0 auto 36px;opacity:0;animation:up .6s .65s ease both;}
 
-.card h3{
-    margin-bottom:10px;
-}
+.h-tag{font-size:16px;font-weight:300;color:var(--txt2);line-height:1.85;max-width:460px;margin:0 auto 52px;opacity:0;animation:up .7s .75s ease both;}
+.h-tag em{color:var(--txt);font-style:normal;font-weight:400;}
 
-.card a{
-    display:inline-block;
-    margin-top:10px;
-    padding:10px 15px;
-    background:#2563eb;
-    color:white;
-    text-decoration:none;
-    border-radius:5px;
-}
+.hbtns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;opacity:0;animation:up .7s .9s ease both;}
+.btn{display:inline-flex;align-items:center;gap:9px;padding:13px 28px;border-radius:8px;font-size:13px;font-weight:500;text-decoration:none;transition:all .2s ease;cursor:none;letter-spacing:.01em;}
+.btn-g{background:var(--gold);color:#08100e;}
+.btn-g:hover{background:var(--gold2);transform:translateY(-3px);}
+.btn-o{color:var(--txt);border:1px solid var(--border2);}
+.btn-o:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-3px);}
 
-footer{
-    background:#0f172a;
-    color:white;
-    text-align:center;
-    padding:20px;
+.scroll-ind{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:10px;animation:bob 2.8s ease-in-out infinite;}
+.scroll-ind span{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--txt3);}
+.scroll-ind i{width:1px;height:48px;background:linear-gradient(var(--gold),transparent);}
+@keyframes bob{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(9px);}}
+@keyframes up{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.7);}}
+
+/* PRINCIPLE */
+.principle{max-width:860px;margin:0 auto;padding:110px 40px 90px;}
+.p-wrap{position:relative;padding:44px 48px;border:1px solid var(--border);border-left:2px solid var(--gold);}
+.p-wrap::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--gold4),transparent);pointer-events:none;}
+.p-label{font-family:var(--mono);font-size:9px;letter-spacing:.25em;color:var(--gold);text-transform:uppercase;margin-bottom:20px;}
+.p-quote{font-size:clamp(15px,2.2vw,19px);font-weight:300;line-height:1.7;color:var(--txt);}
+.p-quote strong{color:var(--gold2);font-weight:400;}
+.p-byline{margin-top:24px;font-family:var(--mono);font-size:10px;color:var(--txt3);letter-spacing:.08em;}
+
+/* ABOUT */
+.about{max-width:1100px;margin:0 auto;padding:0 40px 110px;display:grid;grid-template-columns:1.1fr 1fr;gap:80px;align-items:start;}
+.a-left{}
+.a-label{font-family:var(--mono);font-size:9px;letter-spacing:.25em;color:var(--gold);text-transform:uppercase;margin-bottom:20px;}
+.a-heading{font-size:clamp(28px,3.5vw,40px);font-weight:200;line-height:1.2;margin-bottom:24px;}
+.a-heading b{font-weight:500;color:var(--gold);}
+.a-body{font-size:14px;color:var(--txt2);line-height:1.9;margin-bottom:32px;}
+.a-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{font-family:var(--mono);font-size:10px;padding:5px 12px;border-radius:4px;border:1px solid var(--border2);color:var(--txt2);letter-spacing:.03em;}
+.a-right{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.st{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px 22px;transition:border-color .2s,transform .2s;}
+.st:hover{border-color:rgba(200,168,75,.3);transform:translateY(-2px);}
+.st-n{font-size:48px;font-weight:200;color:var(--gold);font-family:var(--mono);line-height:1;margin-bottom:8px;}
+.st-l{font-size:12px;color:var(--txt2);}
+
+/* DIVIDER */
+.div-full{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);max-width:1100px;margin:0 auto;}
+
+/* SECTION HEADER */
+.sec-h{max-width:1100px;margin:0 auto;padding:88px 40px 52px;display:grid;grid-template-columns:auto 1fr auto;align-items:end;gap:32px;}
+.sec-num{font-size:clamp(80px,12vw,140px);font-weight:200;font-family:var(--mono);line-height:1;opacity:.05;letter-spacing:-.05em;transition:transform .4s ease;}
+.sec-body{}
+.sec-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.25em;text-transform:uppercase;margin-bottom:12px;}
+.sec-eyebrow.bl{color:var(--blue);}
+.sec-eyebrow.tl{color:var(--teal);}
+.sec-title{font-size:clamp(24px,3vw,34px);font-weight:200;line-height:1.25;margin-bottom:6px;}
+.sec-sub{font-size:13px;color:var(--txt3);}
+.sec-pill{font-family:var(--mono);font-size:10px;padding:7px 16px;border-radius:20px;letter-spacing:.04em;align-self:flex-end;}
+.sec-pill.bl{background:var(--blue2);color:var(--blue);}
+.sec-pill.tl{background:var(--teal2);color:var(--teal);}
+
+/* GRID */
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;max-width:1100px;margin:0 auto;background:var(--border);}
+@media(max-width:900px){.pgrid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.pgrid{grid-template-columns:1fr;}}
+
+.pc{background:var(--bg);padding:40px 34px;display:flex;flex-direction:column;text-decoration:none;color:inherit;position:relative;overflow:hidden;transition:background .25s;}
+.pc:hover{background:var(--bg2);}
+
+/* accent bar */
+.pc::before{content:'';position:absolute;left:0;top:0;width:2px;height:0;transition:height .4s cubic-bezier(.25,.8,.25,1);}
+.pc.bl::before{background:linear-gradient(var(--blue),transparent);}
+.pc.tl::before{background:linear-gradient(var(--teal),transparent);}
+.pc:hover::before{height:100%;}
+
+/* shimmer on hover */
+.pc::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.02) 0%,transparent 60%);opacity:0;transition:opacity .3s;}
+.pc:hover::after{opacity:1;}
+
+.pc-idx{font-family:var(--mono);font-size:9px;color:var(--txt3);margin-bottom:24px;letter-spacing:.05em;}
+.pc-ico{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:22px;flex-shrink:0;}
+.pc-ico.bl{background:var(--blue2);}
+.pc-ico.tl{background:var(--teal2);}
+.pc-ttl{font-size:16px;font-weight:500;line-height:1.35;margin-bottom:16px;}
+.pc-body{font-size:13px;color:var(--txt2);line-height:1.8;flex-grow:1;margin-bottom:28px;}
+.pc-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px;}
+.tag{font-size:10px;font-family:var(--mono);padding:3px 9px;border-radius:3px;letter-spacing:.02em;}
+.tag.bl{background:var(--blue2);color:var(--blue);}
+.tag.tl{background:var(--teal2);color:var(--teal);}
+.pc-cta{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:var(--txt3);transition:color .2s;text-decoration:none;}
+.pc.bl:hover .pc-cta{color:var(--blue);}
+.pc.tl:hover .pc-cta{color:var(--teal);}
+.arr{width:14px;height:14px;transition:transform .2s;}
+.pc:hover .arr{transform:translate(3px,-3px);}
+
+/* CONCEPT LEARNED BAR */
+.learned{margin:0 auto;max-width:1100px;padding:0 0 0;}
+.learned-inner{background:var(--bg3);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:28px 40px;display:flex;align-items:center;gap:24px;overflow-x:auto;}
+.learned-label{font-family:var(--mono);font-size:9px;color:var(--txt3);letter-spacing:.18em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;}
+.learned-items{display:flex;gap:10px;flex-wrap:wrap;}
+.litem{font-size:11px;color:var(--txt2);background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:5px 12px;white-space:nowrap;}
+
+/* FOOTER */
+footer{max-width:1100px;margin:80px auto 0;padding:56px 40px 56px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;gap:40px;}
+.f-brand{}
+.f-name{font-size:22px;font-weight:200;margin-bottom:4px;}
+.f-name b{font-weight:600;color:var(--gold);}
+.f-tag{font-family:var(--mono);font-size:10px;color:var(--txt3);letter-spacing:.08em;}
+.f-mid{text-align:center;}
+.f-principle{font-size:11px;color:var(--txt3);line-height:1.6;font-style:italic;max-width:220px;margin:0 auto;}
+.f-meta{text-align:right;font-family:var(--mono);font-size:10px;color:var(--txt3);line-height:2;}
+
+@media(max-width:760px){
+footer{grid-template-columns:1fr;text-align:center;}
+.f-meta{text-align:center;}
+.about{grid-template-columns:1fr;gap:48px;}
+.sec-h{grid-template-columns:1fr;gap:16px;}
+.sec-num{font-size:64px;}
+.principle{padding:60px 24px;}
+.about,.pgrid,.div-full,.learned,.sec-h{margin-left:0;margin-right:0;padding-left:24px;padding-right:24px;}
+.pgrid{padding:0;}
+#hero{padding:90px 24px 70px;}
 }
 </style>
-
 </head>
 <body>
 
-<header>
-    <h1>Mahedi Hasan</h1>
-    <p>ID: 2417551</p>
-    <p>Business Student Portfolio</p>
-</header>
+<div id="cur"></div>
+<div id="cur-r"></div>
 
-<nav>
-    <a href="#trade">International Trade</a>
-    <a href="#management">Management Science</a>
-</nav>
+<!-- HERO -->
+<section id="hero">
+<canvas id="c"></canvas>
+<div class="grid-overlay"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
 
-<section>
-    <h2 class="section-title">About Me</h2>
-    <p>
-        Welcome to my academic portfolio. This website showcases projects
-        completed in International Trade and Management Science.
+<!-- Globe -->
+<div class="globe-wrap">
+<svg id="globe" width="460" height="460" viewBox="0 0 460 460" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="230" cy="230" r="185" stroke="#c8a84b" stroke-width=".5" opacity=".5"/>
+  <ellipse cx="230" cy="230" rx="75" ry="185" stroke="#c8a84b" stroke-width=".4" opacity=".35"/>
+  <ellipse cx="230" cy="230" rx="148" ry="185" stroke="#c8a84b" stroke-width=".3" opacity=".25"/>
+  <ellipse cx="230" cy="230" rx="185" ry="52" stroke="#c8a84b" stroke-width=".35" opacity=".3"/>
+  <ellipse cx="230" cy="230" rx="185" ry="110" stroke="#c8a84b" stroke-width=".3" opacity=".22"/>
+  <line x1="45" y1="230" x2="415" y2="230" stroke="#c8a84b" stroke-width=".35" opacity=".3"/>
+  <!-- nodes -->
+  <circle class="gn" cx="160" cy="190" r="5" fill="#c8a84b"/>
+  <circle class="gn" cx="295" cy="170" r="4" fill="#c8a84b"/>
+  <circle class="gn" cx="345" cy="250" r="4.5" fill="#c8a84b"/>
+  <circle class="gn" cx="185" cy="300" r="3.5" fill="#c8a84b"/>
+  <circle class="gn" cx="270" cy="310" r="4" fill="#c8a84b"/>
+  <circle class="gn" cx="130" cy="265" r="3" fill="#c8a84b"/>
+  <circle class="gn" cx="310" cy="230" r="3" fill="#c8a84b"/>
+  <!-- edges -->
+  <line x1="160" y1="190" x2="295" y2="170" stroke="#c8a84b" stroke-width=".7" opacity=".3"/>
+  <line x1="295" y1="170" x2="345" y2="250" stroke="#c8a84b" stroke-width=".7" opacity=".3"/>
+  <line x1="160" y1="190" x2="185" y2="300" stroke="#c8a84b" stroke-width=".6" opacity=".25"/>
+  <line x1="345" y1="250" x2="270" y2="310" stroke="#c8a84b" stroke-width=".6" opacity=".3"/>
+  <line x1="185" y1="300" x2="270" y2="310" stroke="#c8a84b" stroke-width=".6" opacity=".25"/>
+  <line x1="130" y1="265" x2="160" y2="190" stroke="#c8a84b" stroke-width=".5" opacity=".22"/>
+  <line x1="130" y1="265" x2="185" y2="300" stroke="#c8a84b" stroke-width=".5" opacity=".22"/>
+  <line x1="295" y1="170" x2="310" y2="230" stroke="#c8a84b" stroke-width=".5" opacity=".25"/>
+  <line x1="310" y1="230" x2="345" y2="250" stroke="#c8a84b" stroke-width=".5" opacity=".22"/>
+</svg>
+</div>
+
+<div class="hc">
+  <div class="eyebrow"><i></i>Academic Portfolio · 2026<i></i></div>
+  <h1 class="h-name">Mahedi <b>Hasan</b></h1>
+  <p class="h-degree">ID: 2417551</p>
+  <div class="h-ibm">
+    <span></span>
+    Integrated Business Management
+  </div>
+  <div class="h-line"></div>
+  <p class="h-tag">
+    Two courses. Ten projects.<br>
+    One principle: <em>show what was understood,<br>not what was submitted.</em>
+  </p>
+  <div class="hbtns">
+    <a href="#trade" class="btn btn-g">International Trade ↓</a>
+    <a href="#management" class="btn btn-o">Management Science ↓</a>
+  </div>
+</div>
+
+<div class="scroll-ind"><i></i><span>scroll</span></div>
+</section>
+
+<!-- GUIDING PRINCIPLE -->
+<section class="principle">
+  <div class="p-wrap">
+    <div class="p-label">Guiding Principle</div>
+    <p class="p-quote">
+      "Sustainable value is created when <strong>resources are allocated efficiently</strong>, decisions are guided by <strong>evidence</strong>, and systems are <strong>optimized to maximize mutual benefit</strong>."
     </p>
+    <p class="p-byline">The lens through which every project in this portfolio was approached.</p>
+  </div>
 </section>
 
-<section id="trade">
-    <h2 class="section-title">International Trade Projects</h2>
-
-    <div class="projects">
-
-        <div class="card">
-            <h3>The Gravity Model of Trade</h3>
-            <p>Analysis of trade flows between countries.</p>
-            <a href="gravity-model.html">View Project</a>
-        </div>
-
-        <div class="card">
-            <h3>Ricardex</h3>
-            <p>Comparative advantage and trade specialization.</p>
-            <a href="ricardex.html">View Project</a>
-        </div>
-
-        <div class="card">
-            <h3>Resource Abundance & Trade Patterns</h3>
-            <p>Resource availability and export behavior.</p>
-            <a href="resource-abundance.html">View Project</a>
-        </div>
-
-        <div class="card">
-            <h3>Systems Thinking and Economies of Scale</h3>
-            <p>Production efficiency and scale benefits.</p>
-            <a href="economies-scale.html">View Project</a>
-        </div>
-
-        <div class="card">
-            <h3>The Autarky Trap</h3>
-            <p>Economic impacts of self-sufficiency.</p>
-            <a href="autarky-trap.html">View Project</a>
-        </div>
-
+<!-- ABOUT -->
+<section class="about">
+  <div class="a-left">
+    <div class="a-label">About</div>
+    <h2 class="a-heading">Exploring the systems<br>that create <b>sustainable value</b><br>in a connected world.</h2>
+    <p class="a-body">I'm an IBM student studying how economies specialize and exchange, how firms allocate scarce resources optimally, and how mathematical models transform complex decisions into evidence-guided action. This portfolio documents that understanding — not as a file of completed tasks, but as a map of concepts mastered.</p>
+    <div class="a-chips">
+      <span class="chip">Resource Allocation</span>
+      <span class="chip">Trade Theory</span>
+      <span class="chip">Optimization</span>
+      <span class="chip">Evidence-Based Decisions</span>
+      <span class="chip">Systems Thinking</span>
     </div>
+  </div>
+  <div class="a-right">
+    <div class="st"><div class="st-n" data-t="10">0</div><div class="st-l">Projects completed</div></div>
+    <div class="st"><div class="st-n" data-t="2">0</div><div class="st-l">Courses covered</div></div>
+    <div class="st"><div class="st-n" data-t="5">0</div><div class="st-l">Trade frameworks</div></div>
+    <div class="st"><div class="st-n" data-t="5">0</div><div class="st-l">Optimization methods</div></div>
+  </div>
 </section>
 
-<section id="management">
-    <h2 class="section-title">Management Science Projects</h2>
+<div class="div-full"></div>
 
-    <div class="projects">
-
-        <div class="card">
-            <h3>Binary Decision Optimizer</h3>
-            <a href="binary-optimizer.html">View Project</a>
-        </div>
-
-        <div class="card">
-            <h3>LP Solver</h3>
-            <a href="lp-solver.html">View Project</a>
-        </div>
-
-        <div class="card">
-            <h3>Branch and Bound</h3>
-            <a href="branch-bound.html">View Project</a>
-        </div>
-
-        <div class="card">
-            <h3>TSP</h3>
-            <a href="tsp.html">View Project</a>
-        </div>
-
-        <div class="card">
-            <h3>wp</h3>
-            <a href="wp.html">View Project</a>
-        </div>
-
+<!-- WHAT I LEARNED BAR -->
+<div class="learned">
+  <div class="learned-inner">
+    <div class="learned-label">Concepts learned</div>
+    <div class="learned-items">
+      <span class="litem">Gravity Model</span>
+      <span class="litem">Comparative Advantage</span>
+      <span class="litem">Factor Endowments</span>
+      <span class="litem">Economies of Scale</span>
+      <span class="litem">Autarky & Welfare Loss</span>
+      <span class="litem">Binary Integer Programming</span>
+      <span class="litem">Simplex Method</span>
+      <span class="litem">Branch & Bound</span>
+      <span class="litem">TSP Heuristics</span>
+      <span class="litem">Workforce Scheduling</span>
     </div>
-</section>
+  </div>
+</div>
 
+<!-- INTERNATIONAL TRADE -->
+<div class="sec-h" id="trade">
+  <div class="sec-num" id="sn1">01</div>
+  <div class="sec-body">
+    <div class="sec-eyebrow bl">International Trade</div>
+    <h2 class="sec-title">Why nations trade —<br>and how economists model it</h2>
+    <p class="sec-sub">Five frameworks that explain the patterns and gains of global exchange.</p>
+  </div>
+  <span class="sec-pill bl">5 projects</span>
+</div>
+
+<div class="pgrid">
+
+  <a class="pc bl" href="gravity-model.html">
+    <div class="pc-idx">01 / 05</div>
+    <div class="pc-ico bl">🌐</div>
+    <h3 class="pc-ttl">The Gravity Model of Trade</h3>
+    <p class="pc-body">Two economies trade in proportion to their size and in inverse proportion to the distance between them — exactly as gravity pulls masses. This equation explains why neighbouring giants dominate each other's import lists, and why efficiently allocating trade flows requires understanding the physics-like forces that shape them.</p>
+    <div class="pc-tags"><span class="tag bl">Trade Flows</span><span class="tag bl">Economic Mass</span><span class="tag bl">Distance Decay</span></div>
+    <span class="pc-cta">View project <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13L13 3M13 3H7M13 3V9"/></svg></span>
+  </a>
+
+  <a class="pc bl" href="ricardex.html">
+    <div class="pc-idx">02 / 05</div>
+    <div class="pc-ico bl">📊</div>
+    <h3 class="pc-ttl">Ricardex — Comparative Advantage</h3>
+    <p class="pc-body">Even a country worse at producing everything gains from trade by focusing on what it gives up least to make. Ricardo's insight — that relative cost, not absolute ability, drives specialization — is the foundational evidence that free exchange maximizes mutual benefit even between unequal partners.</p>
+    <div class="pc-tags"><span class="tag bl">Comparative Advantage</span><span class="tag bl">Opportunity Cost</span><span class="tag bl">Mutual Gain</span></div>
+    <span class="pc-cta">View project <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13L13 3M13 3H7M13 3V9"/></svg></span>
+  </a>
+
+  <a class="pc bl" href="resource-abundance.html">
+    <div class="pc-idx">03 / 05</div>
+    <div class="pc-ico bl">⛏️</div>
+    <h3 class="pc-ttl">Resource Abundance & Trade Patterns</h3>
+    <p class="pc-body">The Heckscher-Ohlin theorem: countries export goods that use their abundant factor intensively. Efficient resource allocation at global scale means labour-rich nations specialize in labour-intensive goods and capital-rich ones in capital-intensive goods — letting each economy do what its endowment makes cheapest.</p>
+    <div class="pc-tags"><span class="tag bl">Factor Endowments</span><span class="tag bl">H-O Model</span><span class="tag bl">Export Patterns</span></div>
+    <span class="pc-cta">View project <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13L13 3M13 3H7M13 3V9"/></svg></span>
+  </a>
+
+  <a class="pc bl" href="economies-scale.html">
+    <div class="pc-idx">04 / 05</div>
+    <div class="pc-ico bl">📈</div>
+    <h3 class="pc-ttl">Systems Thinking & Economies of Scale</h3>
+    <p class="pc-body">When unit costs fall as output rises, trade is no longer just about differences — it's about size and feedback. Systems thinking reveals how increasing returns and network effects concentrate production, creating self-reinforcing loops that reshape the geography of industry and make optimized scale a source of sustained competitive value.</p>
+    <div class="pc-tags"><span class="tag bl">Increasing Returns</span><span class="tag bl">Feedback Loops</span><span class="tag bl">Scale Effects</span></div>
+    <span class="pc-cta">View project <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13L13 3M13 3H7M13 3V9"/></svg></span>
+  </a>
+
+  <a class="pc bl" href="autarky-trap.html">
+    <div class="pc-idx">05 / 05</div>
+    <div class="pc-ico bl">🔒</div>
+    <h3 class="pc-ttl">The Autarky Trap</h3>
+    <p class="pc-body">Self-sufficiency carries a hidden price: a closed economy must produce everything domestically, surrendering the welfare gains that efficient international specialization delivers. This project maps the deadweight loss of autarky and asks when, if ever, the security premium justifies the allocative inefficiency of isolation.</p>
+    <div class="pc-tags"><span class="tag bl">Autarky</span><span class="tag bl">Deadweight Loss</span><span class="tag bl">Trade Policy</span></div>
+    <span class="pc-cta">View project <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13L13 3M13 3H7M13 3V9"/></svg></span>
+  </a>
+
+</div>
+
+<div class="div-full" style="margin-top:0;"></div>
+
+<!-- MANAGEMENT SCIENCE -->
+<div class="sec-h" id="management">
+  <div class="sec-num" id="sn2">02</div>
+  <div class="sec-body">
+    <div class="sec-eyebrow tl">Management Science</div>
+    <h2 class="sec-title">Making better decisions<br>with evidence and mathematics</h2>
+    <p class="sec-sub">Five optimization methods for allocating resources under real-world constraints.</p>
+  </div>
+  <span class="sec-pill tl">5 projects</span>
+</div>
+
+<div class="pgrid">
+
+  <a class="pc tl" href="binary-optimizer.html">
+    <div class="pc-idx">01 / 05</div>
+    <div class="pc-ico tl">🔀</div>
+    <h3 class="pc-ttl">Binary Decision Optimizer</h3>
+    <p class="pc-body">When resource allocation requires a hard yes-or-no — build or don't, hire or don't — binary integer programming finds the combination that maximizes value within budget and capacity constraints. This project demonstrates why rounding a continuous LP solution is dangerous, and why proper 0-1 programming is essential evidence-based management.</p>
+    <div class="pc-tags"><span class="tag tl">0-1 Variables</span><span class="tag tl">Integer Programming</span><span class="tag tl">Resource Allocation</span></div>
+    <span class="pc-cta">View project <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13L13 3M13 3H7M13 3V9"/></svg></span>
+  </a>
+
+  <a class="pc tl" href="lp-solver.html">
+    <div class="pc-idx">02 / 05</div>
+    <div class="pc-ico tl">📐</div>
+    <h3 class="pc-ttl">LP Solver</h3>
+    <p class="pc-body">Linear programming finds the allocation of resources that maximizes profit or minimizes cost subject to constraints. The simplex algorithm navigates the corners of the feasible polytope until it reaches the global optimum — turning complex multi-variable trade-offs into rigorous, evidence-guided decisions rather than guesswork.</p>
+    <div class="pc-tags"><span class="tag tl">Simplex Method</span><span class="tag tl">Feasible Region</span><span class="tag tl">Optimal Allocation</span></div>
+    <span class="pc-cta">View project <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13L13 3M13 3H7M13 3V9"/></svg></span>
+  </a>
+
+  <a class="pc tl" href="branch-bound.html">
+    <div class="pc-idx">03 / 05</div>
+    <div class="pc-ico tl">🌿</div>
+    <h3 class="pc-ttl">Branch and Bound</h3>
+    <p class="pc-body">When an LP optimum turns out fractional but the problem demands whole-number decisions, branch and bound constructs a decision tree: branch on a fractional variable, solve LP sub-problems, and prune branches whose bound can't beat the best integer solution found. Systematic, guaranteed optimal, and a model of evidence-guided elimination.</p>
+    <div class="pc-tags"><span class="tag tl">Tree Search</span><span class="tag tl">Bounding & Pruning</span><span class="tag tl">Integer Solutions</span></div>
+    <span class="pc-cta">View project <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13L13 3M13 3H7M13 3V9"/></svg></span>
+  </a>
+
+  <a class="pc tl" href="tsp.html">
+    <div class="pc-idx">04 / 05</div>
+    <div class="pc-ico tl">🗺️</div>
+    <h3 class="pc-ttl">Travelling Salesman Problem</h3>
+    <p class="pc-body">Visit every city exactly once and return home at minimum cost. With 20 cities there are more possible tours than atoms in the observable universe — a combinatorial explosion that makes brute force impossible. This project applies exact methods and heuristic strategies to make an NP-hard allocation problem tractable and practically useful.</p>
+    <div class="pc-tags"><span class="tag tl">Combinatorial Opt.</span><span class="tag tl">NP-Hard</span><span class="tag tl">Route Optimization</span></div>
+    <span class="pc-cta">View project <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13L13 3M13 3H7M13 3V9"/></svg></span>
+  </a>
+
+  <a class="pc tl" href="wp.html">
+    <div class="pc-idx">05 / 05</div>
+    <div class="pc-ico tl">👥</div>
+    <h3 class="pc-ttl">Workforce Planning</h3>
+    <p class="pc-body">Matching staff levels to fluctuating demand is a multi-period resource allocation problem: too few workers and service quality collapses; too many and fixed costs destroy margins. This project formulates workforce planning as a linear program with shift, overtime, and coverage constraints — converting an intuitive scheduling problem into an optimized, evidence-based model.</p>
+    <div class="pc-tags"><span class="tag tl">Multi-period LP</span><span class="tag tl">Demand Coverage</span><span class="tag tl">Cost Minimization</span></div>
+    <span class="pc-cta">View project <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13L13 3M13 3H7M13 3V9"/></svg></span>
+  </a>
+
+</div>
+
+<!-- FOOTER -->
 <footer>
-    <p>© 2026 Mahedi Hasan Portfolio</p>
+  <div class="f-brand">
+    <div class="f-name">Mahedi <b>Hasan</b></div>
+    <div class="f-tag">ID: 2417551 · IBM · 2026</div>
+  </div>
+  <div class="f-mid">
+    <p class="f-principle">"Sustainable value is created when resources are allocated efficiently."</p>
+  </div>
+  <div class="f-meta">
+    Integrated Business Management<br>
+    Academic Portfolio<br>
+    © 2026
+  </div>
 </footer>
 
+<script>
+/* CURSOR */
+const cur=document.getElementById('cur'),ring=document.getElementById('cur-r');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
+(function lp(){rx+=(mx-rx)*.11;ry+=(my-ry)*.11;ring.style.left=Math.round(rx)+'px';ring.style.top=Math.round(ry)+'px';requestAnimationFrame(lp);})();
+document.querySelectorAll('a,button').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('h'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('h'));
+});
+
+/* STAR CANVAS */
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W,H,stars=[];
+function rs(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+rs();window.addEventListener('resize',()=>{rs();is();});
+function is(){
+  stars=[];
+  const n=Math.floor(W*H/7000);
+  for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*.9+.2,o:Math.random()*.6+.1,s:Math.random()*.12+.02,t:Math.random()*Math.PI*2});
+}
+is();
+function ds(){
+  ctx.clearRect(0,0,W,H);
+  stars.forEach(s=>{
+    s.t+=s.s*.04;
+    const op=s.o*(.5+.5*Math.sin(s.t));
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(200,168,75,${op.toFixed(2)})`;ctx.fill();
+  });
+  requestAnimationFrame(ds);
+}
+ds();
+
+/* GLOBE PULSE */
+const gnodes=document.querySelectorAll('.gn');
+let ga=0;
+(function gp(){
+  ga+=.005;
+  gnodes.forEach((n,i)=>{const p=i*1.3+ga;n.setAttribute('opacity',((.35+.55*Math.abs(Math.sin(p)))).toFixed(2));});
+  requestAnimationFrame(gp);
+})();
+
+/* COUNTERS */
+const counters=document.querySelectorAll('.st-n[data-t]');
+const co=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(!e.isIntersecting)return;
+    const el=e.target,tgt=+el.dataset.t;
+    let v=0;const step=tgt/36;
+    const t=setInterval(()=>{v=Math.min(v+step,tgt);el.textContent=Math.round(v);if(v>=tgt)clearInterval(t);},28);
+    co.unobserve(el);
+  });
+},{threshold:.4});
+counters.forEach(c=>co.observe(c));
+
+/* SCROLL REVEAL */
+const revEls=document.querySelectorAll('.pc,.st,.a-left,.a-right,.p-wrap,.chip,.litem');
+revEls.forEach((el,i)=>{
+  el.style.opacity='0';
+  el.style.transform='translateY(24px)';
+  el.style.transition=`opacity .5s ease ${(i%6)*.06}s,transform .5s ease ${(i%6)*.06}s,background .25s,border-color .2s`;
+});
+const ro=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';ro.unobserve(e.target);}});
+},{threshold:.07});
+revEls.forEach(el=>ro.observe(el));
+
+/* SEC NUMBER PARALLAX */
+window.addEventListener('scroll',()=>{
+  [['sn1','trade'],['sn2','management']].forEach(([id,sid])=>{
+    const sec=document.getElementById(sid);
+    const num=document.getElementById(id);
+    if(!sec||!num)return;
+    const rect=sec.getBoundingClientRect();
+    const pct=Math.max(0,Math.min(1,(window.innerHeight-rect.top)/window.innerHeight));
+    num.style.transform=`translateY(${(1-pct)*40}px)`;
+  });
+},{passive:true});
+</script>
 </body>
 </html>

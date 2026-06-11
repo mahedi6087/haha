@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary Decision Optimizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ══ ROOTS ══════════════════════════════════════════════════════ */
+:root{
+  --bg:#070f0d; --s1:#0c1815; --s2:#101e1a; --s3:#162620;
+  --border:#1c2e28; --b2:#243d35; --b3:#2d5045;
+  --text:#d8ede8; --muted:#4a7060; --dim:#2a4038;
+  --teal:#2dd4bf; --t2:#0d9488; --t3:#0f4a3f; --t4:#082822;
+  --gold:#f59e0b; --gold2:#92400e;
+  --red:#ef4444; --grn:#22c55e; --blue:#60a5fa;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-weight:300;line-height:1.7;overflow-x:hidden;}
+
+/* ══ SCROLLBAR ═════════════════════════════════════════════════ */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--t3);border-radius:3px;}
+
+/* ══ HEADER ════════════════════════════════════════════════════ */
+header{
+  padding:1.1rem 3rem;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+  position:sticky;top:0;z-index:300;
+  background:rgba(7,15,13,.96);backdrop-filter:blur(14px);
+}
+.hdr-brand{display:flex;align-items:center;gap:.8rem;}
+.hdr-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);animation:glow 2.5s ease infinite;}
+@keyframes glow{0%,100%{opacity:1;box-shadow:0 0 8px var(--teal)}50%{opacity:.4;box-shadow:none}}
+.hdr-title{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;}
+.nav{display:flex;gap:.4rem;}
+.npill{font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;padding:.25rem .65rem;border:1px solid var(--border);color:var(--muted);border-radius:2px;text-decoration:none;transition:all .15s;}
+.npill:hover{border-color:var(--teal);color:var(--teal);}
+
+/* ══ HERO ══════════════════════════════════════════════════════ */
+.hero{
+  padding:5rem 3rem 4.5rem;border-bottom:1px solid var(--border);
+  display:grid;grid-template-columns:1fr 480px;gap:4rem;align-items:center;
+  position:relative;overflow:hidden;
+}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,rgba(45,212,191,.05) 0%,transparent 60%);pointer-events:none;}
+.hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--t2);margin-bottom:1.2rem;}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.6rem,4.5vw,4.2rem);font-weight:800;line-height:1.0;letter-spacing:-.02em;margin-bottom:1.5rem;}
+.hero h1 .hl{color:var(--teal);}
+.hero-sub{font-size:.95rem;color:#6a9080;max-width:500px;line-height:1.9;margin-bottom:2rem;}
+.hero-sub strong{color:var(--text);}
+.hero-pills{display:flex;gap:.4rem;flex-wrap:wrap;}
+.hero-pill{font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;padding:.22rem .65rem;border:1px solid var(--b2);color:var(--muted);border-radius:2px;}
+
+/* Hero right — stats */
+.hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+.hstat{background:var(--s1);border:1px solid var(--b2);padding:1.1rem 1.3rem;border-radius:6px;position:relative;overflow:hidden;}
+.hstat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.hstat.t::before{background:var(--teal);}
+.hstat.g::before{background:var(--gold);}
+.hstat.b::before{background:var(--blue);}
+.hstat.r::before{background:var(--grn);}
+.hstat-num{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;line-height:1;color:var(--teal);margin-bottom:.3rem;}
+.hstat-num.g{color:var(--gold);}
+.hstat-num.b{color:var(--blue);}
+.hstat-num.r{color:var(--grn);}
+.hstat-lbl{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+
+/* ══ SECTION SHELL ═════════════════════════════════════════════ */
+section{padding:4rem 3rem;border-bottom:1px solid var(--border);}
+.sec-hdr{display:flex;align-items:center;gap:1rem;margin-bottom:2.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border);}
+.sec-n{font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;padding:.2rem .6rem;border:1px solid var(--b2);color:var(--muted);border-radius:2px;}
+.sec-title{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700;}
+.sec-title .t{color:var(--teal);} .sec-title .g{color:var(--gold);}
+
+/* ══ OVERVIEW ══════════════════════════════════════════════════ */
+.ov-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;}
+.ov-text p{font-size:.9rem;color:#6a9080;line-height:1.9;margin-bottom:1rem;}
+.ov-text p:last-child{margin-bottom:0;}
+.ov-text strong{color:var(--text);}
+
+.use-cases{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-top:1.5rem;}
+.uc{background:var(--s1);border:1px solid var(--b2);border-left:2px solid var(--t2);padding:.8rem 1rem;border-radius:4px;}
+.uc-icon{font-size:1rem;margin-bottom:.3rem;}
+.uc-title{font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:.2rem;}
+.uc-desc{font-size:.72rem;color:var(--muted);line-height:1.5;}
+
+/* Notation block */
+.notation-block{background:#050d0a;border:1px solid var(--b2);border-left:3px solid var(--t2);border-radius:6px;padding:1.8rem 2rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:2.2;color:#9ac8be;}
+.nkw{color:var(--teal);font-weight:700;}
+.nvar{color:#93c5fd;}
+.nparam{color:var(--gold);}
+.ncmt{color:#1c4035;font-size:.65rem;}
+.nset{color:#c084fc;}
+
+/* ══ OPTIMIZER TOOL ════════════════════════════════════════════ */
+.tool-wrap{background:var(--s1);border:1px solid var(--b2);border-radius:8px;overflow:hidden;box-shadow:0 0 60px rgba(45,212,191,.04);}
+
+/* Toolbar */
+.tool-bar{
+  background:var(--t4);padding:.75rem 1.4rem;
+  border-bottom:1px solid var(--t3);
+  display:flex;align-items:center;gap:.8rem;
+}
+.tb-title{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--t2);flex:1;}
+.tb-badge{font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;padding:.18rem .5rem;border:1px solid var(--t3);color:var(--muted);border-radius:2px;transition:all .3s;}
+.tb-badge.active-badge{border-color:var(--teal);color:var(--teal);}
+
+/* Presets */
+.presets-bar{
+  padding:.7rem 1.4rem;border-bottom:1px solid var(--b2);
+  display:flex;gap:.5rem;align-items:center;background:rgba(10,40,34,.5);
+  flex-wrap:wrap;
+}
+.pb-lbl{font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.15em;text-transform:uppercase;color:var(--t3);margin-right:.3rem;}
+.pb{font-family:'JetBrains Mono',monospace;font-size:.65rem;padding:.28rem .85rem;background:transparent;border:1px solid var(--b2);color:var(--muted);cursor:pointer;border-radius:3px;transition:all .15s;}
+.pb:hover,.pb.active{border-color:var(--t2);color:var(--teal);background:rgba(45,212,191,.06);}
+
+/* Main grid: setup | notation */
+.tool-main{display:grid;grid-template-columns:1.1fr 1fr;min-height:480px;}
+
+/* ─ LEFT: SETUP ─ */
+.setup-col{border-right:1px solid var(--b2);padding:1.4rem;display:flex;flex-direction:column;gap:1.2rem;overflow:auto;}
+.sc-section-title{font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--t2);margin-bottom:.7rem;padding-bottom:.35rem;border-bottom:1px solid var(--b2);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+.field-row.full{grid-template-columns:1fr;}
+.field{display:flex;flex-direction:column;gap:.25rem;}
+.field label{font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+.field input,.field select{background:var(--s3);border:1px solid var(--b2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.76rem;padding:.42rem .65rem;border-radius:3px;outline:none;transition:border-color .15s;width:100%;}
+.field input:focus,.field select:focus{border-color:var(--t2);}
+.field select option{background:var(--s2);}
+
+/* Items spreadsheet */
+.tbl-wrap{overflow-x:auto;}
+table.itbl{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:.68rem;}
+table.itbl th{background:var(--t4);color:var(--t2);padding:.38rem .55rem;text-align:center;font-weight:500;font-size:.58rem;letter-spacing:.07em;border:1px solid var(--t3);}
+table.itbl th:first-child{text-align:left;min-width:30px;}
+table.itbl th.name-col{text-align:left;min-width:100px;}
+table.itbl td{padding:.22rem .35rem;border:1px solid var(--border);vertical-align:middle;}
+table.itbl td.row-num{font-size:.6rem;color:var(--muted);text-align:center;background:var(--s2);user-select:none;}
+table.itbl td input{width:100%;background:transparent;border:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.68rem;padding:.18rem .25rem;border-radius:2px;outline:none;}
+table.itbl td input[type=number]{text-align:right;min-width:52px;}
+table.itbl td input:focus{background:var(--s3);outline:1px solid var(--t3);}
+table.itbl tr:hover td:not(.row-num):not(.lock-cell):not(.del-cell){background:rgba(45,212,191,.03);}
+/* Lock cell */
+.lock-cell{text-align:center;width:32px;}
+.lock-btn{font-size:.72rem;padding:.1rem .3rem;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;border-radius:3px;transition:all .15s;line-height:1;}
+.lock-btn.free{color:var(--muted);}
+.lock-btn.in{color:var(--grn);border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.08);}
+.lock-btn.out{color:var(--red);border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08);}
+table.itbl tr.row-locked-in td:not(.lock-cell):not(.del-cell):not(.row-num){background:rgba(34,197,94,.04);}
+table.itbl tr.row-locked-out td:not(.lock-cell):not(.del-cell):not(.row-num){background:rgba(239,68,68,.04);opacity:.6;}
+.del-cell{width:26px;text-align:center;}
+.del-btn{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;padding:.1rem .3rem;transition:color .15s;}
+.del-btn:hover{color:var(--red);}
+.add-item-btn{width:100%;padding:.38rem;background:transparent;border:1px dashed var(--b2);color:var(--t2);font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.1em;cursor:pointer;border-radius:3px;transition:all .15s;margin-top:.4rem;}
+.add-item-btn:hover{border-color:var(--t2);color:var(--teal);}
+
+/* Constraints */
+.con-list{display:flex;flex-direction:column;gap:.45rem;}
+.con-item{display:grid;grid-template-columns:1fr 54px 60px 26px;gap:.35rem;align-items:center;}
+.con-item input{background:var(--s3);border:1px solid var(--b2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.72rem;padding:.35rem .5rem;border-radius:3px;outline:none;transition:border-color .15s;}
+.con-item input:focus{border-color:var(--t2);}
+.con-item .ci-op{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--t2);text-align:center;}
+.add-con-btn{background:transparent;border:1px dashed var(--b2);color:var(--t2);font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.1em;padding:.28rem .7rem;cursor:pointer;border-radius:3px;transition:all .15s;margin-top:.25rem;}
+.add-con-btn:hover{border-color:var(--t2);}
+
+/* Lock legend */
+.lock-legend{display:flex;gap:.8rem;font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);}
+.ll{display:flex;align-items:center;gap:.3rem;}
+
+/* Solve button */
+.solve-btn{
+  width:100%;padding:.85rem;margin-top:.3rem;
+  background:linear-gradient(135deg,var(--t3),var(--t4));
+  border:1px solid var(--t2);color:var(--teal);
+  font-family:'JetBrains Mono',monospace;font-size:.78rem;
+  letter-spacing:.18em;text-transform:uppercase;
+  cursor:pointer;border-radius:5px;transition:all .2s;
+  position:relative;overflow:hidden;
+}
+.solve-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(45,212,191,.1),transparent);opacity:0;transition:opacity .2s;}
+.solve-btn:hover{border-color:var(--teal);box-shadow:0 0 24px rgba(45,212,191,.2);}
+.solve-btn:hover::before{opacity:1;}
+.solve-btn:active{transform:scale(.99);}
+.solve-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ─ RIGHT: NOTATION ─ */
+.notation-col{padding:1.4rem;display:flex;flex-direction:column;gap:.8rem;background:var(--t4);}
+.notation-header{display:flex;align-items:center;justify-content:space-between;}
+.nc-title{font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--t2);}
+.copy-btn{font-family:'JetBrains Mono',monospace;font-size:.58rem;padding:.22rem .65rem;background:transparent;border:1px solid var(--t3);color:var(--t2);cursor:pointer;border-radius:3px;transition:all .15s;letter-spacing:.08em;}
+.copy-btn:hover{border-color:var(--teal);color:var(--teal);}
+.copy-btn.copied{color:var(--grn);border-color:rgba(34,197,94,.4);}
+.live-notation{
+  background:#040c09;border:1px solid var(--t3);border-left:3px solid var(--t2);
+  border-radius:4px;padding:1.2rem 1.4rem;
+  font-family:'JetBrains Mono',monospace;font-size:.7rem;
+  line-height:2.1;color:#88c0b0;flex:1;
+  min-height:340px;overflow:auto;white-space:pre-wrap;word-break:break-word;
+}
+/* Enumeration counter */
+.enum-counter{
+  display:none;font-family:'JetBrains Mono',monospace;font-size:.62rem;
+  color:var(--t2);padding:.5rem .8rem;background:rgba(45,212,191,.06);
+  border:1px solid var(--t3);border-radius:3px;text-align:center;
+}
+.enum-counter.visible{display:block;}
+
+/* ══ SOLUTION AREA ════════════════════════════════════════════ */
+.solution-area{border-top:2px solid var(--t3);display:none;animation:slideUp .4s ease both;}
+.solution-area.visible{display:block;}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* Sol stats bar */
+.sol-stats-bar{
+  background:var(--t4);padding:.8rem 1.4rem;border-bottom:1px solid var(--t3);
+  display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;
+}
+.ssb-item{display:flex;flex-direction:column;gap:.15rem;text-align:center;}
+.ssb-val{font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;color:var(--teal);line-height:1;}
+.ssb-val.gold{color:var(--gold);}
+.ssb-lbl{font-family:'JetBrains Mono',monospace;font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+
+/* Sol body */
+.sol-body{display:grid;grid-template-columns:1fr 340px;}
+.sol-left{padding:1.4rem;border-right:1px solid var(--b2);}
+.sol-right{padding:1.4rem;display:flex;flex-direction:column;gap:1.2rem;background:rgba(8,40,34,.3);}
+
+/* Item cards */
+.cards-lbl{font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:.8rem;display:flex;align-items:center;gap:.6rem;}
+.item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:.55rem;margin-bottom:1.2rem;}
+.icard{
+  border:1px solid var(--border);border-radius:6px;padding:.85rem .9rem;
+  position:relative;transition:all .3s;cursor:default;
+  animation:cardIn .3s ease both;
+}
+@keyframes cardIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.icard.included{border-color:var(--t2);background:rgba(13,148,136,.1);box-shadow:0 0 16px rgba(13,148,136,.1);}
+.icard.excluded{opacity:.4;border-color:var(--border);background:var(--s1);}
+.icard.locked-in{border-color:var(--grn);background:rgba(34,197,94,.08);}
+.icard.locked-out{opacity:.3;border-color:var(--red);}
+.icard-badge{position:absolute;top:.5rem;right:.5rem;font-family:'JetBrains Mono',monospace;font-size:.58rem;padding:.1rem .35rem;border-radius:2px;border:1px solid;}
+.icard.included .icard-badge{background:rgba(13,148,136,.2);color:var(--teal);border-color:var(--t3);}
+.icard.excluded .icard-badge{background:rgba(30,46,40,.5);color:var(--muted);border-color:var(--border);}
+.icard.locked-in .icard-badge{background:rgba(34,197,94,.15);color:var(--grn);border-color:rgba(34,197,94,.4);}
+.icard.locked-out .icard-badge{background:rgba(239,68,68,.12);color:var(--red);border-color:rgba(239,68,68,.3);}
+.icard-name{font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:.35rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.icard-score{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--teal);margin-bottom:.18rem;}
+.icard-cvals{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);line-height:1.65;}
+
+/* Marginal panel */
+.marginal-panel{background:var(--s2);border:1px solid var(--b2);border-radius:4px;overflow:hidden;}
+.mp-header{background:var(--s3);padding:.45rem .85rem;font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+.mp-row{display:flex;align-items:center;gap:.6rem;padding:.4rem .85rem;border-bottom:1px solid var(--border);font-size:.78rem;}
+.mp-row:last-child{border-bottom:none;}
+.mp-name{color:var(--text);font-weight:500;min-width:100px;}
+.mp-score{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--t2);min-width:70px;}
+.mp-reason{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);margin-left:auto;}
+.mp-reason.tight{color:var(--gold);}
+.mp-reason.ok{color:var(--grn);}
+
+/* ─ RIGHT SIDE PANELS ─ */
+.panel-label{font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:.7rem;}
+
+/* Summary */
+.summary-card{background:var(--t4);border:1px solid var(--t3);border-radius:6px;padding:1.2rem 1.3rem;}
+.sc-top{margin-bottom:.6rem;}
+.sc-main-val{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:800;color:var(--teal);line-height:1;}
+.sc-main-lbl{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--t2);margin-top:.2rem;}
+.sc-metrics{display:flex;flex-direction:column;gap:.25rem;margin-top:.8rem;}
+.sc-metric{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:.64rem;padding:.22rem 0;border-top:1px solid var(--t3);}
+.sm-lbl{color:var(--t2);} .sm-val{color:var(--teal);}
+
+/* Constraint bars */
+.cbar-item{margin-bottom:.7rem;}
+.cbar-item:last-child{margin-bottom:0;}
+.cbar-hdr{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:.62rem;margin-bottom:.25rem;}
+.cbar-name{color:#6a9080;} .cbar-info{color:var(--teal);}
+.cbar-track{height:7px;background:var(--border);border-radius:4px;overflow:hidden;}
+.cbar-fill{height:100%;border-radius:4px;transition:width .7s cubic-bezier(.4,0,.2,1);}
+
+/* Alternatives chart */
+.alt-chart-wrap{background:var(--s2);border:1px solid var(--b2);border-radius:4px;overflow:hidden;}
+.act-header{background:var(--s3);padding:.4rem .85rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.act-title{font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);}
+canvas#alt-canvas{display:block;width:100%;}
+
+/* Alt list */
+.alt-list{display:flex;flex-direction:column;}
+.alt-item{
+  display:flex;align-items:center;gap:.6rem;padding:.45rem .85rem;
+  border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;
+}
+.alt-item:last-child{border-bottom:none;}
+.alt-item:hover{background:rgba(45,212,191,.04);}
+.alt-item.current{background:rgba(13,148,136,.08);border-left:2px solid var(--t2);}
+.ai-rank{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);width:18px;flex-shrink:0;}
+.ai-items{flex:1;display:flex;gap:.2rem;flex-wrap:wrap;}
+.ai-chip{font-family:'JetBrains Mono',monospace;font-size:.52rem;padding:.06rem .3rem;border-radius:2px;background:rgba(13,148,136,.1);border:1px solid var(--t3);color:var(--t2);}
+.ai-score{font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:700;color:var(--teal);}
+.ai-item.current .ai-rank::before{content:'★ ';}
+
+/* ══ EVIDENCE ══════════════════════════════════════════════════ */
+.ev-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:2rem;}
+.ev-block{background:var(--s1);border:1px solid var(--b2);border-radius:6px;overflow:hidden;}
+.ev-hdr{background:var(--s2);padding:.6rem 1rem;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;display:flex;align-items:center;gap:.5rem;color:var(--muted);}
+.ev-dot{width:6px;height:6px;border-radius:50%;}
+
+/* Excel-style table */
+.excel-tbl-wrap{overflow-x:auto;padding:.8rem;}
+table.excel{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:.7rem;}
+table.excel th{background:#0a1f18;color:var(--t2);padding:.38rem .65rem;text-align:center;font-size:.6rem;letter-spacing:.06em;border:1px solid var(--b2);font-weight:500;}
+table.excel th:first-child{text-align:left;}
+table.excel td{padding:.38rem .65rem;border:1px solid var(--border);text-align:center;}
+table.excel td:first-child{text-align:left;color:var(--text);}
+table.excel tr.header-row td{background:var(--t4);color:var(--t2);font-weight:500;}
+table.excel tr.totals-row td{background:var(--s3);font-weight:600;}
+table.excel tr.optimal-row td{background:rgba(245,158,11,.06);color:var(--gold);}
+table.excel td.formula{color:var(--blue);font-size:.62rem;}
+table.excel td.included{color:var(--teal);font-weight:700;}
+table.excel td.excluded{color:var(--muted);}
+table.excel td.pass{color:var(--grn);}
+table.excel td.fail{color:var(--red);}
+.excel-note{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);padding:.5rem .8rem;background:var(--s2);border-top:1px solid var(--border);}
+
+/* AI thread */
+.ai-thread{padding:.8rem;display:flex;flex-direction:column;gap:.5rem;}
+.ai-msg{border-radius:3px;overflow:hidden;}
+.am-hdr{font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;padding:.28rem .7rem;}
+.am-hdr.user{background:rgba(96,165,250,.08);color:var(--blue);}
+.am-hdr.ai{background:rgba(45,212,191,.06);color:var(--t2);}
+.am-body{padding:.6rem .8rem;font-size:.78rem;color:#5a8070;line-height:1.75;background:var(--s2);}
+.am-body strong{color:var(--text);}
+.am-body a{color:var(--t2);text-decoration:none;font-size:.7rem;}
+.am-body code{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--gold);background:var(--bg);padding:.08rem .28rem;border-radius:2px;}
+
+/* ══ LEARN ═════════════════════════════════════════════════════ */
+.learn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;}
+.lcard{background:var(--s1);border:1px solid var(--b2);padding:1.8rem;border-radius:6px;position:relative;}
+.lcard::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:6px 6px 0 0;}
+.lcard.kn::after{background:var(--teal);}
+.lcard.sk::after{background:var(--gold);}
+.lcard.rf::after{background:var(--blue);}
+.lcard-tag{font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:.7rem;}
+.lcard h3{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:1rem;}
+.lcard ul{list-style:none;}
+.lcard ul li{font-size:.82rem;color:#5a8070;padding:.3rem 0 .3rem 1rem;border-bottom:1px solid var(--border);position:relative;line-height:1.6;}
+.lcard ul li::before{content:'›';position:absolute;left:0;color:var(--t2);}
+.lcard ul li:last-child{border-bottom:none;}
+.lcard p{font-size:.82rem;color:#5a8070;line-height:1.85;}
+.lcard p strong{color:var(--text);}
+
+/* ══ RESPONSIVE ════════════════════════════════════════════════ */
+@media(max-width:960px){
+  header{padding:1rem 1.5rem;}
+  .hero,section{padding:3rem 1.5rem;}
+  .hero,.ov-grid,.tool-main,.sol-body,.ev-grid,.learn-grid{grid-template-columns:1fr;}
+  .use-cases{grid-template-columns:1fr;}
+  .hero-stats{grid-template-columns:1fr 1fr;}
+  .sol-stats-bar{grid-template-columns:repeat(3,1fr);}
+  .item-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));}
+}
+
+/* ══ BACK TO TOP ══════════════════════════════════════════════ */
+.back-to-top{
+  position:fixed;
+  right:1.4rem;
+  bottom:1.4rem;
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  border:1px solid var(--t3);
+  background:rgba(8,40,34,.92);
+  color:var(--teal);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  opacity:0;
+  visibility:hidden;
+  transform:translateY(12px);
+  transition:all .25s ease;
+  z-index:500;
+  box-shadow:0 0 24px rgba(45,212,191,.08);
+  backdrop-filter:blur(10px);
+}
+.back-to-top:hover{
+  border-color:var(--teal);
+  transform:translateY(-2px);
+  box-shadow:0 0 28px rgba(45,212,191,.18);
+}
+.back-to-top.visible{
+  opacity:1;
+  visibility:visible;
+  transform:translateY(0);
+}
+.back-to-top svg{
+  width:18px;
+  height:18px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ═════════════════════════════════════════════════ -->
+<header>
+  <div class="hdr-brand">
+    <div class="hdr-dot"></div>
+    <span class="hdr-title">Binary Decision Optimizer</span>
+  </div>
+  <nav class="nav">
+    <a href="#overview" class="npill">Overview</a>
+    <a href="#optimizer" class="npill">Optimizer</a>
+    <a href="#evidence" class="npill">Evidence</a>
+    <a href="#learn" class="npill">Reflection</a>
+  </nav>
+</header>
+
+<!-- ══ HERO ═══════════════════════════════════════════════════ -->
+<div class="hero">
+  <div>
+    <div class="hero-eyebrow">Combinatorial Optimization · Binary Programming</div>
+    <h1><span class="hl">Binary</span><br>Decision<br>Optimizer</h1>
+    <p class="hero-sub">
+      Every real decision is a tradeoff. Given a list of options and a set of limits,
+      which combination gives the <strong>best possible outcome</strong>?
+      This tool models any yes/no selection problem — and finds the provably optimal answer.
+    </p>
+    <div class="hero-pills">
+      <span class="hero-pill">yᵢ ∈ {0,1}</span>
+      <span class="hero-pill">Up to 20 items</span>
+      <span class="hero-pill">Any constraints</span>
+      <span class="hero-pill">Auto notation</span>
+      <span class="hero-pill">Lock items</span>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="hstat t"><div class="hstat-num">2ⁿ</div><div class="hstat-lbl">Combinations checked</div></div>
+    <div class="hstat g"><div class="hstat-num g">100%</div><div class="hstat-lbl">Provably optimal</div></div>
+    <div class="hstat b"><div class="hstat-num b">∞</div><div class="hstat-lbl">Problem types</div></div>
+    <div class="hstat r"><div class="hstat-num r">Live</div><div class="hstat-lbl">Notation generated</div></div>
+  </div>
+</div>
+
+<!-- ══ SECTION 01: OVERVIEW ═══════════════════════════════════ -->
+<section id="overview">
+  <div class="sec-hdr"><span class="sec-n">01</span><div class="sec-title">Project <span class="t">Overview</span></div></div>
+  <div class="ov-grid">
+    <div>
+      <div class="ov-text">
+        <p>Binary optimization answers the question: <strong>given a set of options and limited resources, which combination should you choose?</strong> Each item is either included (1) or excluded (0) — no fractions, no partial choices.</p>
+        <p>This is fundamentally different from continuous optimization. There is no slope to follow, no corner point theorem. The only guarantee of optimality is examining every possible combination — or using clever strategies like branch and bound to prune the search space.</p>
+        <p>The assignment was to model a real-world selection problem using formal notation, then solve it. I built a general-purpose tool so that <em>any</em> binary problem can be entered, formulated, and solved — not just snack combos, but projects, equipment, courses, investments.</p>
+      </div>
+      <div class="use-cases">
+        <div class="uc"><div class="uc-icon">🍿</div><div class="uc-title">Snack Combo</div><div class="uc-desc">Max taste within budget and calorie limits — the original assignment problem.</div></div>
+        <div class="uc"><div class="uc-icon">💼</div><div class="uc-title">Project Selection</div><div class="uc-desc">Max business value across IT projects under budget and team capacity.</div></div>
+        <div class="uc"><div class="uc-icon">⚙️</div><div class="uc-title">Machine Upgrade</div><div class="uc-desc">Max profit gain from equipment purchases within budget and floor space.</div></div>
+        <div class="uc"><div class="uc-icon">📚</div><div class="uc-title">Course Selection</div><div class="uc-desc">Max learning value under credit hour and schedule constraints.</div></div>
+      </div>
+    </div>
+    <div>
+      <p style="font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--t2);margin-bottom:.8rem;">General Formulation</p>
+      <div class="notation-block">
+<span class="ncmt">// Binary Decision Problem — General Form</span>
+
+<span class="nkw">Sets:</span>
+  <span class="nset">𝒮</span> = { item₁, item₂, ..., itemₙ }     <span class="ncmt">// n items to consider</span>
+  <span class="nset">𝒞</span> = { C₁, C₂, ..., Cₘ }             <span class="ncmt">// m constraints</span>
+
+<span class="nkw">Parameters:</span>
+  <span class="nparam">Vᵢ</span>   = objective value of item i        <span class="ncmt">// e.g. taste, profit</span>
+  <span class="nparam">Wᵢⱼ</span>  = resource j consumed by item i   <span class="ncmt">// e.g. cost, calories</span>
+  <span class="nparam">Lⱼ</span>   = limit for resource j             <span class="ncmt">// e.g. $15, 1200 cal</span>
+
+<span class="nkw">Decision Variables:</span>
+  <span class="nvar">yᵢ</span> ∈ { 0, 1 }   ∀i ∈ <span class="nset">𝒮</span>              <span class="ncmt">// 1=include, 0=exclude</span>
+
+<span class="nkw">Objective:</span>
+  max  Z = Σᵢ∈𝒮 <span class="nparam">Vᵢ</span> · <span class="nvar">yᵢ</span>
+
+<span class="nkw">Subject to:</span>
+  Σᵢ∈𝒮 <span class="nparam">Wᵢⱼ</span> · <span class="nvar">yᵢ</span> ≤ <span class="nparam">Lⱼ</span>   ∀j ∈ <span class="nset">𝒞</span>       <span class="ncmt">// each resource limit</span>
+  <span class="nvar">yᵢ</span> ∈ { 0, 1 }           ∀i ∈ <span class="nset">𝒮</span>       <span class="ncmt">// binary constraint</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SECTION 02: OPTIMIZER ══════════════════════════════════ -->
+<section id="optimizer" style="padding-top:3rem;">
+  <div class="sec-hdr"><span class="sec-n">02</span><div class="sec-title">Binary Decision <span class="t">Optimizer</span></div></div>
+  <p style="font-size:.88rem;color:#5a8070;max-width:700px;line-height:1.9;margin-bottom:1.5rem;">Enter any selection problem. Define your items, objective, and constraints. The optimizer checks every valid combination and returns the <strong>provably best selection</strong>. Lock any item to force-include or force-exclude it, then re-solve.</p>
+
+  <div class="tool-wrap">
+    <!-- TOOLBAR -->
+    <div class="tool-bar">
+      <span class="tb-title">General-Purpose Binary Decision Optimizer</span>
+      <span class="tb-badge" id="tb-items">6 items</span>
+      <span class="tb-badge" id="tb-cons">2 constraints</span>
+      <span class="tb-badge" id="tb-combos">64 combinations</span>
+    </div>
+
+    <!-- PRESETS -->
+    <div class="presets-bar">
+      <span class="pb-lbl">Load Example</span>
+      <button class="pb active" onclick="loadPreset('snack',this)">🍿 Snack Combo</button>
+      <button class="pb" onclick="loadPreset('project',this)">💼 Project Selection</button>
+      <button class="pb" onclick="loadPreset('machine',this)">⚙️ Machine Upgrade</button>
+      <button class="pb" onclick="loadPreset('course',this)">📚 Course Selection</button>
+      <button class="pb" onclick="loadPreset('blank',this)">✏️ Blank</button>
+    </div>
+
+    <!-- MAIN: SETUP | NOTATION -->
+    <div class="tool-main">
+      <!-- SETUP -->
+      <div class="setup-col">
+        <!-- Problem Info -->
+        <div>
+          <div class="sc-section-title">Problem Setup</div>
+          <div class="field-row full" style="margin-bottom:.6rem;">
+            <div class="field"><label>Problem Title</label><input type="text" id="prob-title" value="Snack Combo Optimizer" oninput="refreshAll()"></div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Direction</label>
+              <select id="obj-dir" onchange="refreshAll()">
+                <option value="max">Maximize</option>
+                <option value="min">Minimize</option>
+              </select>
+            </div>
+            <div class="field"><label>Objective Name</label><input type="text" id="obj-name" value="Taste Score" oninput="refreshAll()"></div>
+          </div>
+        </div>
+
+        <!-- Items Table -->
+        <div>
+          <div class="sc-section-title">Items</div>
+          <div class="lock-legend">
+            <span class="ll"><span style="color:var(--muted)">⊙</span> Free</span>
+            <span class="ll"><span style="color:var(--grn)">✓</span> Lock In</span>
+            <span class="ll"><span style="color:var(--red)">✗</span> Lock Out</span>
+          </div>
+          <div class="tbl-wrap" style="margin-top:.6rem;">
+            <table class="itbl">
+              <thead id="itbl-head"></thead>
+              <tbody id="itbl-body"></tbody>
+            </table>
+          </div>
+          <button class="add-item-btn" onclick="addItem()">+ Add Item</button>
+        </div>
+
+        <!-- Constraints -->
+        <div>
+          <div class="sc-section-title">Constraints (each ≤ limit)</div>
+          <div class="con-list" id="con-list"></div>
+          <button class="add-con-btn" id="add-con-btn" onclick="addConstraint()">+ Add Constraint</button>
+        </div>
+
+        <!-- Solve -->
+        <button class="solve-btn" id="solve-btn" onclick="runSolver()">▶ &nbsp; FIND OPTIMAL SELECTION</button>
+        <div class="enum-counter" id="enum-counter">Checking combinations...</div>
+      </div>
+
+      <!-- NOTATION -->
+      <div class="notation-col">
+        <div class="notation-header">
+          <span class="nc-title">Live Mathematical Notation</span>
+          <button class="copy-btn" id="copy-btn" onclick="copyNotation()">Copy</button>
+        </div>
+        <div class="live-notation" id="live-notation">Loading...</div>
+      </div>
+    </div>
+
+    <!-- SOLUTION -->
+    <div class="solution-area" id="sol-area">
+      <!-- Stats -->
+      <div class="sol-stats-bar">
+        <div class="ssb-item"><div class="ssb-val gold" id="ssb-score">—</div><div class="ssb-lbl">Optimal Score</div></div>
+        <div class="ssb-item"><div class="ssb-val" id="ssb-items">—</div><div class="ssb-lbl">Items Selected</div></div>
+        <div class="ssb-item"><div class="ssb-val" id="ssb-feasible">—</div><div class="ssb-lbl">Feasible Combos</div></div>
+        <div class="ssb-item"><div class="ssb-val" id="ssb-checked">—</div><div class="ssb-lbl">Total Checked</div></div>
+        <div class="ssb-item"><div class="ssb-val" id="ssb-locked">—</div><div class="ssb-lbl">Locks Active</div></div>
+      </div>
+
+      <!-- Body -->
+      <div class="sol-body">
+        <!-- LEFT -->
+        <div class="sol-left">
+          <div class="cards-lbl">Selected Items <span id="cards-count" style="color:var(--t2)"></span></div>
+          <div class="item-grid" id="item-grid"></div>
+          <div class="marginal-panel" id="marginal-panel">
+            <div class="mp-header">Why Excluded Items Were Not Selected</div>
+            <div id="marginal-body"></div>
+          </div>
+        </div>
+        <!-- RIGHT -->
+        <div class="sol-right">
+          <div>
+            <div class="panel-label">Optimal Solution</div>
+            <div class="summary-card">
+              <div class="sc-top">
+                <div class="sc-main-val" id="sc-val">—</div>
+                <div class="sc-main-lbl" id="sc-lbl">—</div>
+              </div>
+              <div class="sc-metrics" id="sc-metrics"></div>
+            </div>
+          </div>
+          <div>
+            <div class="panel-label">Resource Utilization</div>
+            <div id="cbar-wrap"></div>
+          </div>
+          <div class="alt-chart-wrap">
+            <div class="act-header">
+              <span class="act-title">Top Alternatives</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:.56rem;color:var(--muted);">click to compare</span>
+            </div>
+            <canvas id="alt-canvas" height="120"></canvas>
+            <div class="alt-list" id="alt-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SECTION 03: EVIDENCE ═══════════════════════════════════ -->
+<section id="evidence">
+  <div class="sec-hdr"><span class="sec-n">03</span><div class="sec-title">Evidence</div></div>
+  <div class="ev-grid">
+    <!-- Excel Recreation -->
+    <div class="ev-block">
+      <div class="ev-hdr">
+        <span class="ev-dot" style="background:var(--grn)"></span>
+        Recreated Spreadsheet — Snack Combo Optimizer
+      </div>
+      <div class="excel-tbl-wrap">
+        <table class="excel">
+          <thead>
+            <tr class="header-row">
+              <td>Snack</td><td>Cost ($)</td><td>Taste Score</td><td>Calories</td><td>Decision (0/1)</td><td>Cost Used</td><td>Taste Used</td><td>Cal Used</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Chips</td><td>2.00</td><td>6</td><td>200</td><td class="included">1</td><td class="formula">=F*C</td><td class="formula">=F*D</td><td class="formula">=F*E</td></tr>
+            <tr><td>Chocolate Bar</td><td>3.00</td><td>9</td><td>300</td><td class="included">1</td><td class="formula">=F*C</td><td class="formula">=F*D</td><td class="formula">=F*E</td></tr>
+            <tr><td>Cookies</td><td>2.50</td><td>7</td><td>250</td><td class="included">1</td><td class="formula">=F*C</td><td class="formula">=F*D</td><td class="formula">=F*E</td></tr>
+            <tr><td>Juice</td><td>4.00</td><td>8</td><td>180</td><td class="included">1</td><td class="formula">=F*C</td><td class="formula">=F*D</td><td class="formula">=F*E</td></tr>
+            <tr><td>Sandwich</td><td>5.00</td><td>10</td><td>400</td><td class="excluded">0</td><td class="formula">=F*C</td><td class="formula">=F*D</td><td class="formula">=F*E</td></tr>
+            <tr><td>Fruit Cup</td><td>3.00</td><td>6</td><td>150</td><td class="included">1</td><td class="formula">=F*C</td><td class="formula">=F*D</td><td class="formula">=F*E</td></tr>
+            <tr class="totals-row">
+              <td><strong>TOTALS</strong></td><td>—</td><td>—</td><td>—</td><td>—</td>
+              <td class="pass">14.50</td><td style="color:var(--teal);font-weight:700;">36</td><td class="pass">1080</td>
+            </tr>
+            <tr class="optimal-row">
+              <td colspan="2"><strong>Constraints</strong></td>
+              <td colspan="2">Budget ≤ $15.00</td><td colspan="2" class="pass">✓ 14.50 ≤ 15</td>
+              <td colspan="2"></td>
+            </tr>
+            <tr class="optimal-row">
+              <td colspan="2"></td>
+              <td colspan="2">Calories ≤ 1200</td><td colspan="2" class="pass">✓ 1080 ≤ 1200</td>
+              <td colspan="2"></td>
+            </tr>
+            <tr class="optimal-row">
+              <td colspan="3"><strong>Max Taste Score</strong></td>
+              <td colspan="2" style="color:var(--gold);font-size:.85rem;font-weight:800;">36</td>
+              <td colspan="3" style="color:var(--t2);font-size:.65rem;">Chips + Choc + Cookies + Juice + Fruit Cup</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="excel-note">Source: Custom_Optimization_Problem.xlsx · SUMPRODUCT formulas used for objective and constraint totals</div>
+      </div>
+    </div>
+
+    <!-- AI Conversation -->
+    <div class="ev-block">
+      <div class="ev-hdr">
+        <span class="ev-dot" style="background:var(--gold)"></span>
+        AI Conversation — Problem Design
+      </div>
+      <div class="ai-thread">
+        <div class="ai-msg">
+          <div class="am-hdr user">Student</div>
+          <div class="am-body">I need to create a binary optimization problem similar to the Pizza Optimizer from class. It should have clear yes/no decisions, at least 2 constraints, and maximize something meaningful. Generate a problem with real data I can solve in a spreadsheet.</div>
+        </div>
+        <div class="am-hdr ai">Assistant</div>
+        <div class="am-body"><strong>Snack Combo Optimizer:</strong> You're preparing snack packs for an event. Maximize taste score while staying within <code>Budget ≤ $15</code> and <code>Calories ≤ 1,200</code>. Each snack is either included (1) or excluded (0).<br><br>Items: Chips ($2, 200 cal, taste 6), Chocolate Bar ($3, 300 cal, taste 9), Cookies ($2.50, 250 cal, taste 7), Juice ($4, 180 cal, taste 8), Sandwich ($5, 400 cal, taste 10), Fruit Cup ($3, 150 cal, taste 6).</div>
+        <div class="ai-msg">
+          <div class="am-hdr user">Student — Reflection Question</div>
+          <div class="am-body">Was the snack with the highest taste score (Sandwich, 10) always the best choice?</div>
+        </div>
+        <div class="ai-msg">
+          <div class="am-hdr ai">Student's Own Answer</div>
+          <div class="am-body"><strong>No.</strong> The Sandwich had the highest single taste score (10), but also cost $5 and 400 calories — the most expensive in both constraints. Including it forced excluding other items, resulting in a lower total. The optimal solution excluded the Sandwich and included 5 cheaper, lighter items for a combined taste of 36 vs 33.<br><br>
+          <a href="https://chatgpt.com/share/69d130c1-af50-8321-8732-2edbc74540e1" target="_blank">View full AI conversation →</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SECTION 04: LEARN ═══════════════════════════════════════ -->
+<section id="learn" style="border-bottom:none;">
+  <div class="sec-hdr"><span class="sec-n">04</span><div class="sec-title">What Did I <span class="g">Learn?</span></div></div>
+  <div class="learn-grid">
+    <div class="lcard kn">
+      <div class="lcard-tag">Dimension 01</div>
+      <h3>Knowledge</h3>
+      <ul>
+        <li>Binary variables yᵢ ∈ {0,1} model yes/no decisions — fundamentally different from continuous variables</li>
+        <li>The search space grows exponentially: 6 items = 64 combinations; 20 items = 1,048,576</li>
+        <li>The highest individual score does not guarantee inclusion — global context matters</li>
+        <li>A binding constraint drives the tradeoff — relaxing it directly improves the objective</li>
+        <li>Formal notation (𝒮, Vᵢ, Wᵢⱼ, Lⱼ) makes any selection problem precise and solvable</li>
+        <li>Force-locking items reduces the search space and enables scenario analysis</li>
+      </ul>
+    </div>
+    <div class="lcard sk">
+      <div class="lcard-tag">Dimension 02</div>
+      <h3>Skills</h3>
+      <ul>
+        <li>Formulating real-world decisions as formal binary optimization models</li>
+        <li>Implementing full enumeration: iterating all 2ⁿ bitmasks and checking feasibility</li>
+        <li>Building dynamic notation generators that update from live user input</li>
+        <li>Designing constraint utilization bars and alternative solution rankings</li>
+        <li>Using SUMPRODUCT formulas in spreadsheets to compute objective and constraint totals</li>
+        <li>Explaining why a solution is optimal — not just what it is</li>
+      </ul>
+    </div>
+    <div class="lcard rf">
+      <div class="lcard-tag">Dimension 03</div>
+      <h3>Reflection</h3>
+      <p>The most surprising result was that <strong>the Sandwich — with the highest taste score of 10 — was excluded from the optimal solution</strong>. This feels wrong until you see the numbers: including it would use $5 of the $15 budget and 400 of 1,200 calories, leaving no room for the 4 lighter items that collectively score 36 vs the Sandwich's contribution to any feasible set.</p>
+      <br>
+      <p>Building the general tool made me realize how <strong>universally applicable this structure is</strong>. The snack combo, project selection, and machine upgrade problems all use identical math — only the labels change. Any decision with a budget and a set of discrete options is a binary problem.</p>
+      <br>
+      <p><strong>Real-world scale:</strong> Amazon uses binary selection models to decide which products to stock in fulfillment centers. Netflix decides which original content to greenlight. The same yᵢ ∈ {0,1} structure, applied to billions in decisions.</p>
+    </div>
+  </div>
+</section>
+
+
+<button class="back-to-top" id="backToTopBtn" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 19V5"></path>
+    <path d="m5 12 7-7 7 7"></path>
+  </svg>
+</button>
+
+<!-- ══════════════════════════════════════════════════
+     JAVASCRIPT ENGINE
+══════════════════════════════════════════════════ -->
+<script>
+// ─────────────────────────────────────────────────
+//  DATA MODEL
+// ─────────────────────────────────────────────────
+let D = { items: [], cons: [] };
+// item: { name, val, cvals:[], lock:'free'|'in'|'out' }
+// con:  { name, limit }
+let lastSol = null;
+let currentAlt = 0;
+
+// ─────────────────────────────────────────────────
+//  PRESETS
+// ─────────────────────────────────────────────────
+const PRESETS = {
+  snack:{
+    title:'Snack Combo Optimizer',dir:'max',objName:'Taste Score',
+    cons:[{name:'Budget ($)',limit:15},{name:'Calories',limit:1200}],
+    items:[
+      {name:'Chips',         val:6,  cvals:[2.0, 200], lock:'free'},
+      {name:'Chocolate Bar', val:9,  cvals:[3.0, 300], lock:'free'},
+      {name:'Cookies',       val:7,  cvals:[2.5, 250], lock:'free'},
+      {name:'Juice',         val:8,  cvals:[4.0, 180], lock:'free'},
+      {name:'Sandwich',      val:10, cvals:[5.0, 400], lock:'free'},
+      {name:'Fruit Cup',     val:6,  cvals:[3.0, 150], lock:'free'},
+    ]
+  },
+  project:{
+    title:'IT Project Selection',dir:'max',objName:'Business Value',
+    cons:[{name:'Budget ($K)',limit:200},{name:'Dev Hours',limit:800}],
+    items:[
+      {name:'CRM System',     val:85, cvals:[80, 300],  lock:'free'},
+      {name:'Mobile App',     val:70, cvals:[120,450],  lock:'free'},
+      {name:'Data Warehouse', val:90, cvals:[150,400],  lock:'free'},
+      {name:'Chatbot',        val:50, cvals:[40, 200],  lock:'free'},
+      {name:'API Gateway',    val:65, cvals:[60, 250],  lock:'free'},
+      {name:'Dashboard',      val:55, cvals:[35, 150],  lock:'free'},
+      {name:'Security Audit', val:75, cvals:[30, 100],  lock:'free'},
+    ]
+  },
+  machine:{
+    title:'Machine Upgrade Planner',dir:'max',objName:'Profit Gain (₩K/wk)',
+    cons:[{name:'Budget (₩K)',limit:400},{name:'Floor Space (m²)',limit:25}],
+    items:[
+      {name:'Auto Sander',     val:120, cvals:[150,6],  lock:'free'},
+      {name:'CNC Router',      val:180, cvals:[200,8],  lock:'free'},
+      {name:'Spray Booth',     val:100, cvals:[180,10], lock:'free'},
+      {name:'Assembly Line',   val:90,  cvals:[120,5],  lock:'free'},
+      {name:'Delivery Van',    val:75,  cvals:[100,0],  lock:'free'},
+      {name:'Quality Scanner', val:60,  cvals:[80, 3],  lock:'free'},
+    ]
+  },
+  course:{
+    title:'Course Selection Optimizer',dir:'max',objName:'Learning Value',
+    cons:[{name:'Credits',limit:18},{name:'Study Hrs/wk',limit:40}],
+    items:[
+      {name:'Algorithms',   val:90, cvals:[3,12], lock:'free'},
+      {name:'Data Science', val:85, cvals:[3,10], lock:'free'},
+      {name:'UX Design',    val:70, cvals:[3,8],  lock:'free'},
+      {name:'Networks',     val:75, cvals:[3,10], lock:'free'},
+      {name:'Ethics in AI', val:60, cvals:[2,5],  lock:'free'},
+      {name:'Capstone',     val:95, cvals:[6,20], lock:'free'},
+      {name:'Elective',     val:50, cvals:[3,6],  lock:'free'},
+    ]
+  },
+  blank:{
+    title:'My Optimization Problem',dir:'max',objName:'Value',
+    cons:[{name:'Constraint 1',limit:100}],
+    items:[
+      {name:'Option A',val:50,cvals:[30],lock:'free'},
+      {name:'Option B',val:70,cvals:[50],lock:'free'},
+      {name:'Option C',val:40,cvals:[20],lock:'free'},
+    ]
+  }
+};
+
+function loadPreset(key, btn){
+  document.querySelectorAll('.pb').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const p = PRESETS[key];
+  document.getElementById('prob-title').value = p.title;
+  document.getElementById('obj-dir').value    = p.dir;
+  document.getElementById('obj-name').value   = p.objName;
+  D.cons  = p.cons.map(c=>({...c}));
+  D.items = p.items.map(it=>({...it, cvals:[...it.cvals], lock:it.lock||'free'}));
+  hideSolution();
+  renderAll();
+}
+
+// ─────────────────────────────────────────────────
+//  RENDERING
+// ─────────────────────────────────────────────────
+function renderAll(){ renderTable(); renderConstraints(); refreshNotation(); updateBadges(); }
+
+function renderTable(){
+  const nc = D.cons.length;
+  const objName = document.getElementById('obj-name')?.value || 'Value';
+  // Header
+  let hth = `<tr><th class="name-col">Item Name</th><th>${objName}</th>`;
+  D.cons.forEach((c,i)=> hth += `<th>${c.name||'C'+(i+1)}</th>`);
+  hth += `<th title="Lock: free/in/out">🔒</th><th></th></tr>`;
+  document.getElementById('itbl-head').innerHTML = hth;
+  // Body
+  const tbody = document.getElementById('itbl-body');
+  tbody.innerHTML = '';
+  D.items.forEach((item,i)=>{
+    const tr = document.createElement('tr');
+    const lockClass = item.lock==='in'?'row-locked-in':item.lock==='out'?'row-locked-out':'';
+    tr.className = lockClass;
+    let tds = `<td class="row-num">${i+1}</td>`;
+    tds += `<td><input type="text" value="${item.name}" oninput="D.items[${i}].name=this.value;refreshAll()"></td>`;
+    tds += `<td><input type="number" value="${item.val}" oninput="D.items[${i}].val=+this.value;refreshNotation()"></td>`;
+    for(let j=0;j<nc;j++){
+      tds += `<td><input type="number" value="${item.cvals[j]??0}" oninput="D.items[${i}].cvals[${j}]=+this.value;refreshNotation()"></td>`;
+    }
+    const lockLabel = item.lock==='in'?'✓':item.lock==='out'?'✗':'⊙';
+    tds += `<td class="lock-cell"><button class="lock-btn ${item.lock}" onclick="cycleLock(${i})">${lockLabel}</button></td>`;
+    tds += `<td class="del-cell"><button class="del-btn" onclick="removeItem(${i})">×</button></td>`;
+    tr.innerHTML = tds;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderConstraints(){
+  const list = document.getElementById('con-list');
+  list.innerHTML = '';
+  D.cons.forEach((c,i)=>{
+    const div = document.createElement('div');
+    div.className = 'con-item';
+    div.innerHTML = `
+      <input type="text" placeholder="Name" value="${c.name}" oninput="D.cons[${i}].name=this.value;renderTable();refreshNotation()">
+      <span class="ci-op">≤</span>
+      <input type="number" value="${c.limit}" oninput="D.cons[${i}].limit=+this.value;refreshNotation()">
+      <button class="del-btn" onclick="removeCon(${i})">×</button>`;
+    list.appendChild(div);
+  });
+  document.getElementById('add-con-btn').style.display = D.cons.length>=4?'none':'inline-block';
+}
+
+function cycleLock(i){
+  const cycle = {free:'in', in:'out', out:'free'};
+  D.items[i].lock = cycle[D.items[i].lock];
+  renderTable();
+  updateBadges();
+}
+
+function addItem(){
+  if(D.items.length>=20) return;
+  D.items.push({name:'Item '+(D.items.length+1), val:10, cvals:D.cons.map(()=>5), lock:'free'});
+  renderAll();
+}
+function removeItem(i){ D.items.splice(i,1); renderAll(); }
+function addConstraint(){
+  if(D.cons.length>=4) return;
+  D.cons.push({name:'Constraint '+(D.cons.length+1),limit:100});
+  D.items.forEach(it=>it.cvals.push(0));
+  renderAll();
+}
+function removeCon(i){
+  D.cons.splice(i,1);
+  D.items.forEach(it=>it.cvals.splice(i,1));
+  renderAll();
+}
+function refreshAll(){ renderTable(); refreshNotation(); updateBadges(); }
+
+function updateBadges(){
+  const n = D.items.length, m = D.cons.length;
+  const locks = D.items.filter(it=>it.lock!=='free').length;
+  const free = D.items.filter(it=>it.lock==='free').length;
+  document.getElementById('tb-items').textContent  = `${n} item${n!==1?'s':''}`;
+  document.getElementById('tb-cons').textContent   = `${m} constraint${m!==1?'s':''}`;
+  const combos = free<=20?(1<<free).toLocaleString():`2^${free}`;
+  document.getElementById('tb-combos').textContent = `${combos} combos`;
+  if(locks>0) document.getElementById('tb-combos').classList.add('active-badge');
+  else document.getElementById('tb-combos').classList.remove('active-badge');
+}
+
+// ─────────────────────────────────────────────────
+//  NOTATION GENERATOR
+// ─────────────────────────────────────────────────
+function refreshNotation(){
+  const title   = document.getElementById('prob-title')?.value || 'My Problem';
+  const dir     = document.getElementById('obj-dir')?.value==='max'?'max':'min';
+  const objName = document.getElementById('obj-name')?.value || 'Value';
+  const items = D.items, cons = D.cons;
+  const t=(s,c)=>`<span style="color:${c}">${s}</span>`;
+  if(!items.length){ document.getElementById('live-notation').textContent='Add items to generate notation...'; return; }
+  const setStr = items.map(it=>it.name).join(', ');
+  const vStr   = items.map(it=>it.val).join(', ');
+  let html = '';
+  html += t(`// ${title}\n\n`,'#1c4035');
+  html += t('Sets:\n','#2dd4bf');
+  html += `  ${t('𝒮','#c084fc')} = { ${setStr} }\n`;
+  if(cons.length) html += `  ${t('𝒞','#c084fc')} = { ${cons.map((c,i)=>c.name||'C'+(i+1)).join(', ')} }\n`;
+  html += `\n${t('Parameters:\n','#2dd4bf')}`;
+  html += `  ${t('Vᵢ','#f59e0b')} = ${objName} per item  →  ( ${vStr} )\n`;
+  cons.forEach((c,j)=>{
+    const wStr = items.map(it=>it.cvals[j]??0).join(', ');
+    html += `  ${t('W'+['₁','₂','₃','₄'][j]+'ᵢ','#f59e0b')} = ${c.name||'C'+(j+1)} per item  →  ( ${wStr} )\n`;
+    html += `  ${t('L'+['₁','₂','₃','₄'][j],'#f59e0b')} = ${c.limit}   ${t('// max '+( c.name||'C'+(j+1)),'#1c4035')}\n`;
+  });
+  html += `\n${t('Decision Variables:\n','#2dd4bf')}`;
+  html += `  ${t('yᵢ','#93c5fd')} ∈ { 0, 1 }   ∀i ∈ ${t('𝒮','#c084fc')}   ${t('// 1=include, 0=exclude','#1c4035')}\n`;
+  // Lock annotations
+  const lockedIn  = items.filter(it=>it.lock==='in');
+  const lockedOut = items.filter(it=>it.lock==='out');
+  if(lockedIn.length)  html += `  ${t('yᵢ','#93c5fd')} = 1  ∀i ∈ { ${lockedIn.map(it=>it.name).join(', ')} }  ${t('// forced in','#22c55e')}\n`;
+  if(lockedOut.length) html += `  ${t('yᵢ','#93c5fd')} = 0  ∀i ∈ { ${lockedOut.map(it=>it.name).join(', ')} }  ${t('// forced out','#ef4444')}\n`;
+  html += `\n${t('Objective:\n','#2dd4bf')}`;
+  html += `  ${t(dir,'#2dd4bf')}  Z = Σᵢ∈${t('𝒮','#c084fc')} ${t('Vᵢ','#f59e0b')} · ${t('yᵢ','#93c5fd')}\n`;
+  html += `\n${t('Subject to:\n','#2dd4bf')}`;
+  cons.forEach((c,j)=>{
+    html += `  Σᵢ∈${t('𝒮','#c084fc')} ${t('W'+['₁','₂','₃','₄'][j]+'ᵢ','#f59e0b')} · ${t('yᵢ','#93c5fd')} ≤ ${t(c.limit,'#f59e0b')}   ${t('// '+( c.name||'C'+(j+1)),'#1c4035')}\n`;
+  });
+  html += `  ${t('yᵢ','#93c5fd')} ∈ { 0, 1 }   ∀i ∈ ${t('𝒮','#c084fc')}`;
+  document.getElementById('live-notation').innerHTML = html;
+}
+
+function copyNotation(){
+  const text = document.getElementById('live-notation').innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ Copied'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='Copy'; btn.classList.remove('copied'); },2000);
+  });
+}
+
+// ─────────────────────────────────────────────────
+//  BINARY SOLVER
+// ─────────────────────────────────────────────────
+function runSolver(){
+  const items = D.items, cons = D.cons;
+  if(!items.length){ alert('Add at least one item.'); return; }
+  const isMax = document.getElementById('obj-dir').value === 'max';
+  const btn = document.getElementById('solve-btn');
+  const counter = document.getElementById('enum-counter');
+  btn.disabled = true; btn.textContent = '⟳  Solving...';
+  counter.classList.add('visible');
+
+  const lockedIn  = items.map((it,i)=>it.lock==='in'  ? i : -1).filter(i=>i>=0);
+  const lockedOut = items.map((it,i)=>it.lock==='out' ? i : -1).filter(i=>i>=0);
+  const freeIdx   = items.map((it,i)=>it.lock==='free'? i : -1).filter(i=>i>=0);
+  const n = freeIdx.length;
+
+  // Base mask from locked-in items
+  let baseMask = 0;
+  lockedIn.forEach(i => baseMask |= (1<<i));
+
+  const total = Math.min(1<<n, 1<<20);
+  let bestZ = isMax ? -Infinity : Infinity;
+  let bestMask = -1;
+  const feasible = [];
+
+  setTimeout(()=>{
+    for(let f = 0; f < total; f++){
+      // Build full mask
+      let mask = baseMask;
+      for(let k=0; k<n; k++) if(f & (1<<k)) mask |= (1<<freeIdx[k]);
+      // Locked-out check (should already not be in mask)
+      let ok = true;
+      for(const ci of lockedOut) if(mask & (1<<ci)){ ok=false; break; }
+      if(!ok) continue;
+      // Constraint check
+      for(const c of cons){
+        let sum = 0;
+        for(let i=0;i<items.length;i++) if(mask&(1<<i)) sum += (items[i].cvals[cons.indexOf(c)]||0);
+        if(sum > c.limit + 1e-9){ ok=false; break; }
+      }
+      if(!ok) continue;
+      // Objective
+      let z=0;
+      for(let i=0;i<items.length;i++) if(mask&(1<<i)) z+=items[i].val;
+      feasible.push({mask,z});
+      if(isMax?z>bestZ:z<bestZ){ bestZ=z; bestMask=mask; }
+    }
+    feasible.sort((a,b)=>isMax?b.z-a.z:a.z-b.z);
+
+    counter.textContent = `Checked ${total.toLocaleString()} combinations · ${feasible.length.toLocaleString()} feasible`;
+    btn.disabled = false; btn.textContent = '▶  FIND OPTIMAL SELECTION';
+
+    const locks = lockedIn.length + lockedOut.length;
+    lastSol = { mask:bestMask, z:bestZ, alts:feasible.slice(0,8), totalFeasible:feasible.length, totalChecked:total, locksActive:locks };
+    currentAlt = 0;
+    renderSolution(lastSol, 0);
+  }, 60);
+}
+
+function renderSolution(sol, altIdx){
+  document.getElementById('sol-area').classList.add('visible');
+  const items = D.items, cons = D.cons;
+  const mask = sol.alts[altIdx]?.mask ?? sol.mask;
+  const z    = sol.alts[altIdx]?.z    ?? sol.z;
+
+  // Stats bar
+  const included = items.filter((_,i)=>mask&(1<<i));
+  document.getElementById('ssb-score').textContent   = Math.round(z*100)/100;
+  document.getElementById('ssb-items').textContent   = included.length;
+  document.getElementById('ssb-feasible').textContent= sol.totalFeasible.toLocaleString();
+  document.getElementById('ssb-checked').textContent = sol.totalChecked.toLocaleString();
+  document.getElementById('ssb-locked').textContent  = sol.locksActive;
+
+  // Item cards
+  const grid = document.getElementById('item-grid');
+  grid.innerHTML='';
+  items.forEach((item,i)=>{
+    const inc = !!(mask&(1<<i));
+    const isLockedIn  = item.lock==='in';
+    const isLockedOut = item.lock==='out';
+    let cls = inc ? (isLockedIn?'locked-in':'included') : (isLockedOut?'locked-out':'excluded');
+    let badge = inc ? (isLockedIn?'🔒 LOCKED':'✓ IN') : (isLockedOut?'🔒 OUT':'✗ OUT');
+    const card = document.createElement('div');
+    card.className = `icard ${cls}`;
+    card.style.animationDelay = `${i*0.05}s`;
+    card.innerHTML = `<div class="icard-badge">${badge}</div>
+      <div class="icard-name">${item.name}</div>
+      <div class="icard-score">Score: ${item.val}</div>
+      <div class="icard-cvals">${cons.map((c,j)=>c.name+': '+item.cvals[j]).join('<br>')}</div>`;
+    grid.appendChild(card);
+  });
+  document.getElementById('cards-count').textContent = `(${included.length} of ${items.length})`;
+
+  // Summary
+  const objName = document.getElementById('obj-name').value||'Score';
+  const dir = document.getElementById('obj-dir').value;
+  document.getElementById('sc-val').textContent = Math.round(z*100)/100;
+  document.getElementById('sc-lbl').textContent = `${dir==='max'?'Maximum':'Minimum'} ${objName} · ${included.length} items selected`;
+  const metricsEl = document.getElementById('sc-metrics');
+  metricsEl.innerHTML = cons.map((c,j)=>{
+    const used = items.reduce((s,it,i)=>(mask&(1<<i))?s+(it.cvals[j]||0):s, 0);
+    return `<div class="sc-metric"><span class="sm-lbl">${c.name}</span><span class="sm-val">${Math.round(used*10)/10} / ${c.limit}</span></div>`;
+  }).join('');
+
+  // Constraint bars
+  const cbWrap = document.getElementById('cbar-wrap');
+  cbWrap.innerHTML = cons.map((c,j)=>{
+    const used = items.reduce((s,it,i)=>(mask&(1<<i))?s+(it.cvals[j]||0):s, 0);
+    const pct  = Math.min((used/c.limit)*100,100);
+    const col  = pct>92?'#ef4444':pct>75?'#f59e0b':'#2dd4bf';
+    return `<div class="cbar-item">
+      <div class="cbar-hdr"><span class="cbar-name">${c.name}</span><span class="cbar-info">${Math.round(used*10)/10} / ${c.limit} (${Math.round(pct)}%)</span></div>
+      <div class="cbar-track"><div class="cbar-fill" style="width:${pct}%;background:${col};"></div></div>
+    </div>`;
+  }).join('');
+
+  // Marginal panel
+  const excl = items.filter((_,i)=>!(mask&(1<<i)) && D.items[i].lock!=='out');
+  const mbody = document.getElementById('marginal-body');
+  if(!excl.length){
+    mbody.innerHTML='<div class="mp-row" style="color:var(--t2);font-size:.78rem;">All eligible items are included in this solution.</div>';
+  } else {
+    mbody.innerHTML = excl.map(item=>{
+      let reason = 'Lower priority vs included items';
+      let cls='';
+      for(const[j,c] of cons.entries()){
+        const curUsed = items.reduce((s,it,i)=>(mask&(1<<i))?s+(it.cvals[j]||0):s,0);
+        const addUsed = curUsed + (item.cvals[j]||0);
+        if(addUsed > c.limit){
+          const gap = addUsed - c.limit;
+          reason = `+${Math.round(gap*10)/10} over ${c.name} limit`;
+          cls = gap < (item.cvals[j]||1)*0.3 ? 'tight' : '';
+          break;
+        }
+      }
+      return `<div class="mp-row"><span class="mp-name">${item.name}</span><span class="mp-score">score: ${item.val}</span><span class="mp-reason ${cls}">${reason}</span></div>`;
+    }).join('');
+  }
+
+  // Alternatives chart
+  drawAltChart(sol.alts, altIdx);
+  // Alt list
+  const altList = document.getElementById('alt-list');
+  altList.innerHTML = sol.alts.slice(0,6).map((alt,rank)=>{
+    const isCur = rank===altIdx;
+    const incNames = items.filter((_,i)=>alt.mask&(1<<i)).map(it=>`<span class="ai-chip">${it.name}</span>`).join('');
+    return `<div class="alt-item ${isCur?'current':''}" onclick="selectAlt(${rank})">
+      <span class="ai-rank">${isCur?'★':rank+1}</span>
+      <div class="ai-items">${incNames}</div>
+      <span class="ai-score">${Math.round(alt.z*100)/100}</span>
+    </div>`;
+  }).join('');
+}
+
+function selectAlt(rank){
+  currentAlt = rank;
+  renderSolution(lastSol, rank);
+}
+
+function drawAltChart(alts, currentIdx){
+  const canvas = document.getElementById('alt-canvas');
+  const dpr = window.devicePixelRatio||1;
+  const W = canvas.offsetWidth||300, H = 120;
+  canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.height=H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.fillStyle='#081510'; ctx.fillRect(0,0,W,H);
+  if(!alts||!alts.length) return;
+  const maxZ = Math.max(...alts.map(a=>a.z),1);
+  const n = Math.min(alts.length,8);
+  const pad={l:8,r:8,t:12,b:18};
+  const gW=W-pad.l-pad.r, gH=H-pad.t-pad.b;
+  const bW = (gW/n) - 4;
+  alts.slice(0,n).forEach((alt,i)=>{
+    const isCur = i===currentIdx;
+    const h = (alt.z/maxZ)*gH;
+    const x = pad.l + i*(gW/n)+2;
+    const y = pad.t+gH-h;
+    ctx.fillStyle = isCur?'#f59e0b':'#0d9488';
+    if(isCur){ctx.shadowColor='rgba(245,158,11,.5)';ctx.shadowBlur=10;}
+    ctx.fillRect(x,y,bW,h);
+    ctx.shadowBlur=0;
+    ctx.fillStyle=isCur?'#f59e0b':'#0d9488';
+    ctx.font=`${isCur?'700':'400'} 9px JetBrains Mono`;
+    ctx.textAlign='center';
+    ctx.fillText(Math.round(alt.z*10)/10, x+bW/2, y-3);
+    ctx.fillStyle='#2a4038'; ctx.font='8px JetBrains Mono';
+    ctx.fillText(`#${i+1}`, x+bW/2, H-3);
+  });
+  ctx.textAlign='left';
+}
+
+function hideSolution(){ document.getElementById('sol-area').classList.remove('visible'); }
+
+// ─────────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────────
+window.addEventListener('load',()=>{ loadPreset('snack',null); document.querySelector('.pb').classList.add('active'); });
+window.addEventListener('resize',()=>{ if(lastSol) drawAltChart(lastSol.alts, currentAlt); });
+
+// ─────────────────────────────────────────────────
+//  BACK TO TOP BUTTON
+// ─────────────────────────────────────────────────
+const backToTopBtn = document.getElementById('backToTopBtn');
+
+window.addEventListener('scroll', () => {
+  if(window.scrollY > 400){
+    backToTopBtn.classList.add('visible');
+  } else {
+    backToTopBtn.classList.remove('visible');
+  }
+});
+
+backToTopBtn.addEventListener('click', () => {
+  window.scrollTo({
+    top:0,
+    behavior:'smooth'
+  });
+});
+
+</script>
+</body>
+</html>

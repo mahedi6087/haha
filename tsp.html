@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Traveling Salesman Problem — Network Optimization</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg:#0d0f14; --surface:#13161e; --surface2:#1a1e2a; --border:#252a38;
+    --accent:#4fffb0; --accent2:#ff6b6b; --accent3:#ffd166;
+    --text:#e8eaf0; --muted:#7a82a0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;line-height:1.6;overflow-x:hidden;}
+
+  /* ══ FLOATING NAV ══ */
+  .float-nav {
+    position:fixed;
+    top:50%;
+    right:22px;
+    transform:translateY(-50%);
+    z-index:100;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    pointer-events:none;
+  }
+  .nav-btn {
+    pointer-events:all;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:40px;
+    padding:8px 14px 8px 10px;
+    cursor:pointer;
+    text-decoration:none;
+    color:var(--muted);
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.7rem;
+    letter-spacing:0.08em;
+    transition:all .25s cubic-bezier(.4,0,.2,1);
+    white-space:nowrap;
+    max-width:44px;
+    overflow:hidden;
+    box-shadow:0 2px 12px rgba(0,0,0,.4);
+  }
+  .nav-btn:hover, .nav-btn.active {
+    max-width:200px;
+    border-color:var(--accent);
+    color:var(--accent);
+    background:rgba(79,255,176,.07);
+  }
+  .nav-btn .nav-dot {
+    width:10px;height:10px;
+    border-radius:50%;
+    border:2px solid currentColor;
+    flex-shrink:0;
+    transition:background .2s;
+  }
+  .nav-btn.active .nav-dot, .nav-btn:hover .nav-dot {
+    background:var(--accent);
+    border-color:var(--accent);
+    box-shadow:0 0 6px var(--accent);
+  }
+  .nav-btn .nav-label { opacity:0; transition:opacity .2s .05s; pointer-events:none; }
+  .nav-btn:hover .nav-label, .nav-btn.active .nav-label { opacity:1; }
+  @media(max-width:600px){ .float-nav{display:none;} }
+
+  /* ══ HERO ══ */
+  .hero {
+    min-height:100vh;display:flex;flex-direction:column;
+    justify-content:center;align-items:center;text-align:center;
+    padding:60px 24px;position:relative;overflow:hidden;
+  }
+  .hero::before {
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(79,255,176,.07) 0%,transparent 70%);
+    pointer-events:none;
+  }
+  /* Animated particles */
+  .hero-particles { position:absolute;inset:0;pointer-events:none;overflow:hidden; }
+  .particle {
+    position:absolute;width:2px;height:2px;border-radius:50%;
+    background:var(--accent);opacity:0;
+    animation:float-up var(--dur,8s) var(--delay,0s) ease-in-out infinite;
+  }
+  @keyframes float-up {
+    0%{transform:translateY(100vh) translateX(0);opacity:0;}
+    10%{opacity:.4;}
+    90%{opacity:.15;}
+    100%{transform:translateY(-10vh) translateX(var(--drift,20px));opacity:0;}
+  }
+  .hero-eyebrow {
+    font-family:'JetBrains Mono',monospace;font-size:.75rem;
+    letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;
+    animation:fade-up .8s ease both;
+  }
+  .hero h1 {
+    font-size:clamp(2.8rem,7vw,5.5rem);font-weight:700;line-height:1.05;
+    letter-spacing:-.03em;max-width:800px;
+    animation:fade-up .8s .1s ease both;
+  }
+  .hero h1 span{color:var(--accent);}
+  .hero-sub {
+    max-width:500px;color:var(--muted);margin-top:20px;
+    font-size:1.05rem;font-weight:300;
+    animation:fade-up .8s .2s ease both;
+  }
+  @keyframes fade-up{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:none;}}
+
+  /* Hero section nav buttons */
+  .hero-nav {
+    display:flex;gap:14px;margin-top:52px;flex-wrap:wrap;justify-content:center;
+    animation:fade-up .8s .35s ease both;
+  }
+  .hero-nav-btn {
+    display:flex;align-items:center;gap:8px;
+    padding:11px 22px;border-radius:40px;
+    border:1px solid var(--border);background:var(--surface);
+    color:var(--text);font-family:'Space Grotesk',sans-serif;
+    font-size:.85rem;font-weight:500;cursor:pointer;
+    text-decoration:none;
+    transition:all .2s cubic-bezier(.4,0,.2,1);
+    position:relative;overflow:hidden;
+  }
+  .hero-nav-btn::before {
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,var(--accent),transparent);
+    opacity:0;transition:opacity .2s;border-radius:inherit;
+  }
+  .hero-nav-btn:hover::before{opacity:.07;}
+  .hero-nav-btn:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px);}
+  .hero-nav-btn .hn-num {
+    font-family:'JetBrains Mono',monospace;font-size:.7rem;
+    color:var(--accent);letter-spacing:.05em;
+  }
+  .hero-nav-btn.featured {
+    background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600;
+  }
+  .hero-nav-btn.featured:hover{opacity:.9;transform:translateY(-2px);}
+  .hero-nav-btn.featured::before{display:none;}
+
+  .hero-stats {
+    display:flex;gap:48px;margin-top:48px;flex-wrap:wrap;justify-content:center;
+    animation:fade-up .8s .45s ease both;
+  }
+  .stat-item{text-align:center;}
+  .stat-num{font-size:2.5rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);}
+  .stat-label{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+
+  .scroll-hint {
+    position:absolute;bottom:32px;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    color:var(--muted);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;
+  }
+  .scroll-arrow {
+    width:1px;height:40px;
+    background:linear-gradient(to bottom,var(--accent),transparent);
+    animation:pulse-line 2s ease-in-out infinite;
+  }
+  @keyframes pulse-line{0%,100%{opacity:.3}50%{opacity:1}}
+
+  /* ══ LAYOUT ══ */
+  .section{max-width:1000px;margin:0 auto;padding:80px 24px;}
+  .section-label {
+    font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--accent);margin-bottom:12px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .section-label::after{content:'';flex:1;height:1px;background:var(--border);max-width:60px;}
+  .section h2{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;letter-spacing:-.02em;margin-bottom:16px;line-height:1.2;}
+  .section > p{color:var(--muted);max-width:640px;font-size:1rem;margin-bottom:40px;}
+  hr.divider{border:none;border-top:1px solid var(--border);max-width:1000px;margin:0 auto;}
+
+  /* scroll-reveal */
+  .reveal{opacity:0;transform:translateY(32px);transition:opacity .6s ease,transform .6s ease;}
+  .reveal.visible{opacity:1;transform:none;}
+
+  /* ══ CARDS ══ */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:32px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;transition:border-color .2s,transform .2s;}
+  .card:hover{border-color:rgba(79,255,176,.3);transform:translateY(-3px);}
+  .card-icon{font-size:1.6rem;margin-bottom:12px;}
+  .card h3{font-size:.95rem;font-weight:600;margin-bottom:8px;}
+  .card p{font-size:.85rem;color:var(--muted);line-height:1.5;}
+
+  /* ══ DEMO ══ */
+  .demo-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+  .demo-tabs{display:flex;border-bottom:1px solid var(--border);padding:0 12px;gap:2px;overflow-x:auto;}
+  .demo-tabs::-webkit-scrollbar{height:0;}
+  .tab-btn{padding:14px 16px;background:none;border:none;color:var(--muted);font-family:'Space Grotesk',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;white-space:nowrap;}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-panel{display:none;padding:28px;}
+  .tab-panel.active{display:block;}
+  canvas.net-canvas{width:100%;height:340px;background:var(--bg);border-radius:10px;display:block;}
+  .canvas-controls{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center;}
+  .btn{padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:background .15s,border-color .15s;}
+  .btn:hover{background:var(--border);}
+  .btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600;}
+  .btn.primary:hover{opacity:.88;}
+  .btn.danger{border-color:var(--accent2);color:var(--accent2);}
+  .btn.danger:hover{background:rgba(255,107,107,.1);}
+  .route-display{margin-top:16px;padding:16px;background:var(--bg);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:.85rem;min-height:54px;line-height:1.7;}
+  .route-highlight{color:var(--accent);font-weight:600;}
+  .route-cost{color:var(--accent3);font-weight:600;}
+  .bf-grid{display:grid;gap:6px;max-height:340px;overflow-y:auto;padding-right:4px;}
+  .bf-grid::-webkit-scrollbar{width:4px;}
+  .bf-grid::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+  .bf-row{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--surface2);border-radius:8px;border:1px solid transparent;font-family:'JetBrains Mono',monospace;font-size:.8rem;}
+  .bf-row.optimal{border-color:var(--accent);background:rgba(79,255,176,.06);}
+  .bf-cost{font-weight:600;color:var(--muted);}
+  .bf-cost.best{color:var(--accent);}
+  .bf-badge{font-size:.62rem;padding:2px 7px;background:var(--accent);color:var(--bg);border-radius:4px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
+  .blocked-info{background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:10px;padding:14px 18px;margin-bottom:18px;font-size:.86rem;color:var(--accent2);}
+
+  /* ══ EVIDENCE ══ */
+  .evidence-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:640px){.evidence-grid{grid-template-columns:1fr;}}
+  .ev-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;}
+  .ev-block h4{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;font-family:'JetBrains Mono',monospace;}
+  .dist-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:.82rem;}
+  .dist-table th,.dist-table td{padding:7px 10px;text-align:center;border:1px solid var(--border);}
+  .dist-table th{background:var(--surface2);color:var(--muted);font-weight:600;}
+  .dist-table td{color:var(--text);}
+  .dist-table td.diagonal{color:var(--border);}
+  .dist-table td.highlight{color:var(--accent);font-weight:600;}
+  .tree-vis{font-family:'JetBrains Mono',monospace;font-size:.76rem;line-height:1.8;color:var(--muted);white-space:pre;overflow-x:auto;}
+
+  /* ══ LEARN ══ */
+  .learn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;}
+  .learn-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;transition:border-color .2s,transform .2s;}
+  .learn-card:hover{border-color:rgba(79,255,176,.2);transform:translateY(-2px);}
+  .lc-tag{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;padding:4px 10px;border-radius:20px;display:inline-block;margin-bottom:16px;font-weight:600;}
+  .lc-tag.knowledge{background:rgba(79,255,176,.12);color:var(--accent);}
+  .lc-tag.skills{background:rgba(112,184,255,.12);color:#70b8ff;}
+  .lc-tag.reflection{background:rgba(255,209,102,.12);color:var(--accent3);}
+  .learn-card h3{font-size:1.05rem;font-weight:600;margin-bottom:12px;}
+  .learn-card p{font-size:.88rem;color:var(--muted);line-height:1.65;}
+
+  /* ══ CUSTOM SOLVER ══ */
+  .solver-layout{display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start;}
+  @media(max-width:720px){.solver-layout{grid-template-columns:1fr;}}
+  .solver-panel{background:var(--bg);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px;}
+  .solver-panel h4{font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);font-family:'JetBrains Mono',monospace;}
+  .node-input-row{display:flex;gap:8px;align-items:center;}
+  .node-input-row input[type="text"]{flex:1;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.85rem;outline:none;transition:border-color .2s;}
+  .node-input-row input[type="text"]:focus{border-color:var(--accent);}
+  .node-chip-wrap{display:flex;flex-wrap:wrap;gap:6px;}
+  .node-chip{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:.78rem;font-weight:600;font-family:'JetBrains Mono',monospace;border:1px solid;animation:chip-pop .25s cubic-bezier(.34,1.56,.64,1) both;}
+  @keyframes chip-pop{from{opacity:0;transform:scale(.7);}to{opacity:1;transform:scale(1);}}
+  .node-chip .del-node{cursor:pointer;opacity:.6;font-size:.75rem;line-height:1;}
+  .node-chip .del-node:hover{opacity:1;}
+  .matrix-scroll{overflow-x:auto;}
+  .matrix-table{border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:.78rem;min-width:100%;}
+  .matrix-table th{padding:6px 8px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);font-weight:600;text-align:center;min-width:52px;}
+  .matrix-table td{padding:4px;border:1px solid var(--border);text-align:center;}
+  .matrix-table td.diag{background:var(--surface2);color:var(--border);font-size:.7rem;}
+  .matrix-table input[type="number"]{width:52px;padding:5px 4px;background:var(--surface2);border:1px solid transparent;border-radius:5px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.78rem;text-align:center;outline:none;transition:border-color .2s;}
+  .matrix-table input[type="number"]:focus{border-color:var(--accent);background:var(--bg);}
+  .matrix-table input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;}
+  .start-row{display:flex;align-items:center;gap:10px;font-size:.85rem;}
+  .start-row label{color:var(--muted);white-space:nowrap;}
+  .start-row select{flex:1;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.85rem;outline:none;cursor:pointer;}
+  .start-row select:focus{border-color:var(--accent);}
+  .solver-right{display:flex;flex-direction:column;gap:16px;}
+  .solver-canvas-wrap{background:var(--bg);border-radius:12px;overflow:hidden;position:relative;}
+  #solverCanvas{width:100%;height:320px;display:block;border-radius:10px;}
+
+  /* Solver stats bar */
+  .solver-stats-bar {
+    display:flex;gap:0;
+    background:var(--surface2);border-radius:8px;overflow:hidden;
+    border:1px solid var(--border);
+  }
+  .solver-stat {
+    flex:1;padding:10px 14px;text-align:center;border-right:1px solid var(--border);
+  }
+  .solver-stat:last-child{border-right:none;}
+  .solver-stat .ss-val{font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:700;color:var(--accent);display:block;transition:all .4s;}
+  .solver-stat .ss-lbl{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+
+  /* Progress bar */
+  .solve-progress{height:3px;background:var(--border);border-radius:2px;overflow:hidden;display:none;margin-top:4px;}
+  .solve-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),#70b8ff);width:0%;transition:width .3s ease;border-radius:2px;}
+
+  .result-box{background:var(--bg);border-radius:10px;padding:16px 20px;font-family:'JetBrains Mono',monospace;font-size:.83rem;line-height:1.7;min-height:60px;}
+  .result-box .res-optimal{color:var(--accent);font-weight:700;font-size:1rem;}
+  .result-box .res-note{color:var(--muted);font-size:.75rem;}
+  .all-routes-wrap{background:var(--bg);border-radius:10px;padding:14px;max-height:200px;overflow-y:auto;}
+  .all-routes-wrap::-webkit-scrollbar{width:4px;}
+  .all-routes-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+  .solver-error{background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);border-radius:8px;padding:10px 14px;color:var(--accent2);font-size:.83rem;display:none;margin-top:8px;}
+  .preset-btns{display:flex;flex-wrap:wrap;gap:6px;}
+  .preset-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:.75rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .15s;}
+  .preset-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+  /* Route cycling animation */
+  @keyframes route-flash {0%{opacity:.4;}50%{opacity:1;}100%{opacity:.4;}}
+  .cycling{animation:route-flash .6s ease infinite;}
+
+  footer{text-align:center;padding:40px 24px;color:var(--muted);font-size:.78rem;border-top:1px solid var(--border);font-family:'JetBrains Mono',monospace;}
+</style>
+</head>
+<body>
+
+<!-- ══ FLOATING SIDE NAV ══ -->
+<nav class="float-nav" aria-label="Section navigation">
+  <a class="nav-btn active" href="#sec-hero"    data-section="sec-hero">    <span class="nav-dot"></span><span class="nav-label">Home</span></a>
+  <a class="nav-btn"        href="#sec-overview" data-section="sec-overview"><span class="nav-dot"></span><span class="nav-label">01 · Overview</span></a>
+  <a class="nav-btn"        href="#sec-demo"     data-section="sec-demo">    <span class="nav-dot"></span><span class="nav-label">02 · Demo</span></a>
+  <a class="nav-btn"        href="#sec-evidence" data-section="sec-evidence"><span class="nav-dot"></span><span class="nav-label">03 · Evidence</span></a>
+  <a class="nav-btn"        href="#sec-learn"    data-section="sec-learn">   <span class="nav-dot"></span><span class="nav-label">04 · Learn</span></a>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero" id="sec-hero">
+  <!-- Floating particles -->
+  <div class="hero-particles" id="particles"></div>
+
+  <div class="hero-eyebrow">Network Optimization · Graph Theory</div>
+  <h1>The <span>Traveling</span><br>Salesman Problem</h1>
+  <p class="hero-sub">Finding the shortest route that visits every node exactly once and returns home — a classic challenge at the heart of logistics and computer science.</p>
+
+  <!-- Section jump buttons -->
+  <div class="hero-nav">
+    <a class="hero-nav-btn" href="#sec-overview">
+      <span class="hn-num">01</span> Project Overview
+    </a>
+    <a class="hero-nav-btn" href="#sec-demo">
+      <span class="hn-num">02</span> Demonstration
+    </a>
+    <a class="hero-nav-btn" href="#sec-evidence">
+      <span class="hn-num">03</span> Evidence
+    </a>
+    <a class="hero-nav-btn" href="#sec-learn">
+      <span class="hn-num">04</span> What Did I Learn?
+    </a>
+    <a class="hero-nav-btn featured" href="#sec-demo" onclick="setTimeout(()=>switchTab('custom'),400)">
+      ⚡ Try Custom Solver
+    </a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item"><div class="stat-num">5</div><div class="stat-label">Nodes</div></div>
+    <div class="stat-item"><div class="stat-num">24</div><div class="stat-label">Possible Paths</div></div>
+    <div class="stat-item"><div class="stat-num">25</div><div class="stat-label">Optimal Cost</div></div>
+    <div class="stat-item"><div class="stat-num">4</div><div class="stat-label">Optimal Routes</div></div>
+  </div>
+  <div class="scroll-hint"><span>Scroll to explore</span><div class="scroll-arrow"></div></div>
+</section>
+
+<hr class="divider">
+
+<!-- ══ 01 OVERVIEW ══ -->
+<section class="section reveal" id="sec-overview">
+  <div class="section-label">01 · Project Overview</div>
+  <h2>What is the TSP?</h2>
+  <p>A delivery driver must visit every town and return to the warehouse — what's the shortest possible route? Simple to state, surprisingly complex to solve.</p>
+  <div class="cards">
+    <div class="card"><div class="card-icon">🏭</div><h3>The Scenario</h3><p>A warehouse (WH) dispatches deliveries to towns A, B, C, D. Fuel costs money, so the shortest round-trip matters.</p></div>
+    <div class="card"><div class="card-icon">📈</div><h3>Why It Matters</h3><p>TSP underpins real-world logistics: courier routing, circuit board drilling, DNA sequencing, and supply chain optimization.</p></div>
+    <div class="card"><div class="card-icon">🧮</div><h3>The Challenge</h3><p>With n cities, there are (n-1)!/2 possible routes. As n grows, brute-force becomes impossible — smarter algorithms are needed.</p></div>
+    <div class="card"><div class="card-icon">🔗</div><h3>The Concept</h3><p>TSP teaches graph traversal, Hamiltonian circuits, combinatorial explosion, and why optimization heuristics exist.</p></div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══ 02 DEMO ══ -->
+<section class="section reveal" id="sec-demo">
+  <div class="section-label">02 · Demonstration</div>
+  <h2>Interactive Route Explorer</h2>
+  <p>Explore the original problem, run brute-force search, handle road blockages — or solve your own custom TSP.</p>
+
+  <div class="demo-wrapper">
+    <div class="demo-tabs">
+      <button class="tab-btn active" onclick="switchTab('network')">Network Map</button>
+      <button class="tab-btn" onclick="switchTab('bruteforce')">All Paths</button>
+      <button class="tab-btn" onclick="switchTab('blocked')">C→D Blocked</button>
+      <button class="tab-btn" onclick="switchTab('custom')" style="color:var(--accent3);" id="customTabBtn">⚡ Custom Solver</button>
+    </div>
+
+    <!-- TAB 1: Network -->
+    <div class="tab-panel active" id="tab-network">
+      <canvas id="networkCanvas" class="net-canvas"></canvas>
+      <div class="canvas-controls">
+        <button class="btn primary" onclick="animateOptimal()">▶ Animate Optimal Route</button>
+        <button class="btn" onclick="showAllOptimal()">Show All Optimal</button>
+        <button class="btn" onclick="resetCanvas()">Reset</button>
+        <span id="routeIndex" style="font-family:JetBrains Mono;font-size:.78rem;color:var(--muted);margin-left:4px;"></span>
+      </div>
+      <div class="route-display" id="routeDisplay"><span style="color:var(--muted)">Click "Animate Optimal Route" to see the best path highlighted.</span></div>
+    </div>
+
+    <!-- TAB 2: Brute Force -->
+    <div class="tab-panel" id="tab-bruteforce">
+      <p style="font-size:.86rem;color:var(--muted);margin-bottom:14px;">All 24 possible routes from WH. Optimal routes are highlighted.</p>
+      <div class="bf-grid" id="bfGrid"></div>
+    </div>
+
+    <!-- TAB 3: Blocked -->
+    <div class="tab-panel" id="tab-blocked">
+      <div class="blocked-info">⚠️ The road between <strong>C ↔ D</strong> is unavailable. All routes using this edge are invalid.</div>
+      <canvas id="blockedCanvas" class="net-canvas"></canvas>
+      <div class="canvas-controls" style="margin-top:14px;">
+        <button class="btn primary" onclick="animateBlocked()">▶ Animate Best Route</button>
+        <button class="btn" onclick="resetBlocked()">Reset</button>
+      </div>
+      <div class="route-display" id="blockedDisplay"><span style="color:var(--muted)">Optimal cost with C→D blocked: <span class="route-cost">30</span></span></div>
+    </div>
+
+    <!-- TAB 4: Custom Solver -->
+    <div class="tab-panel" id="tab-custom">
+      <div style="margin-bottom:18px;">
+        <p style="font-size:.88rem;color:var(--muted);margin-bottom:12px;">Define your own nodes and distances, then solve. Works for 3–8 nodes.</p>
+        <div class="preset-btns">
+          <span style="font-size:.7rem;color:var(--muted);font-family:JetBrains Mono;letter-spacing:.1em;text-transform:uppercase;align-self:center;">Presets:</span>
+          <button class="preset-btn" onclick="loadPreset('original')">Original (5 nodes)</button>
+          <button class="preset-btn" onclick="loadPreset('cities')">4 Cities</button>
+          <button class="preset-btn" onclick="loadPreset('logistics')">6-Stop Logistics</button>
+          <button class="preset-btn" onclick="loadPreset('triangle')">Triangle (3 nodes)</button>
+        </div>
+      </div>
+
+      <div class="solver-layout">
+        <!-- Left: inputs -->
+        <div class="solver-panel">
+          <div>
+            <h4 style="margin-bottom:10px;">Nodes</h4>
+            <div class="node-input-row">
+              <input type="text" id="newNodeName" placeholder="Node name (e.g. City A)" maxlength="10" onkeydown="if(event.key==='Enter')addNode()">
+              <button class="btn primary" onclick="addNode()" style="padding:8px 14px;white-space:nowrap">+ Add</button>
+            </div>
+            <div class="node-chip-wrap" id="nodeChips" style="margin-top:10px;"></div>
+            <div class="solver-error" id="nodeError"></div>
+          </div>
+
+          <div>
+            <h4 style="margin-bottom:10px;">Distance Matrix</h4>
+            <div class="matrix-scroll"><table class="matrix-table" id="matrixTable"></table></div>
+            <p style="font-size:.72rem;color:var(--muted);margin-top:6px;">Symmetric — changing A→B auto-updates B→A.</p>
+          </div>
+
+          <div class="start-row">
+            <label>Start node:</label>
+            <select id="startNodeSelect"></select>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn primary" onclick="solveTSP()" style="flex:1">🔍 Solve TSP</button>
+            <button class="btn danger" onclick="clearCustom()">Clear</button>
+          </div>
+          <div class="solve-progress" id="solveProgress"><div class="solve-progress-bar" id="solveProgressBar"></div></div>
+        </div>
+
+        <!-- Right: canvas + results -->
+        <div class="solver-right">
+          <!-- Stats bar -->
+          <div class="solver-stats-bar" id="solverStatsBar">
+            <div class="solver-stat"><span class="ss-val" id="ss-nodes">—</span><span class="ss-lbl">Nodes</span></div>
+            <div class="solver-stat"><span class="ss-val" id="ss-routes">—</span><span class="ss-lbl">Routes</span></div>
+            <div class="solver-stat"><span class="ss-val" id="ss-optimal">—</span><span class="ss-lbl">Best Cost</span></div>
+            <div class="solver-stat"><span class="ss-val" id="ss-count">—</span><span class="ss-lbl">Optimal Count</span></div>
+          </div>
+
+          <div class="solver-canvas-wrap">
+            <canvas id="solverCanvas"></canvas>
+          </div>
+
+          <!-- Route cycling controls (shown after solve) -->
+          <div id="routeCycleRow" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;">
+            <button class="btn" onclick="cycleSolverRoute(-1)">◀ Prev</button>
+            <span id="routeCycleLabel" style="font-family:JetBrains Mono;font-size:.78rem;color:var(--muted);flex:1;text-align:center;"></span>
+            <button class="btn" onclick="cycleSolverRoute(1)">Next ▶</button>
+            <button class="btn primary" onclick="replaySolverRoute()">↺ Replay</button>
+          </div>
+
+          <div class="result-box" id="resultBox"><span style="color:var(--muted)">Add nodes, fill distances, then click Solve TSP.</span></div>
+
+          <div id="allRoutesSection" style="display:none;">
+            <div style="font-size:.7rem;color:var(--muted);font-family:JetBrains Mono;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">All Routes (sorted by cost)</div>
+            <div class="all-routes-wrap"><div class="bf-grid" id="solverBFGrid"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══ 03 EVIDENCE ══ -->
+<section class="section reveal" id="sec-evidence">
+  <div class="section-label">03 · Evidence</div>
+  <h2>Work & Analysis</h2>
+  <p>The original distance table, computed paths, and decision tree used to find and verify optimal solutions.</p>
+  <div class="evidence-grid">
+    <div class="ev-block" style="grid-column:1/-1">
+      <h4>Delivery Network — Distance Table</h4>
+      <table class="dist-table">
+        <thead><tr><th>To/From</th><th style="color:#4fffb0">WH</th><th style="color:#70b8ff">A</th><th style="color:#ff9f7f">B</th><th style="color:#c77dff">C</th><th style="color:#ffd166">D</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:600;color:#4fffb0">WH</td><td class="diagonal">—</td><td>6</td><td>8</td><td>7</td><td>10</td></tr>
+          <tr><td style="font-weight:600;color:#70b8ff">A</td><td>6</td><td class="diagonal">—</td><td>4</td><td class="highlight">3</td><td>7</td></tr>
+          <tr><td style="font-weight:600;color:#ff9f7f">B</td><td>8</td><td>4</td><td class="diagonal">—</td><td>5</td><td class="highlight">6</td></tr>
+          <tr><td style="font-weight:600;color:#c77dff">C</td><td>7</td><td class="highlight">3</td><td>5</td><td class="diagonal">—</td><td class="highlight">2</td></tr>
+          <tr><td style="font-weight:600;color:#ffd166">D</td><td>10</td><td>7</td><td class="highlight">6</td><td class="highlight">2</td><td class="diagonal">—</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:.75rem;color:var(--muted);margin-top:10px;">Highlighted cells show edges used in at least one optimal route.</p>
+    </div>
+    <div class="ev-block">
+      <h4>All Optimal Routes (Cost = 25)</h4>
+      <table class="dist-table"><thead><tr><th>#</th><th>Route</th><th>Cost</th></tr></thead><tbody id="optimalRoutesTable"></tbody></table>
+    </div>
+    <div class="ev-block">
+      <h4>Decision Tree Sketch (from WH)</h4>
+      <div class="tree-vis" id="treeVis"></div>
+    </div>
+    <div class="ev-block" style="grid-column:1/-1">
+      <h4>Scenario: C→D Edge Removed (Optimal Cost = 30)</h4>
+      <table class="dist-table"><thead><tr><th>Route</th><th>Cost</th><th>Status</th></tr></thead><tbody id="blockedTable"></tbody></table>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══ 04 LEARN ══ -->
+<section class="section reveal" id="sec-learn">
+  <div class="section-label">04 · What Did I Learn?</div>
+  <h2>Reflections</h2>
+  <p>Three dimensions of learning from working through the Traveling Salesman Problem.</p>
+  <div class="learn-grid">
+    <div class="learn-card">
+      <span class="lc-tag knowledge">Knowledge</span>
+      <h3>Graph Theory & Combinatorics</h3>
+      <p>TSP is a Hamiltonian circuit problem on a weighted complete graph. With 5 nodes, there are 4! = 24 orderings to check. Symmetric TSP means A→B equals B→A, halving unique routes. Finding the provably optimal solution is NP-hard — no algorithm guarantees both speed and optimality as cities grow.</p>
+    </div>
+    <div class="learn-card">
+      <span class="lc-tag skills">Skills</span>
+      <h3>Optimization & Decision Trees</h3>
+      <p>Working through brute-force manually built intuition for why heuristics exist. I practiced systematic enumeration using a decision tree, learned to prune branches early when a partial path already exceeds the known best, and applied nearest-neighbor heuristics before verifying with brute force.</p>
+    </div>
+    <div class="learn-card">
+      <span class="lc-tag reflection">Reflection</span>
+      <h3>Surprises & Real-World Ties</h3>
+      <p>It surprised me that four different routes all share the same optimal cost of 25. The C→D block exercise showed how fragile an optimal solution can be — one broken road raises cost by 20%. Real-world logistics needs backup routes for exactly this reason.</p>
+    </div>
+  </div>
+</section>
+
+<footer>Traveling Salesman Problem · Network Optimization Project</footer>
+
+<script>
+// ═══════════════════════════════════════════
+// PARTICLES
+// ═══════════════════════════════════════════
+(function(){
+  const wrap = document.getElementById('particles');
+  for(let i=0;i<28;i++){
+    const p=document.createElement('div'); p.className='particle';
+    p.style.cssText=`left:${Math.random()*100}%;--dur:${6+Math.random()*10}s;--delay:${Math.random()*8}s;--drift:${(Math.random()-.5)*80}px;opacity:0;`;
+    wrap.appendChild(p);
+  }
+})();
+
+// ═══════════════════════════════════════════
+// SCROLL REVEAL + ACTIVE NAV
+// ═══════════════════════════════════════════
+const revealEls = document.querySelectorAll('.reveal');
+const navBtns   = document.querySelectorAll('.nav-btn[data-section]');
+
+const sectionIds = ['sec-hero','sec-overview','sec-demo','sec-evidence','sec-learn'];
+
+function updateNav(){
+  let current='sec-hero';
+  sectionIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el && el.getBoundingClientRect().top <= window.innerHeight*0.4) current=id;
+  });
+  navBtns.forEach(b=>b.classList.toggle('active',b.dataset.section===current));
+}
+
+const io = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:0.1});
+revealEls.forEach(el=>io.observe(el));
+
+window.addEventListener('scroll',updateNav,{passive:true});
+updateNav();
+
+// ═══════════════════════════════════════════
+// ORIGINAL PROBLEM DATA
+// ═══════════════════════════════════════════
+const dist={WH:{A:6,B:8,C:7,D:10},A:{WH:6,B:4,C:3,D:7},B:{WH:8,A:4,C:5,D:6},C:{WH:7,A:3,B:5,D:2},D:{WH:10,A:7,B:6,C:2}};
+const nodes=['WH','A','B','C','D'], towns=['A','B','C','D'];
+const nodePos={WH:{x:.5,y:.14},A:{x:.13,y:.52},B:{x:.5,y:.86},C:{x:.84,y:.62},D:{x:.84,y:.27}};
+const nodeColors={WH:'#4fffb0',A:'#70b8ff',B:'#ff9f7f',C:'#c77dff',D:'#ffd166'};
+
+function permutations(arr){if(arr.length<=1)return[arr];return arr.flatMap((v,i)=>permutations([...arr.slice(0,i),...arr.slice(i+1)]).map(p=>[v,...p]));}
+function routeCost(route,blocked=null){let t=0;for(let i=0;i<route.length-1;i++){const a=route[i],b=route[i+1];if(blocked&&((a===blocked[0]&&b===blocked[1])||(a===blocked[1]&&b===blocked[0])))return Infinity;t+=dist[a][b];}return t;}
+
+const allRoutes=permutations(towns).map(p=>{const f=['WH',...p,'WH'];return{route:f,label:f.join(' → '),cost:routeCost(f)};}).sort((a,b)=>a.cost-b.cost);
+const optimalCost=allRoutes[0].cost;
+const optimalRoutes=allRoutes.filter(r=>r.cost===optimalCost);
+const blockedRoutes=permutations(towns).map(p=>{const f=['WH',...p,'WH'];return{route:f,label:f.join(' → '),cost:routeCost(f,['C','D'])};}).filter(r=>r.cost!==Infinity).sort((a,b)=>a.cost-b.cost);
+const blockedOptimalCost=blockedRoutes[0].cost;
+const blockedOptimalRoutes=blockedRoutes.filter(r=>r.cost===blockedOptimalCost);
+
+// ═══════════════════════════════════════════
+// CANVAS HELPERS
+// ═══════════════════════════════════════════
+function initCanvas(id){
+  const c=document.getElementById(id); if(!c)return null;
+  const dpr=window.devicePixelRatio||1;
+  const rect=c.parentElement.getBoundingClientRect();
+  const w=Math.min(rect.width-2,700),h=320;
+  c.style.width=w+'px';c.style.height=h+'px';c.width=w*dpr;c.height=h*dpr;
+  const ctx=c.getContext('2d');ctx.scale(dpr,dpr);
+  return{canvas:c,ctx,w,h};
+}
+function getOrigPos(w,h,node){const p=nodePos[node];return{x:p.x*w,y:p.y*h};}
+function drawBase(ctx,w,h,blockedEdge=false,hl=null){
+  ctx.clearRect(0,0,w,h);
+  const pairs=[];
+  for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++)pairs.push([nodes[i],nodes[j]]);
+  for(const[a,b] of pairs){
+    const pa=getOrigPos(w,h,a),pb=getOrigPos(w,h,b);
+    const isBlk=blockedEdge&&((a==='C'&&b==='D')||(a==='D'&&b==='C'));
+    let isHL=false;
+    if(hl)for(let k=0;k<hl.length-1;k++)if((hl[k]===a&&hl[k+1]===b)||(hl[k]===b&&hl[k+1]===a)){isHL=true;break;}
+    ctx.beginPath();ctx.moveTo(pa.x,pa.y);ctx.lineTo(pb.x,pb.y);
+    if(isBlk){ctx.setLineDash([6,4]);ctx.strokeStyle='rgba(255,107,107,.35)';ctx.lineWidth=1.5;}
+    else if(isHL){ctx.setLineDash([]);ctx.strokeStyle='rgba(79,255,176,.9)';ctx.lineWidth=2.5;}
+    else{ctx.setLineDash([]);ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=1.5;}
+    ctx.stroke();ctx.setLineDash([]);
+    const mx=(pa.x+pb.x)/2,my=(pa.y+pb.y)/2;
+    if(!isBlk&&dist[a]&&dist[a][b]!==undefined){ctx.fillStyle=isHL?'rgba(79,255,176,.9)':'rgba(160,168,192,.5)';ctx.font='11px JetBrains Mono,monospace';ctx.textAlign='center';ctx.fillText(dist[a][b],mx,my-4);}
+    if(isBlk){ctx.fillStyle='rgba(255,107,107,.5)';ctx.font='10px JetBrains Mono,monospace';ctx.textAlign='center';ctx.fillText('✕',mx,my-4);}
+  }
+  for(const n of nodes){
+    const p=getOrigPos(w,h,n);
+    ctx.beginPath();ctx.arc(p.x,p.y,20,0,Math.PI*2);ctx.fillStyle=nodeColors[n]+'22';ctx.fill();
+    ctx.beginPath();ctx.arc(p.x,p.y,20,0,Math.PI*2);ctx.strokeStyle=nodeColors[n];ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle=nodeColors[n];ctx.font='bold 13px Space Grotesk,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(n,p.x,p.y);ctx.textBaseline='alphabetic';
+  }
+}
+
+// ═══════════════════════════════════════════
+// NETWORK TAB
+// ═══════════════════════════════════════════
+let netCtx,netW,netH,animFrame=null,animOptIdx=0;
+function setupNetwork(){const r=initCanvas('networkCanvas');if(!r)return;netCtx=r.ctx;netW=r.w;netH=r.h;drawBase(netCtx,netW,netH);}
+function animateOptimal(){
+  if(animFrame)clearTimeout(animFrame);
+  const route=optimalRoutes[animOptIdx%optimalRoutes.length];animOptIdx++;
+  document.getElementById('routeIndex').textContent=`Route ${((animOptIdx-1)%optimalRoutes.length)+1} of ${optimalRoutes.length}`;
+  let step=0;const path=route.route;
+  document.getElementById('routeDisplay').innerHTML=`<span class="route-highlight">${path.join(' → ')}</span>  <span class="route-cost">Cost: ${route.cost}</span>`;
+  function frame(){drawBase(netCtx,netW,netH,false,path.slice(0,step+2));if(step<path.length-2){step++;animFrame=setTimeout(frame,350);}}
+  frame();
+}
+function showAllOptimal(){
+  if(animFrame)clearTimeout(animFrame);drawBase(netCtx,netW,netH);
+  document.getElementById('routeDisplay').innerHTML=optimalRoutes.map(r=>`<div style="margin:2px 0"><span class="route-highlight">${r.label}</span> <span class="route-cost">= ${r.cost}</span></div>`).join('');
+  document.getElementById('routeIndex').textContent=`${optimalRoutes.length} optimal routes`;
+}
+function resetCanvas(){
+  if(animFrame)clearTimeout(animFrame);drawBase(netCtx,netW,netH);
+  document.getElementById('routeDisplay').innerHTML='<span style="color:var(--muted)">Click "Animate Optimal Route" to see the best path highlighted.</span>';
+  document.getElementById('routeIndex').textContent='';animOptIdx=0;
+}
+
+// ═══════════════════════════════════════════
+// BRUTE FORCE TAB
+// ═══════════════════════════════════════════
+function buildBFGrid(){
+  const grid=document.getElementById('bfGrid');grid.innerHTML='';
+  for(const r of allRoutes){
+    const isOpt=r.cost===optimalCost;
+    const row=document.createElement('div');row.className='bf-row'+(isOpt?' optimal':'');
+    row.innerHTML=`<span>${r.label}</span><div style="display:flex;align-items:center;gap:8px;"><span class="bf-cost${isOpt?' best':''}">${r.cost}</span>${isOpt?'<span class="bf-badge">Optimal</span>':''}</div>`;
+    grid.appendChild(row);
+  }
+}
+
+// ═══════════════════════════════════════════
+// BLOCKED TAB
+// ═══════════════════════════════════════════
+let blkCtx,blkW,blkH,blkAnim=null;
+function setupBlocked(){const r=initCanvas('blockedCanvas');if(!r)return;blkCtx=r.ctx;blkW=r.w;blkH=r.h;drawBase(blkCtx,blkW,blkH,true);}
+function animateBlocked(){
+  if(blkAnim)clearTimeout(blkAnim);
+  const route=blockedOptimalRoutes[0];let step=0;const path=route.route;
+  document.getElementById('blockedDisplay').innerHTML=`<span class="route-highlight">${path.join(' → ')}</span>  <span class="route-cost">Cost: ${route.cost}</span>`;
+  function frame(){drawBase(blkCtx,blkW,blkH,true,path.slice(0,step+2));if(step<path.length-2){step++;blkAnim=setTimeout(frame,350);}}
+  frame();
+}
+function resetBlocked(){if(blkAnim)clearTimeout(blkAnim);drawBase(blkCtx,blkW,blkH,true);document.getElementById('blockedDisplay').innerHTML=`<span style="color:var(--muted)">Optimal cost with C→D blocked: <span class="route-cost">30</span></span>`;}
+
+// ═══════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════
+function switchTab(name){
+  const names=['network','bruteforce','blocked','custom'];
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',names[i]===name));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='blocked'&&!blkCtx)setupBlocked();
+  if(name==='bruteforce')buildBFGrid();
+  if(name==='custom')setTimeout(initSolverCanvas,60);
+}
+
+// ═══════════════════════════════════════════
+// EVIDENCE
+// ═══════════════════════════════════════════
+function buildOptimalTable(){
+  const tb=document.getElementById('optimalRoutesTable');
+  optimalRoutes.forEach((r,i)=>{tb.innerHTML+=`<tr><td style="color:var(--muted)">${i+1}</td><td style="font-family:JetBrains Mono,monospace;font-size:.8rem;text-align:left">${r.label}</td><td style="color:var(--accent);font-weight:600">${r.cost}</td></tr>`;});
+}
+function buildBlockedTable(){
+  const tb=document.getElementById('blockedTable');
+  blockedRoutes.slice(0,8).forEach(r=>{
+    const isOpt=r.cost===blockedOptimalCost;
+    tb.innerHTML+=`<tr><td style="font-family:JetBrains Mono,monospace;font-size:.8rem;text-align:left;${isOpt?'color:var(--accent)':''}">${r.label}</td><td style="color:${isOpt?'var(--accent)':'var(--muted)'};font-weight:${isOpt?'600':'400'}">${r.cost}</td><td>${isOpt?'<span style="color:var(--accent);font-weight:600">✓ Optimal</span>':''}</td></tr>`;
+  });
+}
+function buildTree(){
+  document.getElementById('treeVis').innerHTML=[
+    'WH','├── A (6)',
+    '│   ├── B (4) → C (5) → D (2) → WH (10) = <b style="color:var(--accent3)">27</b>',
+    '│   ├── C (3) → B (5) → D (6) → WH (10) = <b style="color:var(--accent3)">30</b>',
+    '│   ├── C (3) → D (2) → B (6) → WH (8) = <b style="color:var(--accent)">25 ✓</b>',
+    '│   └── D (7) → C (2) → B (5) → WH (8) = <b style="color:var(--accent3)">28</b>',
+    '├── B (8)',
+    '│   ├── A (4) → C (3) → D (2) → WH (10) = <b style="color:var(--accent)">27</b>',
+    '│   └── D (6) → C (2) → A (3) → WH (6) = <b style="color:var(--accent)">25 ✓</b>',
+    '├── C (7)',
+    '│   ├── A (3) → B (4) → D (6) → WH (10) = <b style="color:var(--accent3)">30</b>',
+    '│   └── D (2) → B (6) → A (4) → WH (6) = <b style="color:var(--accent)">25 ✓</b>',
+    '└── D (10)',
+    '    └── C (2) → A (3) → B (4) → WH (8) = <b style="color:var(--accent)">27</b>',
+  ].join('\n');
+}
+
+// ═══════════════════════════════════════════════════════
+// CUSTOM SOLVER
+// ═══════════════════════════════════════════════════════
+const PALETTE=['#4fffb0','#70b8ff','#ff9f7f','#c77dff','#ffd166','#ff6b6b','#a8edea','#fbc2eb'];
+let customNodes=[],customDist={};
+let solverCtx,solverW,solverH,solverAnim=null;
+let solverNodePos={};
+let solvedRoutes=[],solvedBestCost=Infinity,solvedBestRoutes=[];
+let currentRouteIdx=0;
+
+function nodeColor(i){return PALETTE[i%PALETTE.length];}
+
+// ── Nodes ──────────────────────────────────
+function addNode(){
+  const inp=document.getElementById('newNodeName');
+  let name=inp.value.trim().replace(/\s+/g,' ');
+  if(!name){showNodeError('Please enter a node name.');return;}
+  if(customNodes.length>=8){showNodeError('Maximum 8 nodes.');return;}
+  if(customNodes.map(n=>n.toLowerCase()).includes(name.toLowerCase())){showNodeError(`"${name}" already exists.`);return;}
+  customNodes.push(name);
+  customDist[name]={};
+  customNodes.forEach(n=>{if(n!==name){customDist[name][n]=0;customDist[n][name]=0;}});
+  inp.value='';hideNodeError();
+  renderNodeChips();renderMatrix();renderStartSelect();
+  updateSolverStats();initSolverCanvas();
+}
+function removeNode(name){
+  customNodes=customNodes.filter(n=>n!==name);delete customDist[name];
+  customNodes.forEach(n=>{delete customDist[n][name];});
+  renderNodeChips();renderMatrix();renderStartSelect();resetSolverResult();
+  updateSolverStats();initSolverCanvas();
+}
+function showNodeError(msg){const el=document.getElementById('nodeError');el.textContent=msg;el.style.display='block';}
+function hideNodeError(){document.getElementById('nodeError').style.display='none';}
+
+function renderNodeChips(){
+  const wrap=document.getElementById('nodeChips');wrap.innerHTML='';
+  customNodes.forEach((n,i)=>{
+    const c=document.createElement('div');c.className='node-chip';
+    c.style.borderColor=nodeColor(i);c.style.color=nodeColor(i);c.style.background=nodeColor(i)+'18';
+    c.innerHTML=`${n} <span class="del-node" onclick="removeNode('${n.replace(/'/g,"\\'")}')">✕</span>`;
+    wrap.appendChild(c);
+  });
+}
+
+function renderMatrix(){
+  const tbl=document.getElementById('matrixTable');
+  if(customNodes.length<2){tbl.innerHTML='<tr><td style="color:var(--muted);padding:10px;font-size:.82rem;">Add at least 2 nodes.</td></tr>';return;}
+  let html='<thead><tr><th></th>';
+  customNodes.forEach((n,i)=>{html+=`<th style="color:${nodeColor(i)}">${n}</th>`;});
+  html+='</tr></thead><tbody>';
+  customNodes.forEach((a,ri)=>{
+    html+=`<tr><th style="color:${nodeColor(ri)}">${a}</th>`;
+    customNodes.forEach((b,ci)=>{
+      if(a===b){html+='<td class="diag">—</td>';}
+      else{const val=(customDist[a]&&customDist[a][b]!==undefined)?customDist[a][b]:0;html+=`<td><input type="number" min="0" step="any" value="${val}" data-from="${a}" data-to="${b}" onchange="updateDist(this)" oninput="syncSymmetric(this)"></td>`;}
+    });
+    html+='</tr>';
+  });
+  html+='</tbody>';tbl.innerHTML=html;
+}
+
+function updateDist(inp){
+  const a=inp.dataset.from,b=inp.dataset.to,v=parseFloat(inp.value)||0;
+  if(!customDist[a])customDist[a]={};if(!customDist[b])customDist[b]={};
+  customDist[a][b]=v;customDist[b][a]=v;
+  syncSymmetric(inp);resetSolverResult();drawSolverNetwork(null,null);
+}
+function syncSymmetric(inp){
+  const a=inp.dataset.from,b=inp.dataset.to,v=parseFloat(inp.value)||0;
+  if(!customDist[a])customDist[a]={};if(!customDist[b])customDist[b]={};
+  customDist[a][b]=v;customDist[b][a]=v;
+  const mirror=document.querySelector(`input[data-from="${b}"][data-to="${a}"]`);
+  if(mirror&&mirror!==inp)mirror.value=v;
+}
+
+function renderStartSelect(){
+  const sel=document.getElementById('startNodeSelect');
+  const prev=sel.value;
+  sel.innerHTML=customNodes.map((n,i)=>`<option value="${n}">${n}</option>`).join('');
+  if(customNodes.includes(prev))sel.value=prev;
+}
+
+function updateSolverStats(){
+  const n=customNodes.length;
+  const permsCount=n>1?factorial(n-1):0;
+  document.getElementById('ss-nodes').textContent=n||'—';
+  document.getElementById('ss-routes').textContent=permsCount||'—';
+  document.getElementById('ss-optimal').textContent='—';
+  document.getElementById('ss-count').textContent='—';
+}
+
+// ── Solver ─────────────────────────────────
+function customPermutations(arr){
+  if(arr.length<=1)return[arr.slice()];
+  const res=[];
+  arr.forEach((v,i)=>{const rest=[...arr.slice(0,i),...arr.slice(i+1)];customPermutations(rest).forEach(p=>res.push([v,...p]));});
+  return res;
+}
+function customRouteCost(route){
+  let t=0;
+  for(let i=0;i<route.length-1;i++){
+    const a=route[i],b=route[i+1];
+    const d=(customDist[a]&&customDist[a][b]!==undefined)?customDist[a][b]:null;
+    if(d===null||d<0)return Infinity;
+    t+=d;
+  }
+  return t;
+}
+function factorial(n){let r=1;for(let i=2;i<=n;i++)r*=i;return r;}
+
+function solveTSP(){
+  hideNodeError();
+  if(customNodes.length<3){showNodeError('Need at least 3 nodes.');return;}
+  const startNode=document.getElementById('startNodeSelect').value;
+  if(!customNodes.includes(startNode)){showNodeError('Invalid start node.');return;}
+  for(let i=0;i<customNodes.length;i++){for(let j=0;j<customNodes.length;j++){
+    if(i===j)continue;
+    const a=customNodes[i],b=customNodes[j];
+    const d=(customDist[a]&&customDist[a][b]!==undefined)?parseFloat(customDist[a][b]):NaN;
+    if(isNaN(d)||d<0){showNodeError(`Distance "${a}"→"${b}" missing.`);return;}
+  }}
+
+  // Animate progress bar
+  const prog=document.getElementById('solveProgress');
+  const bar=document.getElementById('solveProgressBar');
+  prog.style.display='block';bar.style.width='0%';
+  setTimeout(()=>{bar.style.width='40%';},30);
+  setTimeout(()=>{bar.style.width='80%';},120);
+
+  setTimeout(()=>{
+    const others=customNodes.filter(n=>n!==startNode);
+    const perms=customPermutations(others);
+    solvedRoutes=perms.map(p=>{const f=[startNode,...p,startNode];return{route:f,label:f.join(' → '),cost:customRouteCost(f)};}).filter(r=>r.cost!==Infinity).sort((a,b)=>a.cost-b.cost);
+
+    bar.style.width='100%';
+    setTimeout(()=>{prog.style.display='none';},400);
+
+    if(solvedRoutes.length===0){showNodeError('No valid routes found.');return;}
+
+    solvedBestCost=solvedRoutes[0].cost;
+    solvedBestRoutes=solvedRoutes.filter(r=>r.cost===solvedBestCost);
+
+    // Update stats
+    document.getElementById('ss-nodes').textContent=customNodes.length;
+    document.getElementById('ss-routes').textContent=solvedRoutes.length;
+    animateCountUp('ss-optimal',solvedBestCost);
+    animateCountUp('ss-count',solvedBestRoutes.length);
+
+    // Result box
+    const rb=document.getElementById('resultBox');
+    rb.innerHTML=`
+      <div style="margin-bottom:10px;">
+        <span style="color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;">Optimal Cost</span>
+        <div class="res-optimal">${solvedBestCost}</div>
+      </div>
+      <div style="color:var(--muted);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">${solvedBestRoutes.length} optimal route${solvedBestRoutes.length>1?'s':''}</div>
+      ${solvedBestRoutes.map(r=>`<div style="margin:2px 0;">${r.label.split(' → ').map((n,i,a)=>{const idx=customNodes.indexOf(n);return`<span style="color:${nodeColor(idx>=0?idx:0)};font-weight:600">${n}</span>${i<a.length-1?'<span style="color:var(--muted)"> → </span>':''}`}).join('')}</div>`).join('')}
+      <div class="res-note" style="margin-top:10px;">${solvedRoutes.length} valid routes · ${others.length}! = ${factorial(others.length)} permutations</div>`;
+
+    // All routes list
+    const grid=document.getElementById('solverBFGrid');grid.innerHTML='';
+    solvedRoutes.forEach(r=>{
+      const isOpt=r.cost===solvedBestCost;
+      const row=document.createElement('div');row.className='bf-row'+(isOpt?' optimal':'');
+      row.innerHTML=`<span style="font-size:.77rem">${r.label}</span><div style="display:flex;align-items:center;gap:6px;"><span class="bf-cost${isOpt?' best':''}">${r.cost}</span>${isOpt?'<span class="bf-badge">Best</span>':''}</div>`;
+      grid.appendChild(row);
+    });
+    document.getElementById('allRoutesSection').style.display='block';
+
+    // Show cycle controls
+    currentRouteIdx=0;
+    document.getElementById('routeCycleRow').style.display='flex';
+    updateRouteCycleLabel();
+    animateSolverRoute(solvedBestRoutes[currentRouteIdx].route);
+  },200);
+}
+
+function animateCountUp(id,target){
+  const el=document.getElementById(id);
+  if(!el)return;
+  let start=0,steps=20,step=0;
+  const inc=target/steps;
+  function frame(){el.textContent=Math.round(start+inc*step);step++;if(step<=steps){setTimeout(frame,30);}else{el.textContent=target;}}
+  frame();
+}
+
+function cycleSolverRoute(dir){
+  if(!solvedBestRoutes.length)return;
+  currentRouteIdx=(currentRouteIdx+dir+solvedBestRoutes.length)%solvedBestRoutes.length;
+  updateRouteCycleLabel();
+  animateSolverRoute(solvedBestRoutes[currentRouteIdx].route);
+}
+function replaySolverRoute(){
+  if(solvedBestRoutes.length)animateSolverRoute(solvedBestRoutes[currentRouteIdx].route);
+}
+function updateRouteCycleLabel(){
+  const lbl=document.getElementById('routeCycleLabel');
+  if(lbl)lbl.textContent=`Optimal Route ${currentRouteIdx+1} / ${solvedBestRoutes.length}`;
+}
+
+function resetSolverResult(){
+  solvedRoutes=[];solvedBestCost=Infinity;solvedBestRoutes=[];currentRouteIdx=0;
+  document.getElementById('resultBox').innerHTML='<span style="color:var(--muted)">Add nodes, fill distances, then click Solve TSP.</span>';
+  document.getElementById('allRoutesSection').style.display='none';
+  document.getElementById('solverBFGrid').innerHTML='';
+  document.getElementById('routeCycleRow').style.display='none';
+  updateSolverStats();
+}
+
+// ── Solver Canvas ───────────────────────────
+function initSolverCanvas(){
+  const c=document.getElementById('solverCanvas');if(!c)return;
+  const dpr=window.devicePixelRatio||1;
+  const rect=c.parentElement.getBoundingClientRect();
+  const w=Math.max(rect.width-2,200),h=300;
+  c.style.width=w+'px';c.style.height=h+'px';c.width=w*dpr;c.height=h*dpr;
+  solverCtx=c.getContext('2d');solverCtx.scale(dpr,dpr);
+  solverW=w;solverH=h;
+  computeNodePositions();drawSolverNetwork(null,null);
+}
+
+function computeNodePositions(){
+  const n=customNodes.length;solverNodePos={};if(n===0)return;
+  const cx=solverW/2,cy=solverH/2,r=Math.min(solverW,solverH)*0.36;
+  customNodes.forEach((name,i)=>{
+    const angle=(2*Math.PI*i/n)-(Math.PI/2);
+    solverNodePos[name]={x:cx+r*Math.cos(angle),y:cy+r*Math.sin(angle)};
+  });
+}
+
+function drawSolverNetwork(hlRoute,animStep){
+  if(!solverCtx||customNodes.length<1)return;
+  solverCtx.clearRect(0,0,solverW,solverH);
+  if(customNodes.length<2){
+    solverCtx.fillStyle='rgba(120,130,160,.35)';solverCtx.font='13px Space Grotesk,sans-serif';
+    solverCtx.textAlign='center';solverCtx.fillText('Add more nodes to visualize.',solverW/2,solverH/2);return;
+  }
+
+  // All edges (dim)
+  for(let i=0;i<customNodes.length;i++){
+    for(let j=i+1;j<customNodes.length;j++){
+      const a=customNodes[i],b=customNodes[j];
+      const pa=solverNodePos[a],pb=solverNodePos[b];
+      let isHL=false;
+      if(hlRoute)for(let k=0;k<hlRoute.length-1;k++)if((hlRoute[k]===a&&hlRoute[k+1]===b)||(hlRoute[k]===b&&hlRoute[k+1]===a)){isHL=true;break;}
+      solverCtx.beginPath();solverCtx.moveTo(pa.x,pa.y);solverCtx.lineTo(pb.x,pb.y);
+      solverCtx.strokeStyle=isHL?'rgba(79,255,176,.15)':'rgba(255,255,255,.06)';
+      solverCtx.lineWidth=1.5;solverCtx.setLineDash([]);solverCtx.stroke();
+
+      const d=(customDist[a]&&customDist[a][b]!==undefined)?customDist[a][b]:0;
+      if(d>0){
+        const mx=(pa.x+pb.x)/2,my=(pa.y+pb.y)/2;
+        solverCtx.fillStyle='rgba(140,150,180,.4)';solverCtx.font='10px JetBrains Mono,monospace';
+        solverCtx.textAlign='center';solverCtx.fillText(d,mx,my-4);
+      }
+    }
+  }
+
+  // Animated route edges with glow
+  if(hlRoute&&animStep!==null&&animStep>0){
+    for(let k=0;k<animStep&&k<hlRoute.length-1;k++){
+      const pa=solverNodePos[hlRoute[k]],pb=solverNodePos[hlRoute[k+1]];
+      if(!pa||!pb)continue;
+      // glow pass
+      solverCtx.save();
+      solverCtx.shadowColor='rgba(79,255,176,.6)';solverCtx.shadowBlur=10;
+      solverCtx.strokeStyle='rgba(79,255,176,.9)';solverCtx.lineWidth=2.5;
+      solverCtx.setLineDash([]);
+      solverCtx.beginPath();solverCtx.moveTo(pa.x,pa.y);solverCtx.lineTo(pb.x,pb.y);solverCtx.stroke();
+      solverCtx.restore();
+      // weight label on highlighted edge
+      const d=(customDist[hlRoute[k]]&&customDist[hlRoute[k]][hlRoute[k+1]]!==undefined)?customDist[hlRoute[k]][hlRoute[k+1]]:0;
+      if(d>0){
+        const mx=(pa.x+pb.x)/2,my=(pa.y+pb.y)/2;
+        solverCtx.fillStyle='rgba(79,255,176,.9)';solverCtx.font='bold 10px JetBrains Mono,monospace';
+        solverCtx.textAlign='center';solverCtx.fillText(d,mx,my-4);
+      }
+      // arrowhead
+      drawArrow(solverCtx,pa.x,pa.y,pb.x,pb.y,22);
+    }
+    // running cost display on canvas
+    let runCost=0;
+    for(let k=0;k<animStep&&k<hlRoute.length-1;k++){
+      const d=(customDist[hlRoute[k]]&&customDist[hlRoute[k]][hlRoute[k+1]]!==undefined)?customDist[hlRoute[k]][hlRoute[k+1]]:0;
+      runCost+=d;
+    }
+    solverCtx.fillStyle='rgba(79,255,176,.85)';
+    solverCtx.font='bold 14px JetBrains Mono,monospace';
+    solverCtx.textAlign='right';
+    solverCtx.fillText('Cost so far: '+runCost,solverW-14,solverH-14);
+    solverCtx.textAlign='left';
+  }
+
+  // Nodes
+  customNodes.forEach((n,i)=>{
+    const p=solverNodePos[n];if(!p)return;
+    const col=nodeColor(i);
+    const isOnRoute=hlRoute&&hlRoute.includes(n);
+    const r=22;
+    // glow if on active route
+    if(isOnRoute){solverCtx.save();solverCtx.shadowColor=col+'99';solverCtx.shadowBlur=12;}
+    solverCtx.beginPath();solverCtx.arc(p.x,p.y,r,0,Math.PI*2);
+    solverCtx.fillStyle=col+(isOnRoute?'33':'18');solverCtx.fill();
+    solverCtx.beginPath();solverCtx.arc(p.x,p.y,r,0,Math.PI*2);
+    solverCtx.strokeStyle=col;solverCtx.lineWidth=isOnRoute?2.5:1.5;solverCtx.stroke();
+    if(isOnRoute)solverCtx.restore();
+    solverCtx.fillStyle=col;solverCtx.font='bold 11px Space Grotesk,sans-serif';
+    solverCtx.textAlign='center';solverCtx.textBaseline='middle';
+    const label=n.length>6?n.slice(0,5)+'…':n;
+    solverCtx.fillText(label,p.x,p.y);solverCtx.textBaseline='alphabetic';
+  });
+}
+
+function drawArrow(ctx,x1,y1,x2,y2,nodeR){
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);if(len<1)return;
+  const ux=dx/len,uy=dy/len;
+  const ex=x2-ux*nodeR,ey=y2-uy*nodeR;
+  const hw=5,hl=9;
+  ctx.save();ctx.shadowColor='rgba(79,255,176,.5)';ctx.shadowBlur=6;
+  ctx.beginPath();ctx.moveTo(ex,ey);
+  ctx.lineTo(ex-ux*hl+uy*hw,ey-uy*hl-ux*hw);
+  ctx.lineTo(ex-ux*hl-uy*hw,ey-uy*hl+ux*hw);
+  ctx.closePath();ctx.fillStyle='rgba(79,255,176,.9)';ctx.fill();
+  ctx.restore();
+}
+
+function animateSolverRoute(route){
+  if(solverAnim)clearTimeout(solverAnim);
+  computeNodePositions();
+  let step=0;
+  function frame(){
+    drawSolverNetwork(route,step);
+    if(step<route.length-1){step++;solverAnim=setTimeout(frame,420);}
+  }
+  frame();
+}
+
+// ── Clear / Presets ─────────────────────────
+function clearCustom(){
+  customNodes=[];customDist={};
+  renderNodeChips();renderMatrix();renderStartSelect();resetSolverResult();
+  if(solverCtx){solverCtx.clearRect(0,0,solverW,solverH);solverCtx.fillStyle='rgba(120,130,160,.3)';solverCtx.font='13px Space Grotesk,sans-serif';solverCtx.textAlign='center';solverCtx.fillText('Add nodes to start.',solverW/2,solverH/2);}
+  document.getElementById('ss-nodes').textContent='—';document.getElementById('ss-routes').textContent='—';
+  document.getElementById('ss-optimal').textContent='—';document.getElementById('ss-count').textContent='—';
+}
+
+function loadPreset(name){
+  clearCustom();
+  const P={
+    original:{nodes:['WH','A','B','C','D'],dist:{WH:{A:6,B:8,C:7,D:10},A:{WH:6,B:4,C:3,D:7},B:{WH:8,A:4,C:5,D:6},C:{WH:7,A:3,B:5,D:2},D:{WH:10,A:7,B:6,C:2}}},
+    cities:{nodes:['Seoul','Busan','Daegu','Incheon'],dist:{Seoul:{Busan:325,Daegu:238,Incheon:40},Busan:{Seoul:325,Daegu:87,Incheon:355},Daegu:{Seoul:238,Busan:87,Incheon:270},Incheon:{Seoul:40,Busan:355,Daegu:270}}},
+    logistics:{nodes:['Depot','Stop1','Stop2','Stop3','Stop4','Stop5'],dist:{Depot:{Stop1:12,Stop2:9,Stop3:15,Stop4:20,Stop5:8},Stop1:{Depot:12,Stop2:7,Stop3:10,Stop4:14,Stop5:11},Stop2:{Depot:9,Stop1:7,Stop3:6,Stop4:18,Stop5:5},Stop3:{Depot:15,Stop1:10,Stop2:6,Stop4:9,Stop5:13},Stop4:{Depot:20,Stop1:14,Stop2:18,Stop3:9,Stop5:16},Stop5:{Depot:8,Stop1:11,Stop2:5,Stop3:13,Stop4:16}}},
+    triangle:{nodes:['Home','Park','Store'],dist:{Home:{Park:3,Store:5},Park:{Home:3,Store:4},Store:{Home:5,Park:4}}}
+  };
+  const p=P[name];if(!p)return;
+  customNodes=p.nodes.slice();customDist={};
+  customNodes.forEach(a=>{customDist[a]={};customNodes.forEach(b=>{if(a!==b)customDist[a][b]=p.dist[a]?.[b]??0;});});
+  renderNodeChips();renderMatrix();renderStartSelect();updateSolverStats();
+  setTimeout(initSolverCanvas,80);
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+window.addEventListener('load',()=>{
+  setupNetwork();buildOptimalTable();buildBlockedTable();buildTree();
+});
+window.addEventListener('resize',()=>{
+  if(netCtx)setupNetwork();
+  if(blkCtx)setupBlocked();
+  if(solverCtx)initSolverCanvas();
+});
+</script>
+</body>
+</html>

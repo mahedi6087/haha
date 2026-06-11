@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Warehouse Picking Heuristics</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&family=Barlow:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #0e0f0e;
+  --surface: #161818;
+  --surface2: #1e2020;
+  --border: #2a2e2a;
+  --yellow: #f5c800;
+  --yellow2: #ffdc40;
+  --orange: #ff7b20;
+  --green: #3ddc84;
+  --blue: #4ea8ff;
+  --red: #ff5252;
+  --text: #e4e8e0;
+  --muted: #778070;
+  --shelf: #1f2820;
+  --shelf-border: #2e3830;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── GRID BG ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(245,200,0,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245,200,0,.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── FLOATING NAV ── */
+.float-nav {
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fnav-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px 7px 9px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .65rem;
+  letter-spacing: .08em;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  max-width: 36px;
+  overflow: hidden;
+  transition: max-width .3s ease, border-color .2s, color .2s, background .2s;
+  box-shadow: 0 2px 10px rgba(0,0,0,.5);
+}
+.fnav-btn:hover, .fnav-btn.active {
+  max-width: 180px;
+  border-color: var(--yellow);
+  color: var(--yellow);
+  background: rgba(245,200,0,.06);
+}
+.fnav-dot {
+  width: 8px; height: 8px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background .2s;
+}
+.fnav-btn:hover .fnav-dot, .fnav-btn.active .fnav-dot {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  box-shadow: 0 0 5px var(--yellow);
+}
+.fnav-label { opacity: 0; transition: opacity .15s .1s; pointer-events: none; }
+.fnav-btn:hover .fnav-label, .fnav-btn.active .fnav-label { opacity: 1; }
+@media(max-width:600px) { .float-nav { display: none; } }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 80px 24px 60px;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+.hero-tape {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--yellow) 0px, var(--yellow) 20px,
+    #1a1c1a 20px, #1a1c1a 30px
+  );
+}
+.hero-tape-bottom {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 6px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--yellow) 0px, var(--yellow) 20px,
+    #1a1c1a 20px, #1a1c1a 30px
+  );
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border: 1px solid var(--yellow);
+  border-radius: 2px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .7rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin-bottom: 28px;
+  animation: fade-in .6s ease both;
+}
+.hero-badge::before {
+  content: '▲';
+  font-size: .55rem;
+}
+.hero h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(3.5rem, 10vw, 8rem);
+  font-weight: 800;
+  line-height: .95;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  animation: fade-in .6s .1s ease both;
+}
+.hero h1 em {
+  font-style: normal;
+  color: var(--yellow);
+  display: block;
+}
+.hero-sub {
+  max-width: 520px;
+  color: var(--muted);
+  margin-top: 20px;
+  font-size: 1rem;
+  font-weight: 300;
+  animation: fade-in .6s .2s ease both;
+}
+@keyframes fade-in { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
+
+/* Hero section nav */
+.hero-nav {
+  display: flex;
+  gap: 10px;
+  margin-top: 40px;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fade-in .6s .3s ease both;
+}
+.hnav-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  font-size: .85rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: all .2s;
+  letter-spacing: .02em;
+}
+.hnav-btn:hover { border-color: var(--yellow); color: var(--yellow); transform: translateY(-2px); }
+.hnav-btn.accent {
+  background: var(--yellow);
+  color: #111;
+  border-color: var(--yellow);
+  font-weight: 700;
+}
+.hnav-btn.accent:hover { background: var(--yellow2); transform: translateY(-2px); }
+.hnav-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .68rem;
+  color: var(--yellow);
+}
+.hnav-btn.accent .hnav-num { color: #333; }
+
+/* Hero stats */
+.hero-stats {
+  display: flex;
+  gap: 40px;
+  margin-top: 48px;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fade-in .6s .4s ease both;
+}
+.hstat { text-align: center; }
+.hstat-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: var(--yellow);
+  line-height: 1;
+}
+.hstat-lbl {
+  font-size: .72rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: .68rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.scroll-line {
+  width: 1px; height: 36px;
+  background: linear-gradient(to bottom, var(--yellow), transparent);
+  animation: pulse-y 2s ease-in-out infinite;
+}
+@keyframes pulse-y { 0%,100%{opacity:.3} 50%{opacity:1} }
+
+/* ── LAYOUT ── */
+.section {
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 80px 24px;
+  position: relative;
+  z-index: 1;
+}
+.sec-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .65rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sec-eyebrow::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  max-width: 50px;
+}
+.section h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .01em;
+  margin-bottom: 14px;
+  line-height: 1.1;
+}
+.section > p {
+  color: var(--muted);
+  max-width: 620px;
+  font-size: .95rem;
+  margin-bottom: 36px;
+}
+hr.div {
+  border: none;
+  border-top: 1px solid var(--border);
+  max-width: 1020px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* scroll reveal */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity .55s ease, transform .55s ease; }
+.reveal.visible { opacity: 1; transform: none; }
+
+/* ── OVERVIEW CARDS ── */
+.ov-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  margin-top: 28px;
+}
+.ov-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--yellow);
+  padding: 20px;
+  border-radius: 2px;
+  transition: transform .2s, border-color .2s;
+}
+.ov-card:hover { transform: translateY(-3px); border-left-color: var(--yellow2); }
+.ov-card-icon { font-size: 1.5rem; margin-bottom: 10px; }
+.ov-card h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; color: var(--yellow); }
+.ov-card p { font-size: .83rem; color: var(--muted); line-height: 1.5; }
+
+/* ── WAREHOUSE MAP ── */
+.map-wrapper {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.map-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.map-toolbar-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .72rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  flex: 1;
+}
+#warehouseCanvas {
+  display: block;
+  width: 100%;
+  cursor: default;
+}
+.map-legend {
+  display: flex;
+  gap: 20px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: .75rem;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── HEURISTICS TABS ── */
+.htabs-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.htabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.htabs::-webkit-scrollbar { height: 0; }
+.htab {
+  padding: 14px 20px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color .2s, border-color .2s;
+  white-space: nowrap;
+}
+.htab.active { color: var(--yellow); border-bottom-color: var(--yellow); }
+.htab-panel { display: none; }
+.htab-panel.active { display: block; }
+
+.hpanel-inner {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 0;
+}
+@media(max-width:720px) { .hpanel-inner { grid-template-columns: 1fr; } }
+
+.hpanel-canvas-side {
+  padding: 20px;
+  border-right: 1px solid var(--border);
+}
+@media(max-width:720px) { .hpanel-canvas-side { border-right: none; border-bottom: 1px solid var(--border); } }
+
+#h1canvas, #h2canvas, #h3canvas { display: block; width: 100%; border-radius: 3px; background: var(--bg); }
+
+.hpanel-info-side {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.hinfo-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 2px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .65rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.tag-green { background: rgba(61,220,132,.12); color: var(--green); }
+.tag-blue  { background: rgba(78,168,255,.12); color: var(--blue); }
+.tag-orange{ background: rgba(255,123,32,.12); color: var(--orange); }
+.tag-yellow{ background: rgba(245,200,0,.12);  color: var(--yellow); }
+
+.hinfo-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  margin-bottom: 8px;
+}
+.hinfo-desc { font-size: .88rem; color: var(--muted); line-height: 1.6; }
+
+.hinfo-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hstep {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: .83rem;
+}
+.hstep-num {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--yellow);
+  color: var(--yellow);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.hstep-text { color: var(--muted); line-height: 1.5; }
+
+.hmetric-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.hmetric {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 10px 12px;
+  text-align: center;
+}
+.hmetric-val {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--yellow);
+  display: block;
+  transition: all .4s;
+}
+.hmetric-lbl { font-size: .65rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+
+.hpanel-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+}
+.btn {
+  padding: 8px 16px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  font-size: .83rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  letter-spacing: .02em;
+}
+.btn:hover { border-color: var(--yellow); color: var(--yellow); }
+.btn.primary { background: var(--yellow); color: #111; border-color: var(--yellow); font-weight: 700; }
+.btn.primary:hover { background: var(--yellow2); }
+.btn.sm { padding: 5px 11px; font-size: .78rem; }
+
+.route-display {
+  padding: 10px 14px;
+  background: var(--bg);
+  border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .78rem;
+  line-height: 1.7;
+  min-height: 44px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.rh { color: var(--yellow); font-weight: 600; }
+.rc { color: var(--green); font-weight: 600; }
+
+/* ── COMPARISON ── */
+.comp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 28px;
+}
+@media(max-width:640px) { .comp-grid { grid-template-columns: 1fr; } }
+.comp-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 22px;
+  transition: transform .2s, border-color .2s;
+}
+.comp-card:hover { transform: translateY(-3px); border-color: rgba(245,200,0,.3); }
+.comp-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+.comp-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.comp-rank {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .65rem;
+  padding: 2px 7px;
+  border-radius: 2px;
+  font-weight: 600;
+}
+.rank-1 { background: rgba(245,200,0,.15); color: var(--yellow); }
+.rank-2 { background: rgba(78,168,255,.12); color: var(--blue); }
+.rank-3 { background: rgba(255,82,82,.1); color: var(--red); }
+
+.comp-bar-wrap { margin-bottom: 8px; }
+.comp-bar-label { font-size: .72rem; color: var(--muted); font-family: 'IBM Plex Mono', monospace; margin-bottom: 4px; display: flex; justify-content: space-between; }
+.comp-bar-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.comp-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+
+.comp-pros-cons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+.pc-block { font-size: .78rem; }
+.pc-label { font-family: 'IBM Plex Mono', monospace; font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 4px; }
+.pc-label.pro { color: var(--green); }
+.pc-label.con { color: var(--red); }
+.pc-item { color: var(--muted); line-height: 1.5; }
+
+/* ── EVIDENCE ── */
+.ev-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media(max-width:640px) { .ev-grid { grid-template-columns: 1fr; } }
+.ev-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 20px;
+}
+.ev-block h4 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .68rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin-bottom: 14px;
+}
+.ev-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .78rem;
+}
+.ev-table th, .ev-table td {
+  padding: 7px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.ev-table th { color: var(--muted); font-weight: 600; font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
+.ev-table td { color: var(--text); }
+.ev-table tr:last-child td { border-bottom: none; }
+.ev-table td.hi { color: var(--yellow); font-weight: 600; }
+
+.formula-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--yellow);
+  padding: 14px 16px;
+  border-radius: 2px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .8rem;
+  line-height: 1.8;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.formula-box .fh { color: var(--yellow); }
+
+/* ── LEARN ── */
+.learn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 16px;
+}
+.learn-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 26px;
+  transition: border-color .2s, transform .2s;
+}
+.learn-card:hover { border-color: rgba(245,200,0,.3); transform: translateY(-2px); }
+.learn-card h3 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 10px;
+}
+.learn-card p { font-size: .86rem; color: var(--muted); line-height: 1.65; }
+
+footer {
+  text-align: center;
+  padding: 36px 24px;
+  color: var(--muted);
+  font-size: .72rem;
+  border-top: 1px solid var(--border);
+  font-family: 'IBM Plex Mono', monospace;
+  position: relative;
+  z-index: 1;
+}
+</style>
+</head>
+<body>
+
+<!-- FLOATING NAV -->
+<nav class="float-nav">
+  <a class="fnav-btn active" href="#hero"       data-s="hero">      <span class="fnav-dot"></span><span class="fnav-label">Home</span></a>
+  <a class="fnav-btn"        href="#s-overview"  data-s="s-overview"><span class="fnav-dot"></span><span class="fnav-label">01 · Overview</span></a>
+  <a class="fnav-btn"        href="#s-map"       data-s="s-map">     <span class="fnav-dot"></span><span class="fnav-label">02 · Warehouse Map</span></a>
+  <a class="fnav-btn"        href="#s-demo"      data-s="s-demo">    <span class="fnav-dot"></span><span class="fnav-label">03 · Heuristics</span></a>
+  <a class="fnav-btn"        href="#s-evidence"  data-s="s-evidence"><span class="fnav-dot"></span><span class="fnav-label">04 · Evidence</span></a>
+  <a class="fnav-btn"        href="#s-learn"     data-s="s-learn">   <span class="fnav-dot"></span><span class="fnav-label">05 · Learn</span></a>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero" id="hero">
+  <div class="hero-tape"></div>
+  <div class="hero-badge">Operations Research · Combinatorial Optimization</div>
+  <h1>Warehouse<br><em>Picking</em><br>Heuristics</h1>
+  <p class="hero-sub">12 items. One picker. Three strategies. Which method clears the floor fastest?</p>
+
+  <div class="hero-nav">
+    <a class="hnav-btn" href="#s-overview"><span class="hnav-num">01</span> Overview</a>
+    <a class="hnav-btn" href="#s-map"><span class="hnav-num">02</span> Warehouse Map</a>
+    <a class="hnav-btn" href="#s-demo"><span class="hnav-num">03</span> Heuristics Demo</a>
+    <a class="hnav-btn" href="#s-evidence"><span class="hnav-num">04</span> Evidence</a>
+    <a class="hnav-btn" href="#s-learn"><span class="hnav-num">05</span> What I Learned</a>
+    <a class="hnav-btn accent" href="#s-demo">▶ Run Simulation</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hstat"><div class="hstat-num">12</div><div class="hstat-lbl">Items to Pick</div></div>
+    <div class="hstat"><div class="hstat-num">3</div><div class="hstat-lbl">Heuristics</div></div>
+    <div class="hstat"><div class="hstat-num">6</div><div class="hstat-lbl">Aisles</div></div>
+    <div class="hstat"><div class="hstat-num">1</div><div class="hstat-lbl">Best Route</div></div>
+  </div>
+  <div class="scroll-hint"><span>Scroll</span><div class="scroll-line"></div></div>
+  <div class="hero-tape-bottom"></div>
+</section>
+
+<hr class="div">
+
+<!-- ═══ 01 OVERVIEW ═══ -->
+<section class="section reveal" id="s-overview">
+  <div class="sec-eyebrow">01 · Project Overview</div>
+  <h2>The Picking Problem</h2>
+  <p>Order picking accounts for up to 55% of warehouse operating costs. Finding a fast, repeatable picking route is a real-world optimization challenge.</p>
+  <div class="ov-grid">
+    <div class="ov-card"><div class="ov-card-icon">📦</div><h3>The Scenario</h3><p>You are a warehouse picker with 12 items to collect. Each item is in a fixed shelf location. Start and end at the depot. Minimize total travel distance.</p></div>
+    <div class="ov-card"><div class="ov-card-icon">🗺️</div><h3>The Warehouse</h3><p>6 parallel aisles with shelves on each side. Items are scattered across all aisles and shelf positions, reflecting a realistic storage layout.</p></div>
+    <div class="ov-card"><div class="ov-card-icon">⚡</div><h3>Why Heuristics?</h3><p>The exact solution (TSP) is NP-hard. Heuristics give near-optimal routes in seconds — essential when routes must be regenerated per order, hundreds of times daily.</p></div>
+    <div class="ov-card"><div class="ov-card-icon">📐</div><h3>Three Methods</h3><p>Zone-Based Picking groups items by area. S-Shape sweeps aisles in sequence. Largest Gap avoids unnecessary aisle penetration using a mid-point return rule.</p></div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ═══ 02 MAP ═══ -->
+<section class="section reveal" id="s-map">
+  <div class="sec-eyebrow">02 · Warehouse Map</div>
+  <h2>Floor Layout & Item Locations</h2>
+  <p>Top-down view of the warehouse. 6 aisles, each with shelf bays on both sides. The depot (start/end) is at the bottom-left corner.</p>
+
+  <div class="map-wrapper">
+    <div class="map-toolbar">
+      <span class="map-toolbar-title">Warehouse Floor — 60m × 40m</span>
+      <button class="btn sm" onclick="resetMapHighlight()">Show All Items</button>
+    </div>
+    <canvas id="warehouseCanvas"></canvas>
+    <div class="map-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#f5c800"></div>Item Location</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ff5252"></div>Depot (Start/End)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3ddc84;border-radius:2px;width:14px;height:8px;"></div>Shelf Bay</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(255,255,255,.08);border:1px solid #2a2e2a;width:22px;height:8px;border-radius:1px;"></div>Aisle</div>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ═══ 03 HEURISTICS ═══ -->
+<section class="section reveal" id="s-demo">
+  <div class="sec-eyebrow">03 · Demonstration</div>
+  <h2>Three Picking Heuristics</h2>
+  <p>Click "Animate Route" on each tab to watch the picker travel through the warehouse. Compare total distance across methods.</p>
+
+  <div class="htabs-wrap">
+    <div class="htabs">
+      <button class="htab active" onclick="switchHTab(0)">H1 · Zone-Based</button>
+      <button class="htab"        onclick="switchHTab(1)">H2 · S-Shape</button>
+      <button class="htab"        onclick="switchHTab(2)">H3 · Largest Gap</button>
+    </div>
+
+    <!-- H1: Zone -->
+    <div class="htab-panel active" id="htab-0">
+      <div class="hpanel-inner">
+        <div class="hpanel-canvas-side">
+          <canvas id="h1canvas"></canvas>
+          <div class="route-display" id="h1route" style="margin-top:10px;">Press Animate to see the route.</div>
+        </div>
+        <div class="hpanel-info-side">
+          <div>
+            <span class="hinfo-tag tag-green">Heuristic 1</span>
+            <div class="hinfo-name">Zone-Based Picking</div>
+            <p class="hinfo-desc">Divide the warehouse into vertical zones (groups of aisles). Collect all items in Zone 1 before moving to Zone 2, and so on. Within each zone, pick items in the order they appear moving inward.</p>
+          </div>
+          <div class="hinfo-steps">
+            <div class="hstep"><span class="hstep-num">1</span><span class="hstep-text">Assign each item to a zone based on its aisle column.</span></div>
+            <div class="hstep"><span class="hstep-num">2</span><span class="hstep-text">Sort zones from nearest to farthest (left → right).</span></div>
+            <div class="hstep"><span class="hstep-num">3</span><span class="hstep-text">Within each zone, enter the aisle and collect all zone items before exiting.</span></div>
+            <div class="hstep"><span class="hstep-num">4</span><span class="hstep-text">Return to depot after clearing all zones.</span></div>
+          </div>
+          <div class="hmetric-row">
+            <div class="hmetric"><span class="hmetric-val" id="h1-dist">—</span><span class="hmetric-lbl">Total Distance (m)</span></div>
+            <div class="hmetric"><span class="hmetric-val" id="h1-turns">—</span><span class="hmetric-lbl">Direction Changes</span></div>
+          </div>
+          <div class="route-display" id="h1-order" style="font-size:.72rem;">Item pick order will appear here.</div>
+        </div>
+      </div>
+      <div class="hpanel-controls">
+        <button class="btn primary" onclick="animateHeuristic(0)">▶ Animate Route</button>
+        <button class="btn" onclick="resetHeuristic(0)">Reset</button>
+      </div>
+    </div>
+
+    <!-- H2: S-Shape -->
+    <div class="htab-panel" id="htab-1">
+      <div class="hpanel-inner">
+        <div class="hpanel-canvas-side">
+          <canvas id="h2canvas"></canvas>
+          <div class="route-display" id="h2route" style="margin-top:10px;">Press Animate to see the route.</div>
+        </div>
+        <div class="hpanel-info-side">
+          <div>
+            <span class="hinfo-tag tag-blue">Heuristic 2</span>
+            <div class="hinfo-name">S-Shape (Serpentine)</div>
+            <p class="hinfo-desc">Traverse every aisle that contains at least one item in a snake-like pattern. Enter from one end and exit from the other, alternating direction each aisle. Never backtrack within an aisle.</p>
+          </div>
+          <div class="hinfo-steps">
+            <div class="hstep"><span class="hstep-num">1</span><span class="hstep-text">Identify which aisles contain items.</span></div>
+            <div class="hstep"><span class="hstep-num">2</span><span class="hstep-text">Enter aisle 1 from the bottom, sweep to top collecting items.</span></div>
+            <div class="hstep"><span class="hstep-num">3</span><span class="hstep-text">Cross over to aisle 2, sweep back down. Alternate.</span></div>
+            <div class="hstep"><span class="hstep-num">4</span><span class="hstep-text">After last item aisle, travel back to depot.</span></div>
+          </div>
+          <div class="hmetric-row">
+            <div class="hmetric"><span class="hmetric-val" id="h2-dist">—</span><span class="hmetric-lbl">Total Distance (m)</span></div>
+            <div class="hmetric"><span class="hmetric-val" id="h2-turns">—</span><span class="hmetric-lbl">Direction Changes</span></div>
+          </div>
+          <div class="route-display" id="h2-order" style="font-size:.72rem;">Item pick order will appear here.</div>
+        </div>
+      </div>
+      <div class="hpanel-controls">
+        <button class="btn primary" onclick="animateHeuristic(1)">▶ Animate Route</button>
+        <button class="btn" onclick="resetHeuristic(1)">Reset</button>
+      </div>
+    </div>
+
+    <!-- H3: Largest Gap -->
+    <div class="htab-panel" id="htab-2">
+      <div class="hpanel-inner">
+        <div class="hpanel-canvas-side">
+          <canvas id="h3canvas"></canvas>
+          <div class="route-display" id="h3route" style="margin-top:10px;">Press Animate to see the route.</div>
+        </div>
+        <div class="hpanel-info-side">
+          <div>
+            <span class="hinfo-tag tag-orange">Heuristic 3</span>
+            <div class="hinfo-name">Largest Gap</div>
+            <p class="hinfo-desc">For each aisle with items, find the largest gap between adjacent items (including depot and aisle end). Enter from the same end as the first item, return from the other side — unless the gap at the top is larger, in which case turn around at that gap.</p>
+          </div>
+          <div class="hinfo-steps">
+            <div class="hstep"><span class="hstep-num">1</span><span class="hstep-text">Sort items within each aisle by shelf position.</span></div>
+            <div class="hstep"><span class="hstep-num">2</span><span class="hstep-text">Identify the largest gap: from depot-end, between any two items, or at the top.</span></div>
+            <div class="hstep"><span class="hstep-num">3</span><span class="hstep-text">If largest gap is at the top: enter, collect all items, exit same side (return).</span></div>
+            <div class="hstep"><span class="hstep-num">4</span><span class="hstep-text">Otherwise: enter from nearest end, collect up to gap, exit at gap (traverse).</span></div>
+          </div>
+          <div class="hmetric-row">
+            <div class="hmetric"><span class="hmetric-val" id="h3-dist">—</span><span class="hmetric-lbl">Total Distance (m)</span></div>
+            <div class="hmetric"><span class="hmetric-val" id="h3-turns">—</span><span class="hmetric-lbl">Direction Changes</span></div>
+          </div>
+          <div class="route-display" id="h3-order" style="font-size:.72rem;">Item pick order will appear here.</div>
+        </div>
+      </div>
+      <div class="hpanel-controls">
+        <button class="btn primary" onclick="animateHeuristic(2)">▶ Animate Route</button>
+        <button class="btn" onclick="resetHeuristic(2)">Reset</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ═══ 04 EVIDENCE ═══ -->
+<section class="section reveal" id="s-evidence">
+  <div class="sec-eyebrow">04 · Evidence</div>
+  <h2>Results & Comparison</h2>
+  <p>All three heuristics applied to the same 12-item layout. Distances calculated using Manhattan distance along aisle paths.</p>
+
+  <!-- Comparison cards -->
+  <div class="comp-grid">
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <div class="comp-name">Zone-Based</div>
+        <span class="comp-rank rank-2">Rank #2</span>
+      </div>
+      <div class="comp-bar-wrap">
+        <div class="comp-bar-label"><span>Distance</span><span id="comp-h1-dist">—</span></div>
+        <div class="comp-bar-track"><div class="comp-bar-fill" id="bar-h1" style="background:var(--green);width:0%"></div></div>
+      </div>
+      <div class="comp-bar-wrap">
+        <div class="comp-bar-label"><span>Turns</span><span id="comp-h1-turns">—</span></div>
+        <div class="comp-bar-track"><div class="comp-bar-fill" id="bar-h1t" style="background:var(--blue);width:0%"></div></div>
+      </div>
+      <div class="comp-pros-cons">
+        <div class="pc-block"><div class="pc-label pro">Pros</div><div class="pc-item">Organized, predictable; scalable for multi-picker teams</div></div>
+        <div class="pc-block"><div class="pc-label con">Cons</div><div class="pc-item">May revisit same aisle area for different zones</div></div>
+      </div>
+    </div>
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <div class="comp-name">S-Shape</div>
+        <span class="comp-rank rank-3">Rank #3</span>
+      </div>
+      <div class="comp-bar-wrap">
+        <div class="comp-bar-label"><span>Distance</span><span id="comp-h2-dist">—</span></div>
+        <div class="comp-bar-track"><div class="comp-bar-fill" id="bar-h2" style="background:var(--blue);width:0%"></div></div>
+      </div>
+      <div class="comp-bar-wrap">
+        <div class="comp-bar-label"><span>Turns</span><span id="comp-h2-turns">—</span></div>
+        <div class="comp-bar-track"><div class="comp-bar-fill" id="bar-h2t" style="background:var(--blue);width:0%"></div></div>
+      </div>
+      <div class="comp-pros-cons">
+        <div class="pc-block"><div class="pc-label pro">Pros</div><div class="pc-item">Simple to memorize; no special calculation needed</div></div>
+        <div class="pc-block"><div class="pc-label con">Cons</div><div class="pc-item">Traverses full empty aisles; highest travel distance</div></div>
+      </div>
+    </div>
+    <div class="comp-card" style="border-color:rgba(245,200,0,.3);">
+      <div class="comp-card-header">
+        <div class="comp-name">Largest Gap</div>
+        <span class="comp-rank rank-1">Rank #1 ★</span>
+      </div>
+      <div class="comp-bar-wrap">
+        <div class="comp-bar-label"><span>Distance</span><span id="comp-h3-dist">—</span></div>
+        <div class="comp-bar-track"><div class="comp-bar-fill" id="bar-h3" style="background:var(--yellow);width:0%"></div></div>
+      </div>
+      <div class="comp-bar-wrap">
+        <div class="comp-bar-label"><span>Turns</span><span id="comp-h3-turns">—</span></div>
+        <div class="comp-bar-track"><div class="comp-bar-fill" id="bar-h3t" style="background:var(--yellow);width:0%"></div></div>
+      </div>
+      <div class="comp-pros-cons">
+        <div class="pc-block"><div class="pc-label pro">Pros</div><div class="pc-item">Skips large empty aisle sections; lowest distance</div></div>
+        <div class="pc-block"><div class="pc-label con">Cons</div><div class="pc-item">Requires per-aisle calculation; less intuitive</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Evidence tables -->
+  <div class="ev-grid" style="margin-top:28px;">
+    <div class="ev-block">
+      <h4>Item Locations</h4>
+      <table class="ev-table">
+        <thead><tr><th>#</th><th>Item</th><th>Aisle</th><th>Shelf Pos</th><th>Side</th></tr></thead>
+        <tbody id="itemTable"></tbody>
+      </table>
+    </div>
+    <div class="ev-block">
+      <h4>Distance Summary</h4>
+      <table class="ev-table" id="distSummaryTable">
+        <thead><tr><th>Heuristic</th><th>Distance (m)</th><th>Turns</th><th>Improvement</th></tr></thead>
+        <tbody id="distSummaryBody"></tbody>
+      </table>
+      <div style="margin-top:20px;">
+        <h4 style="margin-bottom:10px;">Calculation Method</h4>
+        <div class="formula-box">
+          <span class="fh">Manhattan Distance:</span><br>
+          d = |Δx| + |Δy|<br><br>
+          <span class="fh">Route Total:</span><br>
+          D = Σ d(pᵢ, pᵢ₊₁)<br><br>
+          <span class="fh">Improvement vs S-Shape:</span><br>
+          Δ% = (D_sshape − D_h) / D_sshape × 100
+        </div>
+      </div>
+    </div>
+    <div class="ev-block" style="grid-column:1/-1;">
+      <h4>Heuristic Decision Logic — Largest Gap Example</h4>
+      <table class="ev-table" id="lgapTable">
+        <thead><tr><th>Aisle</th><th>Items in Aisle</th><th>Largest Gap (m)</th><th>Decision</th><th>Distance Saved</th></tr></thead>
+        <tbody id="lgapBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ═══ 05 LEARN ═══ -->
+<section class="section reveal" id="s-learn">
+  <div class="sec-eyebrow">05 · What Did I Learn?</div>
+  <h2>Reflections</h2>
+  <p>Three dimensions of learning from designing and comparing warehouse picking heuristics.</p>
+  <div class="learn-grid">
+    <div class="learn-card">
+      <span class="hinfo-tag tag-green" style="margin-bottom:12px;display:inline-block;">Knowledge</span>
+      <h3>Heuristics vs Exact Methods</h3>
+      <p>I learned that a heuristic doesn't guarantee the optimal solution but finds a good-enough answer quickly. The Largest Gap method — while not mathematically proven to be optimal — consistently outperforms S-Shape and Zone-Based on this layout because it explicitly avoids unnecessary travel inside aisles. The key insight: reducing within-aisle travel is more impactful than reducing aisle-to-aisle travel.</p>
+    </div>
+    <div class="learn-card">
+      <span class="hinfo-tag tag-blue" style="margin-bottom:12px;display:inline-block;">Skills</span>
+      <h3>Route Modeling & Spatial Reasoning</h3>
+      <p>Translating a physical warehouse into a 2D coordinate grid — then computing Manhattan distances along allowed paths — taught me how to model real-world constraints in an algorithm. I practiced decomposing a large problem (12-item route) into smaller sub-problems (per-aisle decisions), which is a core skill in operations research and any multi-step optimization task.</p>
+    </div>
+    <div class="learn-card">
+      <span class="hinfo-tag tag-orange" style="margin-bottom:12px;display:inline-block;">Reflection</span>
+      <h3>Surprises & Industry Context</h3>
+      <p>What surprised me most: the S-Shape heuristic — the simplest and most widely used in real warehouses — was the worst performer on this layout. That's because it blindly traverses full aisles regardless of item density. In sparse aisles, this wastes significant time. Real warehouses use Largest Gap or combined return/traversal strategies for exactly this reason. The gap between "easy to implement" and "best performance" is a real design trade-off.</p>
+    </div>
+  </div>
+</section>
+
+<footer>Warehouse Picking Heuristics · Operations Research Project</footer>
+
+<script>
+// ══════════════════════════════════════════════════════
+// WAREHOUSE DATA
+// ══════════════════════════════════════════════════════
+
+// Warehouse: 6 aisles (columns), each 40m deep.
+// Aisle width = 2m, shelf bay width = 4m
+// Layout cols: [shelf][aisle][shelf][aisle]...
+// Grid units: 1 unit = 1 meter
+// Aisles at x = 4,10,16,22,28,34 (center of each aisle corridor)
+// Depot at bottom-left corner (x=0, y=40)
+
+const WH = {
+  W: 40,   // meters wide
+  H: 40,   // meters deep
+  numAisles: 6,
+  aisleX: [5, 11, 17, 23, 29, 35],  // x-center of each aisle
+  shelfW: 4,   // shelf width
+  aisleW: 2,   // aisle corridor width
+  depot: {x: 0, y: 40}
+};
+
+// 12 items: {id, name, aisle (0-5), pos (0-40 = y position in aisle, 0=top, 40=bottom), side:'L'/'R'}
+const ITEMS = [
+  {id:1,  name:'SKU-001', aisle:0, pos:8,  side:'L'},
+  {id:2,  name:'SKU-002', aisle:0, pos:28, side:'R'},
+  {id:3,  name:'SKU-003', aisle:1, pos:5,  side:'L'},
+  {id:4,  name:'SKU-004', aisle:1, pos:22, side:'R'},
+  {id:5,  name:'SKU-005', aisle:1, pos:36, side:'L'},
+  {id:6,  name:'SKU-006', aisle:2, pos:14, side:'R'},
+  {id:7,  name:'SKU-007', aisle:3, pos:10, side:'L'},
+  {id:8,  name:'SKU-008', aisle:3, pos:30, side:'R'},
+  {id:9,  name:'SKU-009', aisle:4, pos:3,  side:'L'},
+  {id:10, name:'SKU-010', aisle:4, pos:18, side:'R'},
+  {id:11, name:'SKU-011', aisle:4, pos:34, side:'L'},
+  {id:12, name:'SKU-012', aisle:5, pos:20, side:'R'}
+];
+
+// ── Canvas scaling ──────────────────────────
+function setupCanvas(id, h=400) {
+  const c = document.getElementById(id); if(!c) return null;
+  const dpr = window.devicePixelRatio||1;
+  const rect = c.parentElement.getBoundingClientRect();
+  const w = Math.min(rect.width - 2, 700);
+  c.style.width = w+'px'; c.style.height = h+'px';
+  c.width = w*dpr; c.height = h*dpr;
+  const ctx = c.getContext('2d'); ctx.scale(dpr,dpr);
+  return {c, ctx, w, h};
+}
+
+// Convert warehouse coords → canvas pixels
+function toCanvas(wx, wy, cw, ch) {
+  const scaleX = cw / (WH.W+4);
+  const scaleY = ch / (WH.H+4);
+  return { x: (wx+2)*scaleX, y: (wy+2)*scaleY };
+}
+
+// ── Draw Warehouse Base ─────────────────────
+function drawWarehouse(ctx, cw, ch, hlItems=null, pathPts=null, animPts=null) {
+  ctx.clearRect(0,0,cw,ch);
+  const S = (wx,wy) => toCanvas(wx,wy,cw,ch);
+
+  // Floor
+  ctx.fillStyle = '#111312';
+  ctx.fillRect(0,0,cw,ch);
+
+  // Grid lines (floor markings)
+  ctx.strokeStyle = 'rgba(245,200,0,.04)';
+  ctx.lineWidth = .5;
+  for(let x=0;x<=WH.W;x+=5) {
+    const p0=S(x,0), p1=S(x,WH.H);
+    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);ctx.stroke();
+  }
+  for(let y=0;y<=WH.H;y+=5) {
+    const p0=S(0,y), p1=S(WH.W,y);
+    ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);ctx.stroke();
+  }
+
+  // Shelf bays
+  for(let a=0;a<WH.numAisles;a++) {
+    const ax = WH.aisleX[a];
+    const lx = ax - WH.aisleW/2 - WH.shelfW; // left shelf left edge
+    const rx = ax + WH.aisleW/2;              // right shelf left edge
+
+    [lx, rx].forEach(sx => {
+      const p0 = S(sx, 0), p1 = S(sx + WH.shelfW, WH.H);
+      ctx.fillStyle = '#1d2420';
+      ctx.fillRect(p0.x, p0.y, p1.x - p0.x, p1.y - p0.y);
+      ctx.strokeStyle = '#2a3228';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(p0.x, p0.y, p1.x - p0.x, p1.y - p0.y);
+    });
+
+    // Shelf dividers
+    for(let y=0;y<=WH.H;y+=5) {
+      const pa = S(lx, y), pb = S(lx+WH.shelfW, y);
+      const pc = S(rx, y), pd = S(rx+WH.shelfW, y);
+      ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=.5;
+      ctx.beginPath();ctx.moveTo(pa.x,pa.y);ctx.lineTo(pb.x,pb.y);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(pc.x,pc.y);ctx.lineTo(pd.x,pd.y);ctx.stroke();
+    }
+
+    // Aisle label
+    const la = S(ax, WH.H+1.5);
+    ctx.fillStyle='rgba(245,200,0,.35)';ctx.font=`bold ${Math.max(8,cw/55)}px IBM Plex Mono,monospace`;
+    ctx.textAlign='center';ctx.fillText(`A${a+1}`,la.x,la.y);
+  }
+
+  // Draw path
+  if(pathPts && pathPts.length>1) {
+    ctx.save();
+    ctx.strokeStyle='rgba(245,200,0,.18)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    pathPts.forEach((p,i)=>{ const c=S(p.x,p.y); i===0?ctx.moveTo(c.x,c.y):ctx.lineTo(c.x,c.y); });
+    ctx.stroke();ctx.setLineDash([]);ctx.restore();
+  }
+
+  // Draw animated path (solid, glowing)
+  if(animPts && animPts.length>1) {
+    ctx.save();
+    ctx.shadowColor='rgba(245,200,0,.5)';ctx.shadowBlur=8;
+    ctx.strokeStyle='rgba(245,200,0,.85)';ctx.lineWidth=2;ctx.setLineDash([]);
+    ctx.beginPath();
+    animPts.forEach((p,i)=>{ const c=S(p.x,p.y); i===0?ctx.moveTo(c.x,c.y):ctx.lineTo(c.x,c.y); });
+    ctx.stroke();
+    // direction arrow at last segment
+    if(animPts.length>=2) {
+      const a=animPts[animPts.length-2], b=animPts[animPts.length-1];
+      const pa=S(a.x,a.y), pb=S(b.x,b.y);
+      drawArrowHead(ctx, pa.x, pa.y, pb.x, pb.y, 7);
+    }
+    ctx.restore();
+  }
+
+  // Items
+  ITEMS.forEach(item => {
+    const ax = WH.aisleX[item.aisle];
+    const ix = item.side==='L' ? ax - WH.aisleW/2 - WH.shelfW/2 : ax + WH.aisleW/2 + WH.shelfW/2;
+    const ic = S(ix, item.pos);
+    const isHL = !hlItems || hlItems.includes(item.id);
+
+    if(!isHL) {
+      ctx.fillStyle='rgba(245,200,0,.15)';ctx.beginPath();ctx.arc(ic.x,ic.y,4,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='rgba(200,210,190,.2)';ctx.font=`${Math.max(7,cw/65)}px IBM Plex Mono,monospace`;
+      ctx.textAlign='center';ctx.fillText('#'+item.id,ic.x,ic.y-6);
+      return;
+    }
+
+    ctx.save();
+    ctx.shadowColor='rgba(245,200,0,.7)';ctx.shadowBlur=10;
+    ctx.fillStyle='#f5c800';ctx.beginPath();ctx.arc(ic.x,ic.y,5,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+    ctx.fillStyle='rgba(245,200,0,.9)';ctx.font=`bold ${Math.max(7,cw/65)}px IBM Plex Mono,monospace`;
+    ctx.textAlign='center';ctx.fillText('#'+item.id,ic.x,ic.y-7);
+  });
+
+  // Depot
+  const dep = S(WH.depot.x+1, WH.depot.y-1);
+  ctx.save();ctx.shadowColor='rgba(255,82,82,.8)';ctx.shadowBlur=12;
+  ctx.fillStyle='#ff5252';ctx.beginPath();
+  ctx.moveTo(dep.x,dep.y-7);ctx.lineTo(dep.x+6,dep.y+4);ctx.lineTo(dep.x-6,dep.y+4);ctx.closePath();ctx.fill();
+  ctx.restore();
+  ctx.fillStyle='rgba(255,82,82,.9)';ctx.font=`bold ${Math.max(8,cw/60)}px IBM Plex Mono,monospace`;
+  ctx.textAlign='center';ctx.fillText('DEPOT',dep.x,dep.y+14);
+}
+
+function drawArrowHead(ctx, x1,y1,x2,y2, size) {
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);if(len<1)return;
+  const ux=dx/len,uy=dy/len;
+  ctx.save();ctx.fillStyle='rgba(245,200,0,.9)';ctx.shadowColor='rgba(245,200,0,.5)';ctx.shadowBlur=4;
+  ctx.beginPath();ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-ux*size+uy*size*.5,y2-uy*size-ux*size*.5);
+  ctx.lineTo(x2-ux*size-uy*size*.5,y2-uy*size+ux*size*.5);
+  ctx.closePath();ctx.fill();ctx.restore();
+}
+
+// ── Item World Position (for distance calc) ──
+function itemWorldPos(item) {
+  const ax = WH.aisleX[item.aisle];
+  return { x: ax, y: item.pos };
+}
+
+// Manhattan distance along paths (must travel via aisle x-center)
+function aislePathDist(p1, p2) {
+  if(p1.x === p2.x) return Math.abs(p1.y - p2.y);
+  // Move to cross aisle, then travel
+  const dx = Math.abs(p1.x - p2.x);
+  const dy = Math.abs(p1.y - p2.y);
+  return dx + dy;
+}
+
+function totalPathDist(pts) {
+  let d=0;
+  for(let i=0;i<pts.length-1;i++) d+=aislePathDist(pts[i],pts[i+1]);
+  return Math.round(d*10)/10;
+}
+
+function countTurns(pts) {
+  let t=0;
+  for(let i=1;i<pts.length-1;i++) {
+    const d1x=pts[i].x-pts[i-1].x, d1y=pts[i].y-pts[i-1].y;
+    const d2x=pts[i+1].x-pts[i].x, d2y=pts[i+1].y-pts[i].y;
+    if(Math.sign(d1x)!==Math.sign(d2x)||Math.sign(d1y)!==Math.sign(d2y)) t++;
+  }
+  return t;
+}
+
+// ══════════════════════════════════════════════
+// HEURISTIC ROUTE BUILDERS
+// ══════════════════════════════════════════════
+
+// Returns array of {x,y} waypoints and picked item order
+// Depot = {x:0, y:40} (we travel to aisle x first)
+
+// Helper: get items in a specific aisle, sorted by pos
+function aisleItems(aisleIdx) {
+  return ITEMS.filter(i=>i.aisle===aisleIdx).sort((a,b)=>a.pos-b.pos);
+}
+
+// ── HEURISTIC 1: Zone-Based ──────────────────
+// Zones: A1-A2 (zone 0), A3-A4 (zone 1), A5-A6 (zone 2)
+function buildZoneRoute() {
+  const zones = [[0,1],[2,3],[4,5]];
+  const pts = [{...WH.depot}];
+  const order = [];
+  let cx = WH.depot.x, cy = WH.depot.y;
+
+  for(const zone of zones) {
+    const zoneItems = ITEMS.filter(i=>zone.includes(i.aisle)).sort((a,b)=>{
+      if(a.aisle!==b.aisle) return a.aisle-b.aisle;
+      return a.pos-b.pos;
+    });
+    if(zoneItems.length===0) continue;
+
+    for(const item of zoneItems) {
+      const ax = WH.aisleX[item.aisle];
+      // Move to aisle column
+      if(cx!==ax) { pts.push({x:ax,y:cy}); cx=ax; }
+      // Move to item y
+      if(cy!==item.pos) { pts.push({x:cx,y:item.pos}); cy=item.pos; }
+      order.push(item);
+    }
+  }
+  // Return to depot
+  if(cx!==WH.depot.x||cy!==WH.depot.y) {
+    pts.push({x:WH.depot.x,y:cy});
+    pts.push({...WH.depot});
+  }
+  return { pts, order };
+}
+
+// ── HEURISTIC 2: S-Shape ─────────────────────
+function buildSShapeRoute() {
+  const pts = [{...WH.depot}];
+  const order = [];
+  let cx=WH.depot.x, cy=WH.depot.y;
+
+  const aislesWithItems = [...new Set(ITEMS.map(i=>i.aisle))].sort((a,b)=>a-b);
+
+  aislesWithItems.forEach((aisleIdx, idx) => {
+    const ax = WH.aisleX[aisleIdx];
+    const fromBottom = (idx%2===0);
+    // Travel to aisle
+    if(cx!==ax) { pts.push({x:ax,y:cy}); cx=ax; }
+    // Enter from bottom or top
+    const startY = fromBottom ? WH.H : 0;
+    const endY   = fromBottom ? 0    : WH.H;
+    if(cy!==startY) { pts.push({x:cx,y:startY}); cy=startY; }
+    // Sweep full aisle
+    const items = aisleItems(aisleIdx);
+    const sorted = fromBottom ? [...items].reverse() : items;
+    sorted.forEach(item=>{ order.push(item); });
+    pts.push({x:cx,y:endY}); cy=endY;
+  });
+
+  // Return to depot
+  if(cx!==WH.depot.x||cy!==WH.depot.y) {
+    pts.push({x:WH.depot.x,y:cy});
+    pts.push({...WH.depot});
+  }
+  return { pts, order };
+}
+
+// ── HEURISTIC 3: Largest Gap ─────────────────
+function buildLargestGapRoute() {
+  const pts = [{...WH.depot}];
+  const order = [];
+  let cx=WH.depot.x, cy=WH.depot.y;
+  const lgapData = [];
+
+  const aislesWithItems = [...new Set(ITEMS.map(i=>i.aisle))].sort((a,b)=>a-b);
+
+  for(const aisleIdx of aislesWithItems) {
+    const ax = WH.aisleX[aisleIdx];
+    const items = aisleItems(aisleIdx); // sorted by pos ascending
+    const positions = items.map(i=>i.pos);
+    const allPts = [WH.H, ...positions, 0]; // bottom(=depot side), items, top
+
+    // Find largest gap
+    let maxGap=0, maxGapIdx=0;
+    for(let i=0;i<allPts.length-1;i++) {
+      const gap=Math.abs(allPts[i]-allPts[i+1]);
+      if(gap>maxGap){maxGap=gap;maxGapIdx=i;}
+    }
+
+    // Decision: if largest gap is at the top (between last item and aisle top)
+    const gapAtTop = maxGapIdx===allPts.length-2;
+    let decision, saved;
+
+    if(cx!==ax){pts.push({x:ax,y:cy});cx=ax;}
+
+    if(gapAtTop) {
+      // Return: enter from bottom, pick all items, return same way
+      const enterY=WH.H, exitY=positions[positions.length-1];
+      if(cy!==enterY){pts.push({x:cx,y:enterY});cy=enterY;}
+      items.forEach(item=>{ pts.push({x:cx,y:item.pos}); cy=item.pos; order.push(item); });
+      // turn around (same side exit — go back to bottom-aisle-row)
+      pts.push({x:cx,y:WH.H}); cy=WH.H;
+      decision='Return (gap at top)';
+      saved=Math.round(maxGap*10)/10;
+    } else {
+      // Traverse: enter bottom, pick lower cluster, skip gap, pick upper cluster, exit top
+      if(cy!==WH.H){pts.push({x:cx,y:WH.H});cy=WH.H;}
+      items.forEach(item=>{ pts.push({x:cx,y:item.pos}); cy=item.pos; order.push(item); });
+      pts.push({x:cx,y:0}); cy=0;
+      decision='Traverse (skip internal gap)';
+      saved=Math.round(maxGap*10)/10;
+    }
+    lgapData.push({aisle:aisleIdx+1, count:items.length, gap:saved, decision});
+  }
+
+  if(cx!==WH.depot.x||cy!==WH.depot.y){
+    pts.push({x:WH.depot.x,y:cy});
+    pts.push({...WH.depot});
+  }
+  return { pts, order, lgapData };
+}
+
+// ══════════════════════════════════════════════
+// CANVAS STATE & ANIMATION
+// ══════════════════════════════════════════════
+let wCanvas=null;
+const hCanvases = [null,null,null];
+const hRoutes   = [null,null,null]; // {pts, order, lgapData?}
+const hAnims    = [null,null,null];
+let mapHighlight = null;
+
+function initAllCanvases() {
+  wCanvas = setupCanvas('warehouseCanvas', 420);
+  if(wCanvas) drawWarehouse(wCanvas.ctx, wCanvas.w, wCanvas.h, null, null, null);
+
+  [0,1,2].forEach(i=>{
+    hCanvases[i] = setupCanvas(`h${i+1}canvas`, 380);
+    if(hCanvases[i]) drawWarehouse(hCanvases[i].ctx, hCanvases[i].w, hCanvases[i].h, null, null, null);
+  });
+
+  buildAllRoutes();
+  buildItemTable();
+  buildDistSummary();
+  buildLgapTable();
+}
+
+function buildAllRoutes() {
+  hRoutes[0] = buildZoneRoute();
+  hRoutes[1] = buildSShapeRoute();
+  hRoutes[2] = buildLargestGapRoute();
+
+  // Update metrics
+  [0,1,2].forEach(i=>{
+    const d = totalPathDist(hRoutes[i].pts);
+    const t = countTurns(hRoutes[i].pts);
+    document.getElementById(`h${i+1}-dist`).textContent = d;
+    document.getElementById(`h${i+1}-turns`).textContent = t;
+  });
+}
+
+function animateHeuristic(idx) {
+  if(hAnims[idx]) clearTimeout(hAnims[idx]);
+  const cv = hCanvases[idx]; if(!cv) return;
+  const route = hRoutes[idx]; if(!route) return;
+
+  const pts = route.pts;
+  const order = route.order;
+  let step = 0;
+  const INTERP = 6; // interpolation steps per segment
+
+  // Build interpolated steps for smooth animation
+  const allSteps = [];
+  for(let i=0;i<pts.length-1;i++){
+    for(let t=1;t<=INTERP;t++){
+      const frac=t/INTERP;
+      allSteps.push({
+        x:pts[i].x+(pts[i+1].x-pts[i].x)*frac,
+        y:pts[i].y+(pts[i+1].y-pts[i].y)*frac,
+        waypoint: t===INTERP ? i+1 : null
+      });
+    }
+  }
+
+  const routeEl = document.getElementById(`h${idx+1}route`);
+  const orderEl = document.getElementById(`h${idx+1}-order`);
+  let pickedItems = [];
+
+  function frame() {
+    const drawn = allSteps.slice(0, step+1).map(s=>({x:s.x,y:s.y}));
+    const fullPath = [pts[0], ...drawn];
+
+    // Which items to highlight as "pending"
+    const pickedIds = pickedItems.map(it=>it.id);
+    const remaining = ITEMS.filter(it=>!pickedIds.includes(it.id)).map(it=>it.id);
+
+    drawWarehouse(cv.ctx, cv.w, cv.h, remaining.length>0?remaining:null, pts, fullPath);
+
+    // Check if we've passed a waypoint to pick items
+    const wp = allSteps[step].waypoint;
+    if(wp!==null && wp < pts.length) {
+      // find any item whose world pos matches pts[wp]
+      ITEMS.forEach(item=>{
+        const ip = itemWorldPos(item);
+        const p  = pts[wp];
+        if(Math.abs(ip.x-p.x)<0.5 && Math.abs(ip.y-p.y)<0.5 && !pickedItems.includes(item)) {
+          pickedItems.push(item);
+        }
+      });
+    }
+
+    // Route display
+    const curr = allSteps[step];
+    routeEl.innerHTML = `<span class="rh">Pos:</span> (${Math.round(curr.x)}m, ${Math.round(curr.y)}m) &nbsp; <span class="rh">Items picked:</span> <span class="rc">${pickedItems.length}/12</span>`;
+    orderEl.innerHTML = pickedItems.length>0
+      ? '<span style="color:rgba(245,200,0,.5)">Pick order: </span>' + pickedItems.map(it=>`<span class="rh">${it.name}</span>`).join(' → ')
+      : 'No items picked yet.';
+
+    step++;
+    if(step < allSteps.length) hAnims[idx] = setTimeout(frame, 30);
+    else {
+      // Finalize metrics
+      const d = totalPathDist(pts);
+      const t = countTurns(pts);
+      document.getElementById(`h${idx+1}-dist`).textContent = d;
+      document.getElementById(`h${idx+1}-turns`).textContent = t;
+      routeEl.innerHTML = `<span class="rh">Route complete!</span>  Distance: <span class="rc">${d}m</span>  Turns: <span class="rc">${t}</span>`;
+      updateComparison();
+    }
+  }
+  frame();
+}
+
+function resetHeuristic(idx) {
+  if(hAnims[idx]) clearTimeout(hAnims[idx]);
+  const cv = hCanvases[idx]; if(!cv) return;
+  drawWarehouse(cv.ctx, cv.w, cv.h, null, null, null);
+  document.getElementById(`h${idx+1}route`).textContent='Press Animate to see the route.';
+  document.getElementById(`h${idx+1}-order`).textContent='Item pick order will appear here.';
+}
+
+function resetMapHighlight() {
+  mapHighlight=null;
+  if(wCanvas) drawWarehouse(wCanvas.ctx, wCanvas.w, wCanvas.h, null, null, null);
+}
+
+// ══════════════════════════════════════════════
+// COMPARISON BARS
+// ══════════════════════════════════════════════
+function updateComparison() {
+  const dists = [0,1,2].map(i=>totalPathDist(hRoutes[i].pts));
+  const turns  = [0,1,2].map(i=>countTurns(hRoutes[i].pts));
+  const maxD = Math.max(...dists), maxT = Math.max(...turns);
+
+  [0,1,2].forEach(i=>{
+    const d = dists[i], t=turns[i];
+    document.getElementById(`comp-h${i+1}-dist`).textContent = d+'m';
+    document.getElementById(`comp-h${i+1}-turns`).textContent = t;
+    const barD=document.getElementById(`bar-h${i+1}`);
+    const barT=document.getElementById(`bar-h${i+1}t`);
+    setTimeout(()=>{
+      barD.style.width = (d/maxD*100)+'%';
+      barT.style.width = (t/maxT*100)+'%';
+    }, 200+i*100);
+  });
+  buildDistSummary();
+}
+
+// ══════════════════════════════════════════════
+// EVIDENCE TABLES
+// ══════════════════════════════════════════════
+function buildItemTable() {
+  const tb=document.getElementById('itemTable');
+  ITEMS.forEach(item=>{
+    tb.innerHTML+=`<tr>
+      <td>${item.id}</td>
+      <td>${item.name}</td>
+      <td>Aisle ${item.aisle+1}</td>
+      <td>${item.pos}m</td>
+      <td>${item.side==='L'?'Left':'Right'}</td>
+    </tr>`;
+  });
+}
+
+function buildDistSummary() {
+  const names=['Zone-Based','S-Shape','Largest Gap'];
+  const dists=[0,1,2].map(i=>totalPathDist(hRoutes[i].pts));
+  const turns=[0,1,2].map(i=>countTurns(hRoutes[i].pts));
+  const maxD=Math.max(...dists);
+  const tb=document.getElementById('distSummaryBody'); tb.innerHTML='';
+  [0,1,2].forEach(i=>{
+    const imp = i===0?'baseline':((maxD-dists[i])/maxD*100).toFixed(1)+'% vs S-Shape';
+    tb.innerHTML+=`<tr>
+      <td>${names[i]}</td>
+      <td class="${dists[i]===Math.min(...dists)?'hi':''}">${dists[i]}m</td>
+      <td>${turns[i]}</td>
+      <td style="color:var(--muted);font-size:.72rem;">${imp}</td>
+    </tr>`;
+  });
+}
+
+function buildLgapTable() {
+  const route = buildLargestGapRoute();
+  const tb=document.getElementById('lgapBody'); tb.innerHTML='';
+  route.lgapData.forEach(row=>{
+    tb.innerHTML+=`<tr>
+      <td>Aisle ${row.aisle}</td>
+      <td>${row.count} item${row.count>1?'s':''}</td>
+      <td class="hi">${row.gap}m</td>
+      <td style="color:var(--muted)">${row.decision}</td>
+      <td style="color:var(--green)">${row.gap>5?row.gap+'m':'—'}</td>
+    </tr>`;
+  });
+}
+
+// ══════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════
+function switchHTab(idx) {
+  document.querySelectorAll('.htab').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  document.querySelectorAll('.htab-panel').forEach((p,i)=>p.classList.toggle('active',i===idx));
+  setTimeout(()=>{
+    if(hCanvases[idx]) { hCanvases[idx]=setupCanvas(`h${idx+1}canvas`,380); drawWarehouse(hCanvases[idx].ctx,hCanvases[idx].w,hCanvases[idx].h,null,null,null); }
+  },50);
+}
+
+// ══════════════════════════════════════════════
+// FLOATING NAV + SCROLL REVEAL
+// ══════════════════════════════════════════════
+const sectionIds=['hero','s-overview','s-map','s-demo','s-evidence','s-learn'];
+const revealEls=document.querySelectorAll('.reveal');
+const navBtns=document.querySelectorAll('.fnav-btn[data-s]');
+
+const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.1});
+revealEls.forEach(el=>io.observe(el));
+
+function updateNav(){
+  let cur='hero';
+  sectionIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&el.getBoundingClientRect().top<=window.innerHeight*.4)cur=id;
+  });
+  navBtns.forEach(b=>b.classList.toggle('active',b.dataset.s===cur));
+}
+window.addEventListener('scroll',updateNav,{passive:true});
+updateNav();
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+window.addEventListener('load',()=>{
+  initAllCanvases();
+  updateComparison();
+});
+window.addEventListener('resize',()=>{
+  initAllCanvases();
+});
+</script>
+</body>
+</html>

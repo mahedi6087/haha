@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Branch and Bound Engine | Operations Research Matrix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --navy:#070B14;
+    --slate:#0F172A;
+    --slate2:#1E293B;
+    --slate3:#334155;
+    --cyan:#00D4FF;
+    --amber:#F59E0B;
+    --green:#10B981;
+    --red:#EF4444;
+    --ghost:#F8FAFC;
+    --muted:#64748B;
+    --purple:#8B5CF6;
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'Space Mono',monospace;
+  }
+  
+  html{scroll-behavior:smooth;background:var(--navy)}
+  body{
+    background:var(--navy);color:var(--ghost);
+    font-family:var(--font-body);font-size:15px;line-height:1.6;
+    overflow-x:hidden;position:relative;
+  }
+
+  body::before{
+    content:'';position:fixed;inset:0;
+    background-image:linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+    background-size:30px 30px;pointer-events:none;z-index:0;
+  }
+
+  nav{
+    position:sticky;top:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:1rem 2.5rem;background:rgba(7,11,20,0.85);
+    backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,212,255,0.1);
+  }
+  .nav-logo{font-family:var(--font-display);font-weight:700;letter-spacing:-0.02em;color:#fff;font-size:1.1rem}
+  .nav-logo em{color:var(--cyan);font-style:normal}
+  .nav-links{display:flex;gap:1.5rem}
+  .nav-links a{font-family:var(--font-display);font-size:0.85rem;color:var(--muted);text-decoration:none;transition:color 0.2s}
+  .nav-links a:hover{color:var(--cyan)}
+
+  .hero{position:relative;padding:5rem 2.5rem 3rem;max-width:1200px;margin:0 auto;z-index:1}
+  .hero-eyebrow{font-family:var(--font-mono);font-size:0.7rem;color:var(--cyan);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
+  .hero-eyebrow::before{content:'';display:inline-block;width:1.5rem;height:1px;background:var(--cyan)}
+  .hero h1{font-family:var(--font-display);font-size:clamp(2.5rem,5vw,3.8rem);font-weight:700;line-height:1.1;letter-spacing:-0.03em;color:#fff;margin-bottom:1rem}
+  .hero h1 em{color:var(--cyan);font-style:normal}
+  .hero p{font-size:1.1rem;color:var(--muted);max-width:800px;font-weight:300}
+
+  .section{max-width:1200px;margin:0 auto;padding:4rem 2.5rem;position:relative;z-index:1;border-top:1px solid rgba(255,255,255,0.05)}
+  .section-label{font-family:var(--font-mono);font-size:0.7rem;color:var(--cyan);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.5rem}
+  .section-label .num{color:var(--amber)}
+  
+  h2{font-family:var(--font-display);font-size:clamp(1.75rem,3vw,2.5rem);font-weight:700;color:#fff;margin-bottom:1.25rem}
+  h3{font-family:var(--font-display);font-size:1.15rem;font-weight:600;color:#fff;margin-bottom:0.5rem}
+  p{color:var(--muted);margin-bottom:1.25rem;line-height:1.7}
+
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:2rem}
+  @media(max-width:768px){.two-col{grid-template-columns:1fr}}
+
+  .formula-card{background:rgba(0,212,255,0.02);border:1px solid rgba(0,212,255,0.1);border-radius:12px;padding:1.5rem;font-family:var(--font-mono);font-size:0.9rem;color:#fff;margin:1.5rem 0;line-height:1.8}
+  .formula-title{color:var(--cyan);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;display:block}
+
+  /* DEMONSTRATION WORKSPACE ARCHITECTURE */
+  .panel-card{background:var(--slate);border:1px solid rgba(255,255,255,0.05);border-radius:16px;padding:1.75rem;box-shadow:0 10px 30px rgba(0,0,0,0.25);margin-bottom:1.5rem}
+  
+  .preset-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));gap:0.75rem;margin-bottom:1.5rem}
+  .preset-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:1rem;color:var(--ghost);text-align:left;cursor:pointer;transition:all 0.2s ease}
+  .preset-card:hover{border-color:var(--cyan);background:rgba(0,212,255,0.02);transform:translateY(-1px)}
+  .preset-card.active{border-color:var(--cyan);background:rgba(0,212,255,0.06);box-shadow:0 4px 15px rgba(0,214,255,0.1)}
+  .preset-card .p-title{font-family:var(--font-display);font-size:0.9rem;font-weight:600;color:#fff;display:block;margin-bottom:0.2rem}
+  .preset-card .p-desc{font-size:0.75rem;color:var(--muted);line-height:1.4;display:block}
+
+  .setup-grid{display:grid;grid-template-columns:1fr 2fr;gap:1.5rem}
+  @media(max-width:900px){.setup-grid{grid-template-columns:1fr}}
+  .form-group{margin-bottom:1rem}
+  .form-group label{display:block;font-family:var(--font-display);font-size:0.8rem;font-weight:600;color:var(--cyan);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.05em}
+  .form-group input, .form-group textarea{width:100%;background:rgba(7,11,20,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.8rem;color:#fff;font-family:var(--font-mono);font-size:0.88rem;transition:all 0.2s}
+  .form-group input:focus, .form-group textarea:focus{border-color:var(--cyan);outline:none;background:rgba(7,11,20,0.7)}
+
+  .playback-bar{display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;margin-bottom:1rem}
+  .btn{font-family:var(--font-display);font-size:0.85rem;font-weight:600;padding:0.6rem 1.25rem;border:none;border-radius:8px;cursor:pointer;transition:all 0.2s ease}
+  .btn-primary{background:var(--cyan);color:var(--navy)}
+  .btn-primary:hover{background:#33e1ff}
+  .btn-primary:disabled{background:var(--slate2);color:var(--muted);cursor:not-allowed}
+  .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--muted)}
+  .btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+  .btn-action{background:var(--amber);color:var(--navy)}
+  .btn-action:hover{background:#fbbf24}
+
+  .progress-rail{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-bottom:1.5rem}
+  .progress-bar{height:100%;background:linear-gradient(90deg, var(--cyan) 0%, var(--purple) 100%);width:0%;transition:width 0.2s ease}
+  .tracker-txt{font-family:var(--font-mono);font-size:0.78rem;color:var(--muted);margin-left:auto}
+
+  .workspace-layout{display:grid;grid-template-columns:1fr 340px;gap:1.5rem;align-items:start}
+  @media(max-width:1100px){.workspace-layout{grid-template-columns:1fr}}
+
+  .theater-frame{background:#020617;border:1px solid rgba(0,212,255,0.15);border-radius:16px;height:580px;position:relative;overflow:hidden}
+  .theater-frame.fullscreen{position:fixed;inset:0;width:100vw;height:100vh;z-index:1000;border-radius:0}
+  .canvas-viewport{width:100%;height:100%;overflow:auto;cursor:grab;position:relative}
+  .canvas-viewport:active{cursor:grabbing}
+  .theater-frame svg{width:2200px;height:1400px;display:block;transform-origin:top left;transition:transform 0.1s ease-out}
+
+  .hud-dock{position:absolute;top:12px;right:12px;display:flex;gap:4px;z-index:10;background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);padding:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.08)}
+  .hud-btn{height:28px;padding:0 0.6rem;border-radius:4px;background:var(--slate2);border:1px solid rgba(255,255,255,0.08);color:var(--ghost);font-family:var(--font-mono);font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.3rem}
+  .hud-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+  .hud-btn.active-fs{background:var(--purple);border-color:#a78bfa}
+
+  .monitor-sidebar{background:var(--slate);border:1px solid rgba(255,255,255,0.05);border-radius:16px;padding:1.25rem;display:flex;flex-direction:column;gap:1rem}
+  .monitor-title{font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--cyan);border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:0.4rem}
+  .monitor-desc{font-size:0.8rem;color:var(--muted);font-family:var(--font-mono);white-space:pre-wrap;background:rgba(0,0,0,0.2);padding:0.6rem;border-radius:6px;max-height:180px;overflow-y:auto}
+  
+  .grid-metrics{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem}
+  .metric-block{background:rgba(7,11,20,0.4);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:0.6rem}
+  .metric-block .m-val{font-family:var(--font-mono);font-size:1.1rem;font-weight:700;color:var(--amber)}
+  .metric-block .m-lbl{font-size:0.6rem;text-transform:uppercase;color:var(--muted);margin-top:0.1rem}
+  
+  .legend-box{background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:0.65rem;display:flex;flex-direction:column;gap:0.4rem}
+  .legend-row{display:flex;align-items:center;gap:0.4rem;font-size:0.7rem;color:var(--muted);font-family:var(--font-mono)}
+  .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+  .live-logger{max-height:100px;overflow-y:auto;background:rgba(0,0,0,0.2);border-radius:6px;padding:0.4rem}
+  .log-row{font-family:var(--font-mono);font-size:0.7rem;color:var(--muted);padding:0.2rem 0;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;justify-content:space-between}
+  .log-row .l-n{color:var(--cyan)}
+  .log-row.pruned .l-a{color:var(--red)}
+  .log-row.int .l-a{color:var(--green)}
+
+  /* EVIDENCE LAB TABLES & SCREENSHOT RULES */
+  .prob-table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:0.82rem;margin-top:1rem}
+  .prob-table th{text-align:left;padding:0.6rem 0.8rem;background:rgba(0,212,255,0.05);color:var(--cyan);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid rgba(0,212,255,0.15)}
+  .prob-table td{padding:0.6rem 0.8rem;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--ghost)}
+  
+  .ledger-box{background:#140E0A;border:1px solid rgba(245,158,11,0.12);border-radius:8px;padding:1.25rem;font-family:'Courier New',monospace;font-size:0.8rem;color:#D4A853;line-height:1.7;white-space:pre;overflow-x:auto}
+  .ledger-tag{color:var(--amber);font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;display:block;margin-bottom:0.5rem}
+
+  /* MODAL OVERLAYS */
+  .modal-mask{position:fixed;inset:0;background:rgba(2,6,23,0.8);backdrop-filter:blur(6px);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:all 0.2s ease}
+  .modal-mask.show{opacity:1;visibility:visible}
+  .modal-frame{background:var(--slate);border:1px solid rgba(0,212,255,0.15);width:100%;max-width:460px;border-radius:12px;padding:1.5rem}
+  .modal-h{font-family:var(--font-display);font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between}
+  .modal-close{background:transparent;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer}
+  .modal-body{font-family:var(--font-mono);font-size:0.8rem;color:var(--ghost);white-space:pre-wrap;background:rgba(0,0,0,0.2);padding:0.85rem;border-radius:6px;max-height:300px;overflow-y:auto;margin-bottom:1rem}
+
+  #backToTop{position:fixed;bottom:25px;right:25px;width:42px;height:42px;background:var(--cyan);color:var(--navy);border:none;border-radius:50%;cursor:pointer;z-index:200;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:bold;opacity:0;visibility:hidden;transition:all 0.25s ease}
+  #backToTop.show{opacity:1;visibility:visible}
+
+  .bb-node circle{transition:all 0.15s ease;cursor:pointer}
+  .bb-node:hover circle{filter:brightness(1.2);stroke-width:2.5px}
+  @keyframes nodeIn{from{opacity:0;transform:scale(0.6)}to{opacity:1;transform:scale(1)}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+  footer{border-top:1px solid rgba(255,255,255,0.04);padding:2rem;text-align:center;font-family:var(--font-mono);font-size:0.7rem;color:var(--muted);margin-top:4rem}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">OR Portfolio Core // <em>BB Engine</em></div>
+  <div class="nav-links">
+    <a href="#overview">Overview</a>
+    <a href="#demo">Demonstration</a>
+    <a href="#evidence">Evidence</a>
+    <a href="#learn">What I Learned</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">Integer Linear Programming Suite</div>
+  <h1>Discrete Search Space Optimization via <em>Branch and Bound</em></h1>
+  <p>An interactive operations research engine executing real-time continuous relaxations to solve combinations of high-dimensional binary decision vectors.</p>
+</div>
+
+<section class="section" id="overview">
+  <div class="section-label"><span class="num">01 /</span> Project Overview</div>
+  <h2>Understanding Discrete Space Approximations</h2>
+  <div class="two-col">
+    <div>
+      <p>
+        This engine was inspired by academic coursework in operations research and linear mathematical optimization. Finding the absolute global optimum for multi-variable binary matrices often requires evaluating an exponentially large combinations of variables—a brute-force approach that quickly hits computational limits.
+      </p>
+      <p>
+        The <strong>Branch and Bound algorithm</strong> systematically prunes sub-optimal options from this massive solution space, ensuring a reliable path to the best possible result.
+      </p>
+    </div>
+    <div>
+      <p>
+        At each step of the search tree, the algorithm drops the strict integer requirement (e.g., $x_i \in \{0, 1\}$) to solve a rapid continuous linear relaxation. This calculation provides an immediate mathematical boundary for the maximum possible value of that branch.
+      </p>
+      <p>
+        If this boundary falls below our best known integer solution (the incumbent), the entire branch is discarded instantly. This key concept forms the basis of modern enterprise supply chain software, asset portfolio management, and automated logistics networks.
+      </p>
+    </div>
+  </div>
+
+  <div class="formula-card">
+    <span class="formula-title">Generalized Binary Integer Programming Model Template</span>
+    Maximize Value Z = ∑ (c_i * x_i)  [Objective Profit Vector Ceiling]<br/>
+    Subject to Constraint: ∑ (a_i * x_i) ≤ b  [Global Capacity Limit Ceiling]<br/>
+    Where Binary Constraints: x_i ∈ {0, 1},  ∀i ∈ {1, 2, ... n}
+  </div>
+</section>
+
+<section class="section" id="demo">
+  <div class="section-label"><span class="num">02 /</span> Scenario Explorer Demonstration</div>
+  <h2>The Interactive Optimization Matrix</h2>
+  <p>Select a scenario archetype below to instantly inject structured problem vectors, or input your own custom definitions directly into the text fields. Compile the data matrix to explore the search tree step by step.</p>
+
+  <div class="panel-card">
+    <div class="preset-grid">
+      <div class="preset-card active" id="pc-knapsack" onclick="loadSelectedArchetype('knapsack')">
+        <span class="p-title">🎒 Camping Knapsack Limit</span>
+        <span class="p-desc">Maximize total equipment payoff within a 12kg carry weight limit.</span>
+      </div>
+      <div class="preset-card" id="pc-pizza" onclick="loadSelectedArchetype('pizza')">
+        <span class="p-title">🍕 Gourmet Pizza Budget</span>
+        <span class="p-desc">Maximize overall flavor scores within a fixed $15 budget constraint.</span>
+      </div>
+      <div class="preset-card" id="pc-capital" onclick="loadSelectedArchetype('capital')">
+        <span class="p-title">🏢 Corporate Capital Expansion</span>
+        <span class="p-desc">Optimize high-level enterprise portfolio NPV with $100M in liquidity.</span>
+      </div>
+      <div class="preset-card" id="pc-logistic" onclick="loadSelectedArchetype('logistic')">
+        <span class="p-title">📦 Freight Link Logistics Hub</span>
+        <span class="p-desc">Maximize delivery fleet utilization scores within a 90-ton capacity hull.</span>
+      </div>
+    </div>
+
+    <div class="setup-grid">
+      <div class="form-group">
+        <label id="lblCapacity" for="capacityInput">Resource Capacity Constraint Value (b)</label>
+        <input type="number" id="capacityInput" value="12">
+        <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="compileMatrixEngine()">Compile Matrix Engine</button>
+      </div>
+      <div class="form-group">
+        <label for="itemsInput">Variable Definitions Matrix Entry Fields (Name, Profit c_i, Structural Weight a_i)</label>
+        <textarea id="itemsInput" rows="5" placeholder="ItemName, Profit, Weight"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="playback-bar">
+    <button class="btn btn-ghost" onclick="resetPlaybackTimeline()">↺ Reset Sequence</button>
+    <button class="btn btn-primary" id="btnNext" onclick="executeStepForward()">Advance Optimization Step →</button>
+    <button class="btn btn-action" id="btnAuto" onclick="toggleAutoSimulationPlayback()">▶ Run Auto-Play Simulation</button>
+    <div class="tracker-txt" id="stepTracker">Step 0 / 0</div>
+  </div>
+  <div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+
+  <div class="workspace-layout">
+    <div class="theater-frame" id="theaterFrame">
+      <div class="hud-dock">
+        <button class="hud-btn" onclick="adjustCanvasZoom(1.15)" title="Zoom In">+</button>
+        <button class="hud-btn" onclick="adjustCanvasZoom(0.85)" title="Zoom Out">−</button>
+        <button class="hud-btn" onclick="recenterTreeCanvas()" title="Recenter Frame">⛶</button>
+        <button class="hud-btn" id="fsToggleBtn" onclick="toggleTheaterViewMode()" style="border-color:var(--cyan)" title="Toggle Theater Workspace View">📺 Expand Viewport</button>
+      </div>
+      <div class="canvas-viewport" id="canvasViewport">
+        <svg id="canvasSvg" viewBox="0 0 2200 1400" xmlns="http://www.w3.org/2000/svg">
+          <g id="edgeLayer"></g>
+          <g id="nodeLayer"></g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="monitor-sidebar">
+      <div class="monitor-title" id="hudTitle">System Infrastructure Core</div>
+      <div class="monitor-desc" id="hudDesc">Compile problem data above to generate the search space simulation details.</div>
+      
+      <div class="grid-metrics">
+        <div class="metric-block">
+          <div class="m-val" id="valBound">—</div>
+          <div class="m-lbl" id="lblBoundLabel">Current Bound</div>
+        </div>
+        <div class="metric-block">
+          <div class="m-val" id="valIncumbent">—</div>
+          <div class="m-lbl">Incumbent Z*</div>
+        </div>
+        <div class="metric-block">
+          <div class="m-val" id="valExplored">0</div>
+          <div class="m-lbl">Active Nodes</div>
+        </div>
+        <div class="metric-block">
+          <div class="m-val" id="valPruned">0</div>
+          <div class="m-lbl">Pruned Subtrees</div>
+        </div>
+      </div>
+
+      <div class="legend-box">
+        <div class="legend-row"><div class="legend-dot" style="background:#8B5CF6"></div>Relaxed Root Entry Variable</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#0E7490"></div>Fractional Vector Branch Node</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#065F46"></div>Feasible Checked Integer Vector</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#7F1D1D"></div>Fathomed Boundary Cut Pruned</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#92400E"></div>Optimal Absolute Solution Vector</div>
+      </div>
+
+      <div class="monitor-title" style="font-size:0.8rem; padding-bottom:0.2rem; margin-top:0.2rem;">Mathematical Evaluation Log</div>
+      <div class="live-logger" id="liveLogger"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="evidence">
+  <div class="section-label"><span class="num">03 /</span> Academic Evidence Ledger</div>
+  <h2>Verified Computational Coursework Evidence</h2>
+  <p>This verification matrix matches standard textbook examples to prove that our runtime environment adheres to proper operations research principles.</p>
+
+  <h3 style="margin-top:1.5rem;">Baseline Itemized Parameters Matrix Array</h3>
+  <table class="prob-table">
+    <thead>
+      <tr><th>Variable Identity</th><th>Item Designation Name</th><th>Objective Payoff (c_i)</th><th>Structural Cost Value (a_i)</th><th>Efficiency Density Ratio (c_i/a_i)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>x₁</td><td>Reference Book</td><td>18 pts</td><td>2 kg</td><td>9.00 Density Metric</td></tr>
+      <tr><td>x₂</td><td>High-Res Digital Camera</td><td>24 pts</td><td>3 kg</td><td>8.00 Density Metric</td></tr>
+      <tr><td>x₃</td><td>Structural Carry Tent</td><td>30 pts</td><td>4 kg</td><td>7.50 Density Metric</td></tr>
+      <tr><td>x₄</td><td>Synthetic Sleeping Bag</td><td>25 pts</td><td>5 kg</td><td>5.00 Density Metric</td></tr>
+      <tr><td>x₅</td><td>Multi-Fuel Utility Stove</td><td>20 pts</td><td>4 kg</td><td>5.00 Density Metric</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:2.5rem;">Root Relaxation Bound Calculation Verification Ledger</h3>
+  <div class="ledger-box"><span class="ledger-tag">// Operations Research Reference Ledger Entry Verification</span>
+Density Array Indices Sorted: x₁ &gt; x₂ &gt; x₃ &gt; x₄ &gt; x₅
+Assigned Bound Constraint Allocation Limit Threshold (b) = 12
+
+Allocation Sequence Protocol:
+  - Allocate x₁ element item: Used space = 2, Profit value accumulated = 18, Residual balance = 10
+  - Allocate x₂ element item: Used space = 5, Profit value accumulated = 42, Residual balance = 7
+  - Allocate x₃ element item: Used space = 9, Profit value accumulated = 72, Residual balance = 3
+  - Allocate x₄ element item: Remaining weight margin available is 3. Variable weight is 5. Fractional step required.
+                        Computed Factor Fraction Target = 3 / 5 = 0.60
+                        Fractional Profit Addition Evaluation = 25 * 0.60 = 15 pts
+
+Continuous Linear Relaxation Bound Calculation (Global Root Boundary Ceiling):
+  Z_initial_upper_bound = 18 + 24 + 30 + (25 * 0.60) = 87.0
+  Every discrete valid binary integer layout is bounded by this equation ($Z_{\text{discrete}} \le 87.0$).</div>
+</section>
+
+<section class="section" id="learn">
+  <div class="section-label"><span class="num">04 /</span> Comprehensive Reflection</div>
+  <h2>What Did I Learn?</h2>
+  
+  <div class="two-col" style="margin-bottom:1.5rem;">
+    <div>
+      <h3 style="color:var(--cyan);">1. Knowledge &amp; Theory</h3>
+      <p>
+        I solidified my understanding of how continuous linear programming relaxations act as outer bounds for discrete integer search spaces. This project clearly demonstrated that dropping integer constraints allows us to calculate an absolute ceiling for a problem's maximum possible objective value.
+      </p>
+      <p>
+        Learning that the algorithm can instantly discard an entire subtree when its boundary falls below the incumbent solution highlighted the efficiency of mathematical pruning over brute-force search.
+      </p>
+    </div>
+    <div>
+      <h3 style="color:var(--cyan);">2. Practical Engineering Skills</h3>
+      <p>
+        I gained valuable experience translating abstract mathematical models into robust code. I built a dynamic relaxation engine that sorts density variables, tracks fractional splits, and manages global optimization parameters.
+      </p>
+      <p>
+        Additionally, I developed a coordinate-mapping layout engine that dynamically balances and structures visualization elements, keeping tree branches from overlapping regardless of the dataset size.
+      </p>
+    </div>
+  </div>
+
+  <div class="panel-card" style="background:rgba(245,158,11,0.02); border-color:rgba(245,158,11,0.15);">
+    <h3 style="color:var(--amber);">3. Critical Reflection &amp; Real-World Scaling</h3>
+    <p>
+      The biggest challenge was creating a dynamic tree layout engine that stays organized across a wide variety of custom user inputs. I solved this by grouping nodes by depth layer and applying proportional horizontal spacing based on the density of each level.
+    </p>
+    <p>
+      I was surprised by how much impact a minor adjustment to an initial resource parameter can have on the overall search space, often causing the algorithm to prune massive branches much earlier than expected. In production environments, these exact principles scale up to address highly complex logistics challenges, including commercial airline scheduling, maritime shipping optimization, and global supply chain hub network distribution.
+    </p>
+  </div>
+</section>
+
+<div class="modal-mask" id="modalMask" onclick="closeOverlayModal(event)">
+  <div class="modal-frame" onclick="event.stopPropagation()">
+    <div class="modal-h">
+      <span id="modalNodeTitle">Node Parameter Insight</span>
+      <button class="modal-close" onclick="setModalVisibilityState(false)">×</button>
+    </div>
+    <div class="modal-body" id="modalNodeBody">Awaiting computation indices data values...</div>
+    <button class="btn btn-ghost" style="width:100%;" onclick="setModalVisibilityState(false)">Close Node Overlay</button>
+  </div>
+</div>
+
+<button id="backToTop" onclick="scrollToTopElement()" title="Scroll Back To Top Elevation">↑</button>
+
+<footer>
+  Advanced Linear System Engineering · Operations Research Portfolio Module Core Framework
+</footer>
+
+<script>
+const DATA_ARCHETYPES = {
+  knapsack: {
+    b: 12,
+    lblCapacity: "Knapsack Capacity Limit (Weight Boundary b)",
+    lblBound: "Max Payoff Bound (Z)",
+    txt: "Tent, 30, 4\nCamera, 24, 3\nSleepingBag, 25, 5\nBook, 18, 2\nStove, 20, 4"
+  },
+  pizza: {
+    b: 15,
+    lblCapacity: "Max Financial Allowance Allocation Ceiling ($ b)",
+    lblBound: "Flavor Performance Value Score",
+    txt: "Prosciutto, 25, 4.50\nTruffleOil, 30, 6.00\nBurrata, 20, 3.50\nArugula, 10, 1.50\nMushrooms, 15, 2.00"
+  },
+  capital: {
+    b: 100,
+    lblCapacity: "Corporate Development Resource Venture Treasury Limit ($M b)",
+    lblBound: "Net Present Value Global Factor",
+    txt: "Warehouse_Alpha, 45, 30\nTechCenter_Beta, 60, 40\nLogistics_Hub, 30, 20\nHQ_Expansion, 50, 35\nRetail_Outlet, 20, 15"
+  },
+  logistic: {
+    b: 90,
+    lblCapacity: "Continental Freight Logistics Hull Constraint (Tons b)",
+    lblBound: "Distribution Core Efficiency Yield",
+    txt: "Hub_North, 50, 35\nHub_East, 40, 25\nHub_South, 35, 22\nHub_West, 28, 18\nHub_Central, 44, 30"
+  }
+};
+
+let SYSTEM_CAPACITY = 12;
+let PROCESSED_VECTORS_ARRAY = [];
+let MODEL_NODES_COLLECTION = [];
+let MODEL_EDGES_COLLECTION = [];
+let SIMULATION_TIMELINE_STEPS = [];
+let stepTimelinePointer = 0;
+let simulationIntervalTimer = null;
+let currentIncumbentValueZ = null;
+let prunedBranchesCounter = 0;
+let runHistoryLogs = [];
+let treeCanvasScaleFactor = 0.8;
+
+// Drag and Pan Interactions Engine Framework
+const svgDrawingBoard = document.getElementById('canvasSvg');
+const viewportWindowFrame = document.getElementById('canvasViewport');
+let clickIsActiveFlag = false, clickOriginCursorX, clickOriginCursorY, initialFrameScrollLeft, initialFrameScrollTop;
+
+viewportWindowFrame.addEventListener('mousedown', (e) => {
+  if (e.target.tagName === 'circle' || e.target.tagName === 'text') return;
+  clickIsActiveFlag = true;
+  viewportWindowFrame.style.cursor = 'grabbing';
+  clickOriginCursorX = e.pageX - viewportWindowFrame.offsetLeft;
+  clickOriginCursorY = e.pageY - viewportWindowFrame.offsetTop;
+  initialFrameScrollLeft = viewportWindowFrame.scrollLeft;
+  initialFrameScrollTop = viewportWindowFrame.scrollTop;
+});
+viewportWindowFrame.addEventListener('mouseleave', () => { clickIsActiveFlag = false; viewportWindowFrame.style.cursor = 'grab'; });
+viewportWindowFrame.addEventListener('mouseup', () => { clickIsActiveFlag = false; viewportWindowFrame.style.cursor = 'grab'; });
+viewportWindowFrame.addEventListener('mousemove', (e) => {
+  if(!clickIsActiveFlag) return;
+  e.preventDefault();
+  const computationalMoveX = e.pageX - viewportWindowFrame.offsetLeft;
+  const computationalMoveY = e.pageY - viewportWindowFrame.offsetTop;
+  viewportWindowFrame.scrollLeft = initialFrameScrollLeft - (computationalMoveX - clickOriginCursorX) * 1.2;
+  viewportWindowFrame.scrollTop = initialFrameScrollTop - (computationalMoveY - clickOriginCursorY) * 1.2;
+});
+
+function adjustCanvasZoom(zoomMultiplierValue) {
+  treeCanvasScaleFactor *= zoomMultiplierValue;
+  treeCanvasScaleFactor = Math.max(0.25, Math.min(treeCanvasScaleFactor, 2.5));
+  svgDrawingBoard.style.transform = `scale(${treeCanvasScaleFactor})`;
+}
+function recenterTreeCanvas() {
+  treeCanvasScaleFactor = 0.8;
+  svgDrawingBoard.style.transform = 'scale(0.8)';
+  viewportWindowFrame.scrollLeft = 320;
+  viewportWindowFrame.scrollTop = 0;
+}
+
+// Full Display Workspace Layout Controls
+function toggleTheaterViewMode() {
+  const compositeTheaterNode = document.getElementById('theaterFrame');
+  const actionButtonSelector = document.getElementById('fsToggleBtn');
+  compositeTheaterNode.classList.toggle('fullscreen');
+  
+  if(compositeTheaterNode.classList.contains('fullscreen')) {
+    actionButtonSelector.textContent = "🗗 Restore Small Screen View";
+    actionButtonSelector.classList.add('active-fs');
+    document.body.style.overflow = "hidden";
+  } else {
+    actionButtonSelector.textContent = "📺 Expand Viewport";
+    actionButtonSelector.classList.remove('active-fs');
+    document.body.style.overflow = "auto";
+  }
+  recenterTreeCanvas();
+}
+
+const floatingScrollArrowElement = document.getElementById('backToTop');
+window.onscroll = function() {
+  if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+    floatingScrollArrowElement.classList.add('show');
+  } else {
+    floatingScrollArrowElement.classList.remove('show');
+  }
+};
+function scrollToTopElement() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+function loadSelectedArchetype(archetypeKeyStr) {
+  document.querySelectorAll('.preset-card').forEach(card => card.classList.remove('active'));
+  document.getElementById(`pc-${archetypeKeyStr}`).classList.add('active');
+
+  const baselineDatabaseNode = DATA_ARCHETYPES[archetypeKeyStr];
+  document.getElementById('capacityInput').value = baselineDatabaseNode.b;
+  document.getElementById('itemsInput').value = baselineDatabaseNode.txt;
+  document.getElementById('lblCapacity').textContent = baselineDatabaseNode.lblCapacity;
+  document.getElementById('lblBoundLabel').textContent = baselineDatabaseNode.lblBound;
+
+  compileMatrixEngine();
+}
+
+window.addEventListener('DOMContentLoaded', () => { loadSelectedArchetype('knapsack'); });
+
+// Core Algorithmic Parser & System Initialization Engine
+function compileMatrixEngine() {
+  clearInterval(simulationIntervalTimer);
+  simulationIntervalTimer = null;
+  document.getElementById('btnAuto').textContent = '▶ Run Auto-Play Simulation';
+  document.getElementById('btnNext').disabled = false;
+
+  SYSTEM_CAPACITY = parseFloat(document.getElementById('capacityInput').value) || 12;
+  const rawTextAreaInputs = document.getElementById('itemsInput').value.split('\n');
+  
+  let structuralCollectorArray = [];
+  rawTextAreaInputs.forEach((rawLineText, executionIdxID) => {
+    if(!rawLineText.trim()) return;
+    const itemSegments = rawLineText.split(',');
+    if(itemSegments.length >= 3) {
+      structuralCollectorArray.push({
+        name: itemSegments[0].trim(),
+        v: parseFloat(itemSegments[1]) || 0, // Payoff Metrics Parameter Variable Value c_i
+        w: parseFloat(itemSegments[2]) || 0, // Resource Constraint Values Weight Value a_i
+        uid: executionIdxID
+      });
+    }
+  });
+
+  if(structuralCollectorArray.length === 0) {
+    alert("Data Array Ingestion Error. Confirm values match structure configurations: Identity, Value, Weight.");
+    return;
+  }
+
+  structuralCollectorArray.forEach(item => { item.efficiencyRatio = item.v / (item.w || 1); });
+  structuralCollectorArray.sort((alphaNode, betaNode) => betaNode.efficiencyRatio - alphaNode.efficiencyRatio);
+  PROCESSED_VECTORS_ARRAY = structuralCollectorArray;
+
+  MODEL_NODES_COLLECTION = [];
+  MODEL_EDGES_COLLECTION = [];
+  SIMULATION_TIMELINE_STEPS = [];
+  stepTimelinePointer = 0;
+  currentIncumbentValueZ = null;
+  prunedBranchesCounter = 0;
+  runHistoryLogs = [];
+  document.getElementById('liveLogger').innerHTML = '';
+
+  let sequentialTokenContainer = { val: 0 };
+  recursiveBinaryOptimizationSearchEngine({}, 0, null, '', sequentialTokenContainer);
+  calculateDynamicTreeCoordinates();
+  flagAbsoluteGlobalOptimum();
+  refreshTimelineUIElements();
+  flushGraphicsCanvasElements();
+  updateMonitorConsoleInterface(null);
+  recenterTreeCanvas();
+}
+
+// Continuous Linear Programming Relaxation Evaluation Module Core
+function executeContinuousRelaxationPass(assignedLocksMap) {
+  let optimalProfitCeiling = 0, targetAvailableWeightVolume = SYSTEM_CAPACITY;
+  let trackedAllocationsArray = Array(PROCESSED_VECTORS_ARRAY.length).fill(0);
+
+  for (let idx = 0; idx < PROCESSED_VECTORS_ARRAY.length; idx++) {
+    if (idx in assignedLocksMap) {
+      trackedAllocationsArray[idx] = assignedLocksMap[idx];
+      if (assignedLocksMap[idx] === 1) {
+        optimalProfitCeiling += PROCESSED_VECTORS_ARRAY[idx].v;
+        targetAvailableWeightVolume -= PROCESSED_VECTORS_ARRAY[idx].w;
+      }
+    }
+  }
+
+  if (targetAvailableWeightVolume < 0) return { feasible: false, upperBoundaryCeiling: -Infinity, vectors: trackedAllocationsArray, integerConstraintMatched: false };
+
+  let localizedFractionalSplitIdx = -1;
+  for (let idx = 0; idx < PROCESSED_VECTORS_ARRAY.length; idx++) {
+    if (idx in assignedLocksMap) continue;
+    if (PROCESSED_VECTORS_ARRAY[idx].w <= targetAvailableWeightVolume) {
+      trackedAllocationsArray[idx] = 1;
+      optimalProfitCeiling += PROCESSED_VECTORS_ARRAY[idx].v;
+      targetAvailableWeightVolume -= PROCESSED_VECTORS_ARRAY[idx].w;
+    } else {
+      if (targetAvailableWeightVolume > 0) {
+        trackedAllocationsArray[idx] = targetAvailableWeightVolume / PROCESSED_VECTORS_ARRAY[idx].w;
+        optimalProfitCeiling += trackedAllocationsArray[idx] * PROCESSED_VECTORS_ARRAY[idx].v;
+        localizedFractionalSplitIdx = idx;
+        targetAvailableWeightVolume = 0;
+      }
+      break;
+    }
+  }
+  return { feasible: true, upperBoundaryCeiling: Math.round(optimalProfitCeiling * 100) / 100, vectors: trackedAllocationsArray, integerConstraintMatched: (localizedFractionalSplitIdx === -1), targetSplitDecisionIndex: localizedFractionalSplitIdx };
+}
+
+// Binary Integer Programming Recursive Solver Tree Loop Core
+function recursiveBinaryOptimizationSearchEngine(assignedLocksMap, analyticalDepth, parentNodeIndexId, edgeDisplayStringLabel, sequentialTokenContainer) {
+  const internalNodeID = sequentialTokenContainer.val++;
+  const relaxationMetricsOutcome = executeContinuousRelaxationPass(assignedLocksMap);
+
+  let structuredNodeObject = {
+    id: internalNodeID, parent: parentNodeIndexId, edgeLabel: edgeDisplayStringLabel,
+    bound: relaxationMetricsOutcome.feasible ? relaxationMetricsOutcome.upperBoundaryCeiling : null,
+    type: parentNodeIndexId === null ? 'relax' : 'fractional',
+    title: `Node ${internalNodeID}`, body: '', depth: analyticalDepth, childrenIndicesList: []
+  };
+
+  let descriptionTextBuffer = `Optimization Matrix Depth Layer: ${analyticalDepth}\n`;
+  if (!relaxationMetricsOutcome.feasible) {
+    structuredNodeObject.type = 'fathomed';
+    descriptionTextBuffer += `Status: Infeasible Space (Constraint Bound Ceilings Transgressed)\nAction: Fathom trajectory immediately.`;
+    structuredNodeObject.body = descriptionTextBuffer;
+    MODEL_NODES_COLLECTION.push(structuredNodeObject); SIMULATION_TIMELINE_STEPS.push(structuredNodeObject);
+    return;
+  }
+
+  descriptionTextBuffer += `Continuous Relaxation Bound: Z = ${relaxationMetricsOutcome.upperBoundaryCeiling}\n\nEvaluated Vectors Solution Array:\n`;
+  PROCESSED_VECTORS_ARRAY.forEach((itemObject, idxPos) => {
+    descriptionTextBuffer += `  x_${itemObject.name} = ${relaxationMetricsOutcome.vectors[idxPos].toFixed(2)}\n`;
+  });
+
+  if (relaxationMetricsOutcome.integerConstraintMatched) {
+    structuredNodeObject.type = 'integer';
+    descriptionTextBuffer += `\nStatus: Feasible configuration match matching constraints. Path terminated.`;
+    structuredNodeObject.body = descriptionTextBuffer;
+    MODEL_NODES_COLLECTION.push(structuredNodeObject); SIMULATION_TIMELINE_STEPS.push(structuredNodeObject);
+    return;
+  }
+
+  const targetedBranchIndexValue = relaxationMetricsOutcome.targetSplitDecisionIndex;
+  descriptionTextBuffer += `\nAction: Select fractional continuous value component element x_${PROCESSED_VECTORS_ARRAY[targetedBranchIndexValue].name} for deep binary branching.`;
+  structuredNodeObject.body = descriptionTextBuffer;
+  structuredNodeObject.pivotIndex = targetedBranchIndexValue;
+
+  MODEL_NODES_COLLECTION.push(structuredNodeObject); SIMULATION_TIMELINE_STEPS.push(structuredNodeObject);
+
+  const leftForkBranchAssignment = Object.assign({}, assignedLocksMap); leftForkBranchAssignment[targetedBranchIndexValue] = 1;
+  structuredNodeObject.childrenIndicesList.push(sequentialTokenContainer.val); MODEL_EDGES_COLLECTION.push([internalNodeID, sequentialTokenContainer.val]);
+  recursiveBinaryOptimizationSearchEngine(leftForkBranchAssignment, analyticalDepth + 1, internalNodeID, `x_${PROCESSED_VECTORS_ARRAY[targetedBranchIndexValue].name}=1`, sequentialTokenContainer);
+
+  const rightForkBranchAssignment = Object.assign({}, assignedLocksMap); rightForkBranchAssignment[targetedBranchIndexValue] = 0;
+  structuredNodeObject.childrenIndicesList.push(sequentialTokenContainer.val); MODEL_EDGES_COLLECTION.push([internalNodeID, sequentialTokenContainer.val]);
+  recursiveBinaryOptimizationSearchEngine(rightForkBranchAssignment, analyticalDepth + 1, internalNodeID, `x_${PROCESSED_VECTORS_ARRAY[targetedBranchIndexValue].name}=0`, sequentialTokenContainer);
+}
+
+// Proportional Horizontal Coordinate Normalizer Engine
+function calculateDynamicTreeCoordinates() {
+  let depthLayersCollectionMap = {};
+  MODEL_NODES_COLLECTION.forEach(node => {
+    if(!depthLayersCollectionMap[node.depth]) depthLayersCollectionMap[node.depth] = [];
+    depthLayersCollectionMap[node.depth].push(node);
+  });
+  Object.keys(depthLayersCollectionMap).forEach(depthKeyStr => {
+    const layerDepthValue = parseInt(depthKeyStr);
+    const nodesInTargetLayer = depthLayersCollectionMap[depthKeyStr];
+    const totalLayerElementsCount = nodesInTargetLayer.length;
+    nodesInTargetLayer.forEach((nodeInstance, positionIndexInLayer) => {
+      nodeInstance.x = (2200 / (totalLayerElementsCount + 1)) * (positionIndexInLayer + 1);
+      nodeInstance.y = 65 + (layerDepthValue * 125);
+    });
+  });
+}
+
+function flagAbsoluteGlobalOptimum() {
+  let highestIdentifiedIntegerBound = -Infinity, absoluteWinnerNodeInstance = null;
+  MODEL_NODES_COLLECTION.forEach(nodeItem => {
+    if(nodeItem.type === 'integer' && nodeItem.bound !== null && nodeItem.bound > highestIdentifiedIntegerBound) {
+      highestIdentifiedIntegerBound = nodeItem.bound; absoluteWinnerNodeInstance = nodeItem;
+    }
+  });
+  if(absoluteWinnerNodeInstance) absoluteWinnerNodeInstance.isAbsoluteOptimalMatch = true;
+}
+
+// Step Playback Automation Core Matrices
+function resetPlaybackTimeline() {
+  clearInterval(simulationIntervalTimer); simulationIntervalTimer = null;
+  document.getElementById('btnAuto').textContent = '▶ Run Auto-Play Simulation';
+  document.getElementById('btnNext').disabled = false;
+  stepTimelinePointer = 0; currentIncumbentValueZ = null; prunedBranchesCounter = 0; runHistoryLogs = [];
+  document.getElementById('liveLogger').innerHTML = '';
+  refreshTimelineUIElements(); flushGraphicsCanvasElements(); updateMonitorConsoleInterface(null); recenterTreeCanvas();
+}
+
+function executeStepForward() {
+  if (stepTimelinePointer >= SIMULATION_TIMELINE_STEPS.length) return;
+  const underlyingNodeInstance = SIMULATION_TIMELINE_STEPS[stepTimelinePointer];
+  stepTimelinePointer++;
+
+  if (underlyingNodeInstance.type === 'integer' && underlyingNodeInstance.bound !== null) {
+    if (currentIncumbentValueZ === null || underlyingNodeInstance.bound > currentIncumbentValueZ) currentIncumbentValueZ = underlyingNodeInstance.bound;
+  }
+  if (underlyingNodeInstance.type === 'fathomed') prunedBranchesCounter++;
+  if (currentIncumbentValueZ !== null && underlyingNodeInstance.bound !== null && underlyingNodeInstance.bound < currentIncumbentValueZ) {
+    if (underlyingNodeInstance.type !== 'integer') { underlyingNodeInstance.type = 'fathomed'; prunedBranchesCounter++; }
+  }
+  if (underlyingNodeInstance.isAbsoluteOptimalMatch && stepTimelinePointer === SIMULATION_TIMELINE_STEPS.length) underlyingNodeInstance.type = 'optimal';
+
+  appendConsoleHistoryLogRows(underlyingNodeInstance); flushGraphicsCanvasElements(); updateMonitorConsoleInterface(underlyingNodeInstance); refreshTimelineUIElements();
+
+  if (underlyingNodeInstance.x > viewportWindowFrame.clientWidth / 2) {
+    viewportWindowFrame.scrollTo({ left: underlyingNodeInstance.x - (viewportWindowFrame.clientWidth / 2), behavior: 'smooth' });
+  }
+
+  if (stepTimelinePointer >= SIMULATION_TIMELINE_STEPS.length) {
+    document.getElementById('btnNext').disabled = true;
+    if (simulationIntervalTimer) { clearInterval(simulationIntervalTimer); simulationIntervalTimer = null; document.getElementById('btnAuto').textContent = '▶ Run Auto-Play Simulation'; }
+  }
+}
+
+function toggleAutoSimulationPlayback() {
+  if(simulationIntervalTimer) { clearInterval(simulationIntervalTimer); simulationIntervalTimer = null; document.getElementById('btnAuto').textContent = '▶ Run Auto-Play Simulation'; return; }
+  if(stepTimelinePointer >= SIMULATION_TIMELINE_STEPS.length) resetPlaybackTimeline();
+  document.getElementById('btnAuto').textContent = '⏸ Pause Simulation';
+  simulationIntervalTimer = setInterval(() => { if(stepTimelinePointer >= SIMULATION_TIMELINE_STEPS.length) { clearInterval(simulationIntervalTimer); simulationIntervalTimer = null; return; } executeStepForward(); }, 950);
+}
+
+function refreshTimelineUIElements() {
+  const upperMaxBoundaryLimit = SIMULATION_TIMELINE_STEPS.length;
+  const targetCompletedRatio = upperMaxBoundaryLimit > 0 ? (stepTimelinePointer / upperMaxBoundaryLimit) * 100 : 0;
+  document.getElementById('progressBar').style.width = targetCompletedRatio + '%';
+  document.getElementById('stepTracker').textContent = `Step ${stepTimelinePointer} / ${upperMaxBoundaryLimit}`;
+}
+
+function updateMonitorConsoleInterface(nodeInstance) {
+  if (!nodeInstance) {
+    document.getElementById('hudTitle').textContent = 'Workspace Active Monitor';
+    document.getElementById('hudDesc').textContent = 'Data matrices parsed successfully. Use control buttons to navigate the optimization path steps.';
+    document.getElementById('valBound').textContent = '—'; document.getElementById('valIncumbent').textContent = '—';
+    document.getElementById('valExplored').textContent = '0'; document.getElementById('valPruned').textContent = '0';
+    return;
+  }
+  document.getElementById('hudTitle').textContent = nodeInstance.title + ` [${nodeInstance.type.toUpperCase()}]`;
+  document.getElementById('hudDesc').textContent = nodeInstance.body;
+  document.getElementById('valBound').textContent = nodeInstance.bound !== null ? nodeInstance.bound : 'Infeasible';
+  document.getElementById('valIncumbent').textContent = currentIncumbentValueZ !== null ? currentIncumbentValueZ : '—';
+  document.getElementById('valExplored').textContent = stepTimelinePointer;
+  document.getElementById('valPruned').textContent = prunedBranchesCounter;
+}
+
+function appendConsoleHistoryLogRows(nodeInstance) {
+  let executionStringStatusLabel = 'Inspected';
+  if(nodeInstance.type==='fathomed') executionStringStatusLabel = 'BRANCH CUT';
+  if(nodeInstance.type==='integer') executionStringStatusLabel = 'FEASIBLE INT';
+  if(nodeInstance.type==='optimal') executionStringStatusLabel = '★ GLOBAL CEILING';
+  runHistoryLogs.unshift({ id: nodeInstance.id, label: executionStringStatusLabel, type: nodeInstance.type });
+  document.getElementById('liveLogger').innerHTML = runHistoryLogs.map(logNode => `
+    <div class="log-row ${logNode.type==='fathomed'?'pruned':(logNode.type==='optimal'||logNode.type==='integer'?'int':'')}">
+      <span class="l-n">Node Array Index ${logNode.id}</span><span class="l-a">${logNode.label}</span>
+    </div>
+  `).join('');
+}
+
+// Vector Elements Graphic Drawer Core Modules
+function flushGraphicsCanvasElements() {
+  const edgeContainerLayerG = document.getElementById('edgeLayer');
+  const nodeContainerLayerG = document.getElementById('nodeLayer');
+  edgeContainerLayerG.innerHTML = ''; nodeContainerLayerG.innerHTML = '';
+
+  const currentlyVisibleNodesSubset = SIMULATION_TIMELINE_STEPS.slice(0, stepTimelinePointer);
+  const activeIdsTrackingSet = new Set(currentlyVisibleNodesSubset.map(nodeElement => nodeElement.id));
+
+  MODEL_EDGES_COLLECTION.forEach(([parentIdKey, childIdKey]) => {
+    if (!activeIdsTrackingSet.has(parentIdKey) || !activeIdsTrackingSet.has(childIdKey)) return;
+    const parentNodeObjectInstance = MODEL_NODES_COLLECTION.find(elementItem => elementItem.id === parentIdKey);
+    const childNodeObjectInstance = MODEL_NODES_COLLECTION.find(elementItem => elementItem.id === childIdKey);
+    const connectionLinkHasFocus = (childNodeObjectInstance.id === SIMULATION_TIMELINE_STEPS[stepTimelinePointer - 1].id);
+
+    const vectorLineNodeElement = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    vectorLineNodeElement.setAttribute('x1', parentNodeObjectInstance.x); vectorLineNodeElement.setAttribute('y1', parentNodeObjectInstance.y + 16);
+    vectorLineNodeElement.setAttribute('x2', childNodeObjectInstance.x); vectorLineNodeElement.setAttribute('y2', childNodeObjectInstance.y - 16);
+    vectorLineNodeElement.setAttribute('stroke', connectionLinkHasFocus ? '#00D4FF' : 'rgba(100,116,139,0.25)');
+    vectorLineNodeElement.setAttribute('stroke-width', connectionLinkHasFocus ? '2.5' : '1.5');
+    edgeContainerLayerG.appendChild(vectorLineNodeElement);
+
+    if (childNodeObjectInstance.edgeLabel) {
+      const computedTextLabelPositionX = (parentNodeObjectInstance.x + childNodeObjectInstance.x) / 2 + (childNodeObjectInstance.x > parentNodeObjectInstance.x ? 22 : -22);
+      const computedTextLabelPositionY = (parentNodeObjectInstance.y + childNodeObjectInstance.y) / 2;
+      const labelSvgTextElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      labelSvgTextElement.setAttribute('x', computedTextLabelPositionX); labelSvgTextElement.setAttribute('y', computedTextLabelPositionY);
+      labelSvgTextElement.setAttribute('text-anchor', 'middle'); labelSvgTextElement.setAttribute('font-family', 'Space Mono, monospace');
+      labelSvgTextElement.setAttribute('font-size', '10'); labelSvgTextElement.setAttribute('fill', 'rgba(248,250,252,0.6)');
+      labelSvgTextElement.textContent = childNodeObjectInstance.edgeLabel;
+      edgeContainerLayerG.appendChild(labelSvgTextElement);
+    }
+  });
+
+  currentlyVisibleNodesSubset.forEach((nodeItem, computationalIndexPos) => {
+    const nodeIsLatestActiveElement = (computationalIndexPos === stepTimelinePointer - 1);
+    const localizedColorMapPalette = {
+      relax: {fill:'#8B5CF6', stroke:'#a78bfa', pulseGlow:true}, fractional: {fill:'#0E7490', stroke:'#00D4FF', pulseGlow:true},
+      fathomed: {fill:'#7F1D1D', stroke:'#EF4444', pulseGlow:false}, integer: {fill:'#065F46', stroke:'#10B981', pulseGlow:true},
+      optimal: {fill:'#92400E', stroke:'#F59E0B', pulseGlow:true}
+    }[nodeItem.type] || {fill:'#0E7490', stroke:'#00D4FF', pulseGlow:true};
+
+    const targetBaseCircleRadiusValue = 16;
+    const individualGroupNodeContainerG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    individualGroupNodeContainerG.setAttribute('class', 'bb-node');
+    individualGroupNodeContainerG.setAttribute('transform', `translate(${nodeItem.x},${nodeItem.y})`);
+
+    if(nodeIsLatestActiveElement) individualGroupNodeContainerG.style.animation = 'nodeIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both';
+
+    if (nodeIsLatestActiveElement && localizedColorMapPalette.pulseGlow) {
+      const interactiveOuterPulseCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      interactiveOuterPulseCircle.setAttribute('r', targetBaseCircleRadiusValue + 4); interactiveOuterPulseCircle.setAttribute('fill', 'none');
+      interactiveOuterPulseCircle.setAttribute('stroke', localizedColorMapPalette.stroke); interactiveOuterPulseCircle.setAttribute('stroke-width', '1');
+      interactiveOuterPulseCircle.style.animation = 'pulse 1.3s infinite';
+      individualGroupNodeContainerG.appendChild(interactiveOuterPulseCircle);
+    }
+
+    const standardBaseCircleElement = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    standardBaseCircleElement.setAttribute('r', targetBaseCircleRadiusValue); standardBaseCircleElement.setAttribute('fill', localizedColorMapPalette.fill);
+    standardBaseCircleElement.setAttribute('stroke', localizedColorMapPalette.stroke); standardBaseCircleElement.setAttribute('stroke-width', nodeIsLatestActiveElement ? '2.5' : '1.5');
+    individualGroupNodeContainerG.appendChild(standardBaseCircleElement);
+
+    const internalTextIDMarkerElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    internalTextIDMarkerElement.setAttribute('text-anchor', 'middle'); internalTextIDMarkerElement.setAttribute('dominant-baseline', 'central');
+    internalTextIDMarkerElement.setAttribute('font-family', 'Space Grotesk, sans-serif'); internalTextIDMarkerElement.setAttribute('font-size', '10');
+    internalTextIDMarkerElement.setAttribute('font-weight', '700'); internalTextIDMarkerElement.setAttribute('fill', '#fff');
+    internalTextIDMarkerElement.textContent = nodeItem.type === 'optimal' ? '★' : `N${nodeItem.id}`;
+    individualGroupNodeContainerG.appendChild(internalTextIDMarkerElement);
+
+    if (nodeItem.type === 'fathomed') {
+      const failureCrossLineLeftToRight = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      failureCrossLineLeftToRight.setAttribute('x1', -6); failureCrossLineLeftToRight.setAttribute('y1', -6); failureCrossLineLeftToRight.setAttribute('x2', 6); failureCrossLineLeftToRight.setAttribute('y2', 6);
+      failureCrossLineLeftToRight.setAttribute('stroke', '#EF4444'); failureCrossLineLeftToRight.setAttribute('stroke-width', '2.5');
+      individualGroupNodeContainerG.appendChild(failureCrossLineLeftToRight);
+      const failureCrossLineRightToLeft = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      failureCrossLineRightToLeft.setAttribute('x1', 6); failureCrossLineRightToLeft.setAttribute('y1', -6); failureCrossLineRightToLeft.setAttribute('x2', -6); failureCrossLineRightToLeft.setAttribute('y2', 6);
+      failureCrossLineRightToLeft.setAttribute('stroke', '#EF4444'); failureCrossLineRightToLeft.setAttribute('stroke-width', '2.5');
+      individualGroupNodeContainerG.appendChild(failureCrossLineRightToLeft);
+    }
+
+    if (nodeItem.bound !== null && nodeItem.bound !== -Infinity) {
+      const nodeTextLabelBoundElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      nodeTextLabelBoundElement.setAttribute('y', targetBaseCircleRadiusValue + 13); nodeTextLabelBoundElement.setAttribute('text-anchor', 'middle');
+      nodeTextLabelBoundElement.setAttribute('font-family', 'Space Mono, monospace'); nodeTextLabelBoundElement.setAttribute('font-size', '9');
+      nodeTextLabelBoundElement.setAttribute('font-weight', '700');
+      nodeTextLabelBoundElement.setAttribute('fill', nodeItem.type === 'optimal' ? '#F59E0B' : (nodeItem.type === 'integer' ? '#10B981' : '#64748B'));
+      nodeTextLabelBoundElement.textContent = `Z=${nodeItem.bound}`;
+      individualGroupNodeContainerG.appendChild(nodeTextLabelBoundElement);
+    }
+
+    individualGroupNodeContainerG.addEventListener('click', (clickEventObject) => {
+      clickEventObject.stopPropagation();
+      openModalOverlaySpecificationInsight(nodeItem);
+    });
+    nodeContainerLayerG.appendChild(individualGroupNodeContainerG);
+  });
+}
+
+// Modal Viewport Presentation Management Kernels
+function openModalOverlaySpecificationInsight(nodeInstance) {
+  document.getElementById('modalNodeTitle').textContent = `${nodeInstance.title} : Variable Assignment Summary Matrices`;
+  document.getElementById('modalNodeBody').textContent = nodeInstance.body;
+  setModalVisibilityState(true);
+}
+function closeOverlayModal(clickEventObject) {
+  if(clickEventObject.target.id === 'modalMask') setModalVisibilityState(false);
+}
+function setModalVisibilityState(displayBooleanStateValue) {
+  const targetModalMaskSelectorNode = document.getElementById('modalMask');
+  if(displayBooleanStateValue) {
+    targetModalMaskSelectorNode.classList.add('show');
+  } else {
+    targetModalMaskSelectorNode.classList.remove('show');
+  }
+}
+</script>
+</body>
+</html>

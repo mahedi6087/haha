@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RICARDEX — Trade Advantage Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0e14;--bg2:#111520;--bg3:#161b26;
+  --card:#1a2030;--card2:#1f2640;
+  --border:#2a3348;--border2:#354060;
+  --accent:#00d4ff;--accent2:#0096ff;
+  --gold:#ffc947;--gold2:#ff9500;
+  --green:#00e5a0;--green2:#00b87a;
+  --red:#ff4d6d;--red2:#c9184a;
+  --purple:#b388ff;
+  --text:#e8eaf2;--text2:#8892a4;--text3:#5a6478;
+  --glow-accent:0 0 20px rgba(0,212,255,0.3);
+  --glow-gold:0 0 20px rgba(255,201,71,0.3);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Lora',serif;font-size:15px;line-height:1.6;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 1.5rem 6rem;}
+
+/* ── HEADER ── */
+header{padding:3.5rem 0 2rem;text-align:center;position:relative;}
+.header-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);padding:5px 16px;border-radius:100px;margin-bottom:1.4rem;}
+.dot-pulse{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1.5s ease infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.8);}}
+header h1{font-family:'Syne',sans-serif;font-size:clamp(2.8rem,6vw,5rem);font-weight:800;letter-spacing:-0.04em;line-height:1;background:linear-gradient(135deg,#fff 0%,var(--accent) 50%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.header-tagline{margin-top:0.5rem;font-family:'Syne',sans-serif;font-size:clamp(0.95rem,2vw,1.15rem);font-weight:400;color:var(--text2);font-style:italic;}
+.header-line{width:80px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);margin:1.5rem auto 0;}
+
+/* ── PAGE NAV ── */
+.page-nav{display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;margin:1.5rem 0 2.5rem;}
+.page-nav a{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);border:1px solid var(--border);border-radius:100px;padding:5px 14px;text-decoration:none;transition:all 0.2s;}
+.page-nav a:hover{color:var(--accent);border-color:var(--accent);background:rgba(0,212,255,0.06);}
+
+/* ── OVERVIEW STRIP ── */
+.overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:2.5rem;}
+.ov-item{background:var(--card);padding:1.2rem 1.4rem;display:flex;flex-direction:column;gap:4px;}
+.ov-icon{font-size:1.4rem;}
+.ov-title{font-family:'Syne',sans-serif;font-size:0.82rem;font-weight:700;color:#fff;}
+.ov-desc{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);line-height:1.5;}
+
+/* ── SECTION LABELS ── */
+.section-label{display:flex;align-items:center;gap:12px;margin:2.5rem 0 1rem;}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent);background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.25);padding:3px 10px;border-radius:3px;white-space:nowrap;}
+.section-title{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:700;color:#fff;}
+.section-line{flex:1;height:1px;background:var(--border);}
+
+/* ── PORTFOLIO SECTION MARKERS ── */
+.portfolio-marker{display:flex;align-items:center;gap:12px;margin:3.5rem 0 1rem;padding-bottom:0.6rem;border-bottom:2px solid var(--border);}
+.portfolio-marker-num{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#000;background:var(--accent);padding:4px 12px;border-radius:2px;font-weight:600;}
+.portfolio-marker-num.gold{background:var(--gold);}
+.portfolio-marker-num.green{background:var(--green);}
+.portfolio-marker-num.purple{background:var(--purple);}
+.portfolio-marker-title{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:#fff;}
+.portfolio-marker-line{flex:1;height:1px;background:var(--border);}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.8rem;margin-bottom:1.5rem;transition:border-color 0.3s;}
+.card:hover{border-color:var(--border2);}
+.card-header{display:flex;align-items:center;gap:10px;margin-bottom:1.4rem;padding-bottom:1rem;border-bottom:1px solid var(--border);}
+.card-icon{font-size:1.4rem;line-height:1;}
+.card-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:#fff;}
+.card-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;}
+
+/* ── PROJECT OVERVIEW STYLES ── */
+.overview-prose{font-size:0.95rem;color:var(--text2);line-height:1.9;margin-bottom:1.2rem;}
+.overview-prose strong{color:var(--text);}
+.concept-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1.2rem 0;}
+.concept-item{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1.2rem;position:relative;overflow:hidden;}
+.concept-item::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--accent));}
+.concept-item-icon{font-size:1.6rem;margin-bottom:0.5rem;}
+.concept-item-title{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:0.3rem;}
+.concept-item-desc{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);line-height:1.6;}
+.course-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(179,136,255,0.08);border:1px solid rgba(179,136,255,0.25);border-radius:6px;padding:0.8rem 1.2rem;margin-top:0.8rem;}
+.course-badge-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--purple);}
+.course-badge-value{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;color:#fff;}
+
+/* ── EVIDENCE STYLES ── */
+.evidence-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;}
+@media(max-width:700px){.evidence-grid{grid-template-columns:1fr;}}
+.evidence-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.evidence-card-header{padding:0.8rem 1.2rem;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.evidence-card-title{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);}
+.evidence-card-body{padding:1.2rem;}
+
+/* Inline OC table as evidence */
+.evi-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:12px;}
+.evi-table th{background:var(--bg3);color:var(--text2);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:8px 12px;border:1px solid var(--border);text-align:center;}
+.evi-table td{padding:10px 12px;border:1px solid var(--border);text-align:center;color:var(--text);}
+.evi-table .row-head{text-align:left;font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:700;background:var(--bg3);}
+.evi-table .evi-low{color:var(--green);font-weight:600;}
+.evi-table .evi-high{color:var(--text3);}
+.evi-table .evi-winner{color:var(--green);}
+
+/* PPF diagram as SVG evidence */
+.ppf-svg-wrap{padding:0.5rem;background:var(--bg3);border-radius:4px;}
+
+/* Worked example steps */
+.worked-steps{display:flex;flex-direction:column;gap:0.6rem;}
+.worked-step{display:flex;gap:12px;align-items:flex-start;}
+.step-num{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;color:#000;background:var(--accent);padding:2px 8px;border-radius:2px;flex-shrink:0;margin-top:3px;font-weight:600;}
+.step-body{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);line-height:1.7;}
+.step-body .eq{color:var(--accent);}
+.step-body .res{color:var(--green);font-weight:600;}
+
+/* Gains bar chart */
+.bar-chart{display:flex;flex-direction:column;gap:0.8rem;padding:0.2rem 0;}
+.bar-row{display:flex;align-items:center;gap:10px;}
+.bar-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);width:110px;flex-shrink:0;text-align:right;}
+.bar-track{flex:1;height:12px;background:var(--bg3);border-radius:2px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:2px;transition:width 0.6s ease;}
+.bar-val{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);width:50px;flex-shrink:0;}
+
+/* Handwritten-style note box */
+.handwritten-note{background:rgba(255,201,71,0.04);border:1px solid rgba(255,201,71,0.2);border-radius:6px;padding:1.2rem 1.4rem;font-family:'Lora',serif;font-style:italic;font-size:0.88rem;color:var(--text2);line-height:1.8;position:relative;}
+.handwritten-note::before{content:'📝 Course Notes';font-family:'JetBrains Mono',monospace;font-style:normal;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:0.6rem;}
+
+/* ── REFLECTION STYLES ── */
+.reflection-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;}
+.reflection-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1.4rem;position:relative;overflow:hidden;}
+.reflection-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c,var(--accent));}
+.reflection-icon{font-size:1.8rem;margin-bottom:0.7rem;}
+.reflection-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:0.6rem;}
+.reflection-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:#fff;margin-bottom:0.7rem;}
+.reflection-body{font-size:0.84rem;color:var(--text2);line-height:1.8;}
+.reflection-body ul{padding-left:1rem;margin:0.3rem 0;}
+.reflection-body ul li{margin-bottom:0.25rem;}
+.reflection-body strong{color:var(--text);}
+.takeaway-strip{display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:1.2rem;}
+.takeaway{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;padding:5px 12px;border-radius:100px;border:1px solid var(--border2);color:var(--text2);}
+.takeaway.k{border-color:rgba(0,212,255,0.3);color:var(--accent);background:rgba(0,212,255,0.06);}
+.takeaway.s{border-color:rgba(0,229,160,0.3);color:var(--green);background:rgba(0,229,160,0.06);}
+.takeaway.r{border-color:rgba(179,136,255,0.3);color:var(--purple);background:rgba(179,136,255,0.06);}
+
+/* ── SCENARIO SECTION ── */
+.scenario-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+@media(max-width:640px){.scenario-row{grid-template-columns:1fr;}}
+.scenario-field{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;}
+.sc-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+.sc-input{width:100%;background:transparent;border:none;border-bottom:1px solid var(--border2);color:#fff;font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:600;padding:4px 0 5px;outline:none;transition:border-color 0.2s;}
+.sc-input:focus{border-bottom-color:var(--accent);}
+.sc-input.b:focus{border-bottom-color:var(--gold);}
+.example-btn{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 14px;border-radius:4px;border:1px solid var(--purple);color:var(--purple);background:rgba(179,136,255,0.06);cursor:pointer;transition:all 0.2s;margin-top:0.6rem;}
+.example-btn:hover{background:rgba(179,136,255,0.14);box-shadow:0 0 14px rgba(179,136,255,0.2);}
+
+/* ── INPUT GRID ── */
+.input-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:1.5rem;align-items:start;}
+@media(max-width:700px){.input-grid{grid-template-columns:1fr;}}
+.input-vs{display:flex;align-items:center;justify-content:center;padding-top:2.5rem;font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--text3);}
+.country-block{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1.4rem;}
+.country-block.a-side{border-top:3px solid var(--accent);}
+.country-block.b-side{border-top:3px solid var(--gold);}
+.country-name-input{width:100%;background:transparent;border:none;border-bottom:1px solid var(--border2);color:#fff;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;padding:4px 0 6px;margin-bottom:1.2rem;outline:none;transition:border-color 0.2s;}
+.country-name-input:focus{border-bottom-color:var(--accent);}
+.country-name-input.b:focus{border-bottom-color:var(--gold);}
+.field-row{margin-bottom:1rem;}
+.field-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.field-unit{font-size:9px;color:var(--text3);background:var(--border);padding:1px 6px;border-radius:3px;}
+.num-input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:5px;color:#fff;font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:500;padding:10px 14px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;-moz-appearance:textfield;}
+.num-input::-webkit-outer-spin-button,.num-input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.num-input:focus{border-color:var(--accent);box-shadow:var(--glow-accent);}
+.num-input.b:focus{border-color:var(--gold);box-shadow:var(--glow-gold);}
+.resources-row{display:flex;align-items:center;gap:10px;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);}
+.resources-row label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);flex-shrink:0;}
+
+/* ── RESULTS ── */
+.results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.result-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1.2rem 1.4rem;position:relative;overflow:hidden;transition:all 0.3s;}
+.result-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--accent));opacity:0.7;}
+.result-card-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:0.5rem;}
+.result-card-value{font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:600;color:var(--c,var(--accent));line-height:1;}
+.result-card-unit{font-size:0.7rem;color:var(--text3);margin-top:3px;font-family:'JetBrains Mono',monospace;}
+
+/* ── OC MATRIX ── */
+.oc-matrix{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:13px;}
+.oc-matrix th{background:var(--bg2);color:var(--text2);font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:10px 16px;text-align:center;border:1px solid var(--border);}
+.oc-matrix td{padding:14px 16px;border:1px solid var(--border);text-align:center;transition:background 0.3s;}
+.oc-matrix .country-cell{text-align:left;font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:#fff;background:var(--bg2);}
+.oc-val{font-size:1.4rem;font-weight:500;}
+.oc-formula{font-size:9px;color:var(--text3);display:block;margin-top:3px;}
+.oc-lower{color:var(--green);}.oc-higher{color:var(--red2);opacity:0.8;}
+.oc-badge{display:inline-block;font-size:9px;letter-spacing:1px;padding:2px 7px;border-radius:3px;margin-top:4px;}
+.oc-badge.winner{background:rgba(0,229,160,0.12);color:var(--green);border:1px solid rgba(0,229,160,0.3);}
+.oc-badge.loser{background:rgba(255,77,109,0.08);color:var(--text3);border:1px solid var(--border);}
+
+/* ── CA RESULT ── */
+.ca-result{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;}
+@media(max-width:600px){.ca-result{grid-template-columns:1fr;}}
+.ca-card{border-radius:8px;padding:1.4rem;border:1px solid var(--border);background:var(--bg2);position:relative;overflow:hidden;}
+.ca-country{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:0.3rem;}
+.ca-specializes{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:0.6rem;}
+.ca-good{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;}
+.ca-oc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);margin-top:5px;}
+.ca-reason{font-size:0.78rem;color:var(--text2);margin-top:0.5rem;font-style:italic;}
+
+/* ── PPF ── */
+.ppf-wrap{display:grid;grid-template-columns:1fr 300px;gap:1.5rem;align-items:start;}
+@media(max-width:800px){.ppf-wrap{grid-template-columns:1fr;}}
+#ppfCanvas{width:100%!important;border-radius:8px;border:1px solid var(--border);background:var(--bg2);display:block;}
+.ppf-controls{display:flex;flex-direction:column;gap:1rem;}
+.ppf-stat{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;}
+.ppf-stat-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:0.8rem;}
+.ppf-stat-row{display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:0.5rem;}
+.ppf-stat-name{color:var(--text2);}.ppf-stat-val{font-weight:500;}
+
+/* ── SIMULATOR ── */
+.simulator-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+@media(max-width:600px){.simulator-grid{grid-template-columns:1fr;}}
+.sim-block{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1.2rem;}
+.sim-title{font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:#fff;margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+.sim-dot{width:8px;height:8px;border-radius:50%;}
+.allocation-slider{margin-bottom:0.8rem;}
+.alloc-header{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:4px;}
+input[type=range]{width:100%;height:4px;border-radius:2px;outline:none;cursor:pointer;-webkit-appearance:none;}
+input[type=range].a-range{background:linear-gradient(90deg,var(--accent) var(--pct,50%),var(--border) var(--pct,50%));}
+input[type=range].b-range{background:linear-gradient(90deg,var(--gold) var(--pct,50%),var(--border) var(--pct,50%));}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--border2);box-shadow:0 2px 8px rgba(0,0,0,0.4);transition:transform 0.15s;}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.3);}
+.alloc-output{font-family:'JetBrains Mono',monospace;font-size:12px;display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:0.8rem;}
+.alloc-out-val{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;text-align:center;}
+.alloc-out-label{font-size:9px;color:var(--text3);display:block;margin-bottom:2px;}
+.alloc-out-num{font-size:1rem;font-weight:500;}
+.world-total{background:linear-gradient(135deg,rgba(0,212,255,0.06),rgba(255,201,71,0.06));border:1px solid rgba(0,212,255,0.2);border-radius:8px;padding:1.2rem 1.6rem;margin-top:1rem;}
+.world-total-title{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:0.8rem;}
+.world-total-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.8rem;}
+@media(max-width:600px){.world-total-grid{grid-template-columns:1fr 1fr;}}
+.wt-item{text-align:center;}.wt-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);margin-bottom:3px;}
+.wt-val{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:500;}
+.gains-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:600px){.gains-grid{grid-template-columns:1fr;}}
+.gain-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1.2rem;}
+.gain-title{font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:#fff;margin-bottom:1rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border);}
+.gain-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;font-family:'JetBrains Mono',monospace;font-size:11px;}
+.gain-label{color:var(--text3);}.gain-val{font-weight:500;}
+.gain-delta{font-size:10px;padding:1px 7px;border-radius:3px;margin-left:6px;}
+.delta-pos{background:rgba(0,229,160,0.12);color:var(--green);}
+.delta-neg{background:rgba(255,77,109,0.1);color:var(--red);}
+
+/* ── EXPLAIN BOX ── */
+.explain-box{background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:6px;padding:1.2rem 1.4rem;font-size:0.85rem;color:var(--text2);line-height:1.7;margin-top:1rem;}
+.explain-box strong{color:var(--accent);}
+.explain-box .highlight{background:rgba(0,229,160,0.1);color:var(--green);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+.formula-strip{display:flex;flex-wrap:wrap;gap:0.7rem;margin:1rem 0;}
+.formula{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);}
+.formula span{color:var(--accent);}
+.alert{display:flex;align-items:flex-start;gap:10px;background:rgba(255,201,71,0.08);border:1px solid rgba(255,201,71,0.2);border-radius:6px;padding:1rem 1.2rem;font-size:0.84rem;color:var(--text2);margin-top:1rem;}
+.alert-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px;}
+.scenario-badge{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:100px;border:1px solid var(--border);color:var(--text3);margin-right:0.4rem;margin-bottom:0.4rem;cursor:pointer;transition:all 0.2s;}
+.scenario-badge:hover,.scenario-badge.active{border-color:var(--purple);color:var(--purple);background:rgba(179,136,255,0.08);}
+
+/* ── MCQ TEST ── */
+.mcq-wrap{display:flex;flex-direction:column;gap:1.4rem;}
+.mcq-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1.4rem;transition:border-color 0.3s;}
+.mcq-q-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:1rem;}
+.mcq-q-num{font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(0,212,255,0.12);color:var(--accent);border:1px solid rgba(0,212,255,0.25);padding:3px 10px;border-radius:4px;white-space:nowrap;flex-shrink:0;margin-top:2px;}
+.mcq-q-text{font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:600;color:#fff;line-height:1.4;}
+.mcq-options{display:flex;flex-direction:column;gap:0.5rem;}
+.mcq-opt{display:flex;align-items:center;gap:10px;padding:0.7rem 1rem;border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all 0.2s;font-size:0.87rem;color:var(--text2);}
+.mcq-opt:hover{border-color:var(--accent2);background:rgba(0,150,255,0.06);color:#fff;}
+.mcq-opt.selected{border-color:var(--accent);background:rgba(0,212,255,0.08);color:#fff;}
+.mcq-opt.correct-ans{border-color:var(--green)!important;background:rgba(0,229,160,0.1)!important;color:var(--green)!important;}
+.mcq-opt.wrong-ans{border-color:var(--red)!important;background:rgba(255,77,109,0.08)!important;color:var(--red)!important;}
+.mcq-opt-key{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--border);padding:2px 7px;border-radius:3px;flex-shrink:0;}
+.mcq-feedback{margin-top:0.7rem;font-size:0.82rem;padding:0.6rem 1rem;border-radius:5px;display:none;}
+.mcq-feedback.show{display:block;}
+.mcq-feedback.correct{background:rgba(0,229,160,0.1);color:var(--green);border:1px solid rgba(0,229,160,0.25);}
+.mcq-feedback.wrong{background:rgba(255,77,109,0.08);color:var(--red);border:1px solid rgba(255,77,109,0.2);}
+.submit-test-btn{display:block;width:100%;margin-top:1.5rem;padding:1rem;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;letter-spacing:1px;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#000;border:none;border-radius:8px;cursor:pointer;transition:all 0.2s;}
+.submit-test-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,212,255,0.3);}
+.submit-test-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+.test-score-box{display:none;margin-top:1.5rem;border-radius:8px;padding:1.6rem;text-align:center;border:1px solid var(--border);}
+.test-score-box.show{display:block;}
+.score-title{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;margin-bottom:0.3rem;}
+.score-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:1rem;}
+.retry-btn{display:inline-block;margin-top:1rem;padding:8px 24px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;border:1px solid var(--border2);border-radius:5px;color:var(--text2);cursor:pointer;transition:all 0.2s;background:transparent;}
+.retry-btn:hover{border-color:var(--accent);color:var(--accent);}
+.test-locked{text-align:center;padding:2rem;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);}
+.test-locked .lock-icon{font-size:2.5rem;margin-bottom:0.8rem;}
+
+/* ── ANGRY OVERLAY ── */
+#angryOverlay{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,0.92);
+  flex-direction:column;align-items:center;justify-content:center;
+  animation:angryIn 0.4s ease;
+}
+#angryOverlay.show{display:flex;}
+@keyframes angryIn{from{opacity:0;transform:scale(1.05);}to{opacity:1;transform:scale(1);}}
+.angry-emoji{font-size:clamp(8rem,25vw,18rem);line-height:1;animation:angryShake 0.3s ease infinite;}
+@keyframes angryShake{0%,100%{transform:rotate(-4deg) scale(1);}50%{transform:rotate(4deg) scale(1.04);}}
+.angry-text{font-family:'Syne',sans-serif;font-size:clamp(1.4rem,4vw,2.5rem);font-weight:800;color:var(--red);margin-top:1.5rem;text-align:center;animation:angryPulse 0.6s ease infinite alternate;}
+@keyframes angryPulse{from{opacity:1;}to{opacity:0.5;}}
+.angry-sub{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-top:0.8rem;text-align:center;}
+.angry-close{margin-top:2rem;padding:10px 28px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;transition:all 0.2s;}
+.angry-close:hover{background:var(--red2);}
+
+/* ── EXPORT ── */
+.export-btn{display:inline-flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:8px 18px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);cursor:pointer;transition:all 0.2s;margin-right:0.5rem;margin-top:0.5rem;}
+.export-btn:hover{border-color:var(--accent);color:var(--accent);box-shadow:var(--glow-accent);}
+
+/* ── EMPTY / TOAST ── */
+.empty{text-align:center;padding:2rem;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;}
+.empty-icon{font-size:2rem;margin-bottom:0.5rem;}
+#toast{position:fixed;bottom:2rem;right:2rem;background:var(--green);color:#000;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 20px;border-radius:6px;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none;z-index:999;}
+#toast.show{opacity:1;transform:translateY(0);}
+
+#backToTop{
+position:fixed;
+right:24px;
+bottom:24px;
+z-index:999;
+display:none;
+padding:12px 16px;
+border:none;
+border-radius:999px;
+cursor:pointer;
+font-family:'JetBrains Mono',monospace;
+font-size:11px;
+letter-spacing:1px;
+background:var(--accent);
+color:#000;
+box-shadow:var(--glow-accent);
+}
+#backToTop:hover{transform:translateY(-2px);}
+
+</style>
+</head>
+<body>
+
+<!-- ANGRY OVERLAY -->
+<div id="angryOverlay">
+  <div class="angry-emoji">😤</div>
+  <div class="angry-text">WRONG ANSWER!</div>
+  <div class="angry-sub">You missed at least one question. Study harder!</div>
+  <button class="angry-close" onclick="closeAngry()">Try Again →</button>
+</div>
+
+<div id="toast"></div>
+
+<div class="wrap">
+
+<!-- ════ HEADER ════ -->
+<header>
+  <div class="header-eyebrow"><div class="dot-pulse"></div>International Trade</div>
+  <h1>RICARDEX</h1>
+  <div class="header-tagline">The Trade Advantage Engine — by David Ricardo's Principle</div>
+  <div class="header-line"></div>
+</header>
+
+<!-- Page navigation -->
+<nav class="page-nav">
+  <a href="#overview">Project Overview</a>
+  <a href="#demo">Demonstration</a>
+  <a href="#evidence">Evidence</a>
+  <a href="#reflection">What I Learned</a>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 1 — PROJECT OVERVIEW
+═══════════════════════════════════════════════════════════ -->
+<div id="overview" class="portfolio-marker">
+  <div class="portfolio-marker-num">01</div>
+  <div class="portfolio-marker-title">Project Overview</div>
+  <div class="portfolio-marker-line"></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🌐</div>
+    <div>
+      <div class="card-title">What Is This Page About?</div>
+      <div class="card-sub">Assignment context · Core concept · Why it matters</div>
+    </div>
+  </div>
+
+  <p class="overview-prose">
+    This project was built as part of an <strong>International Trade Economics</strong> course assignment exploring the foundations of why nations trade. The assignment asked us to analyze two countries producing two goods and determine, step by step, who holds <strong>absolute advantage</strong>, how to construct an <strong>opportunity cost matrix</strong>, and which country should specialize in which good according to <strong>Comparative Advantage</strong> — David Ricardo's central insight from 1817.
+  </p>
+  <p class="overview-prose">
+    Rather than submitting a static worksheet, I built an interactive tool that replicates the full analytical workflow. Any two countries and any two goods can be entered, and the tool computes every result instantly — from raw productivity comparisons through to PPF equations and world output gains from specialization.
+  </p>
+
+  <div class="course-badge">
+    <div class="course-badge-label">Course Assignment</div>
+    <div class="course-badge-value">International Trade Economics — Comparative Advantage Analysis</div>
+  </div>
+
+  <div class="concept-grid">
+    <div class="concept-item" style="--c:var(--accent)">
+      <div class="concept-item-icon">⚡</div>
+      <div class="concept-item-title">Absolute Advantage</div>
+      <div class="concept-item-desc">A country has absolute advantage when it can produce more of a good per resource unit than another. Introduced by Adam Smith. Important, but not the full story.</div>
+    </div>
+    <div class="concept-item" style="--c:var(--gold)">
+      <div class="concept-item-icon">⚖️</div>
+      <div class="concept-item-title">Opportunity Cost</div>
+      <div class="concept-item-desc">The real cost of producing one unit of a good is the quantity of the other good that must be given up. Calculated as: OC(Good 1) = output(Good 2) ÷ output(Good 1).</div>
+    </div>
+    <div class="concept-item" style="--c:var(--green)">
+      <div class="concept-item-icon">🎯</div>
+      <div class="concept-item-title">Comparative Advantage</div>
+      <div class="concept-item-desc">Ricardo's breakthrough: a country should specialize in the good where its opportunity cost is lowest, even if it is worse at producing everything. This is why trade benefits all nations.</div>
+    </div>
+    <div class="concept-item" style="--c:var(--purple)">
+      <div class="concept-item-icon">📈</div>
+      <div class="concept-item-title">Production Possibility Frontier</div>
+      <div class="concept-item-desc">The PPF shows the maximum combinations of two goods a country can produce with fixed resources. Its slope equals the opportunity cost — a direct visual of trade-offs.</div>
+    </div>
+  </div>
+
+  <div class="alert" style="margin-top:1.2rem;">
+    <div class="alert-icon">💡</div>
+    <div><strong>Why this matters in the real world:</strong> Comparative advantage explains patterns in global trade — why Bangladesh exports garments, why Germany exports machinery, and why even a highly productive country gains from importing goods other nations produce at lower opportunity cost. It underpins the WTO, free trade agreements, and development economics debates about export-led growth.</div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 2 — DEMONSTRATION (full interactive tool)
+═══════════════════════════════════════════════════════════ -->
+<div id="demo" class="portfolio-marker">
+  <div class="portfolio-marker-num gold">02</div>
+  <div class="portfolio-marker-title">Demonstration</div>
+  <div class="portfolio-marker-line"></div>
+</div>
+
+<!-- ════ PROJECT OVERVIEW STRIP ════ -->
+<div class="overview">
+  <div class="ov-item">
+    <div class="ov-icon">⚡</div>
+    <div class="ov-title">Live Calculations</div>
+    <div class="ov-desc">All results — absolute advantage, OC matrix, CA — update instantly as you type any number.</div>
+  </div>
+  <div class="ov-item">
+    <div class="ov-icon">🌍</div>
+    <div class="ov-title">Fully Custom</div>
+    <div class="ov-desc">Enter any two countries and any two goods. Use real countries or fictional ones.</div>
+  </div>
+  <div class="ov-item">
+    <div class="ov-icon">📈</div>
+    <div class="ov-title">PPF Visualizer</div>
+    <div class="ov-desc">Dynamic Production Possibility Frontier chart redraws with every input change.</div>
+  </div>
+  <div class="ov-item">
+    <div class="ov-icon">🔬</div>
+    <div class="ov-title">Trade Simulator</div>
+    <div class="ov-desc">Drag sliders to allocate resources and see world output gains from specialization live.</div>
+  </div>
+  <div class="ov-item">
+    <div class="ov-icon">🧠</div>
+    <div class="ov-title">Context MCQ Test</div>
+    <div class="ov-desc">5 questions generated from YOUR data. Tests whether you truly understood the analysis.</div>
+  </div>
+  <div class="ov-item">
+    <div class="ov-icon">💾</div>
+    <div class="ov-title">Export Ready</div>
+    <div class="ov-desc">Download your full analysis as CSV, copy a text summary, or print a report.</div>
+  </div>
+</div>
+
+<!-- ════ DATA INPUT ════ -->
+<div class="section-label">
+  <div class="section-num">STEP 01</div>
+  <div class="section-title">Enter Your Data</div>
+  <div class="section-line"></div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">✏️</div>
+    <div>
+      <div class="card-title">Countries & Goods — Fully Custom</div>
+      <div class="card-sub">Type any country names · any good names · any output numbers</div>
+    </div>
+    <button class="example-btn" onclick="loadExample()" style="margin-left:auto">★ Load Example</button>
+  </div>
+
+  <div class="scenario-row" style="margin-bottom:1.2rem;">
+    <div class="scenario-field">
+      <div class="sc-label">Name of Good 1</div>
+      <input class="sc-input" id="good1Name" type="text" value="" placeholder="e.g. Steel, Rice, Software…" oninput="updateGoodLabels()">
+    </div>
+    <div class="scenario-field">
+      <div class="sc-label">Name of Good 2</div>
+      <input class="sc-input" id="good2Name" type="text" value="" placeholder="e.g. Wheat, Cars, Textiles…" oninput="updateGoodLabels()">
+    </div>
+  </div>
+
+  <div class="input-grid">
+    <div class="country-block a-side">
+      <input class="country-name-input" id="nameA" value="" placeholder="Country A name…" oninput="calculate()">
+      <div class="field-row">
+        <div class="field-label">Output of <span class="field-unit" id="good1Label">Good 1</span> per resource unit</div>
+        <input class="num-input" id="aGood1" type="number" min="0.01" step="any" placeholder="e.g. 12" oninput="calculate()">
+      </div>
+      <div class="field-row">
+        <div class="field-label">Output of <span class="field-unit" id="good2Label">Good 2</span> per resource unit</div>
+        <input class="num-input" id="aGood2" type="number" min="0.01" step="any" placeholder="e.g. 6" oninput="calculate()">
+      </div>
+      <div class="resources-row">
+        <label>Total Resource Units:</label>
+        <input class="num-input" id="aRes" type="number" min="1" step="1" value="100" style="max-width:100px" oninput="calculate()">
+      </div>
+    </div>
+    <div class="input-vs">VS</div>
+    <div class="country-block b-side">
+      <input class="country-name-input b" id="nameB" value="" placeholder="Country B name…" oninput="calculate()">
+      <div class="field-row">
+        <div class="field-label">Output of <span class="field-unit" id="good1LabelB">Good 1</span> per resource unit</div>
+        <input class="num-input b" id="bGood1" type="number" min="0.01" step="any" placeholder="e.g. 8" oninput="calculate()">
+      </div>
+      <div class="field-row">
+        <div class="field-label">Output of <span class="field-unit" id="good2LabelB">Good 2</span> per resource unit</div>
+        <input class="num-input b" id="bGood2" type="number" min="0.01" step="any" placeholder="e.g. 2" oninput="calculate()">
+      </div>
+      <div class="resources-row">
+        <label>Total Resource Units:</label>
+        <input class="num-input b" id="bRes" type="number" min="1" step="1" value="100" style="max-width:100px" oninput="calculate()">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ ABSOLUTE ADVANTAGE ════ -->
+<div class="section-label">
+  <div class="section-num">STEP 02</div>
+  <div class="section-title">Absolute Advantage</div>
+  <div class="section-line"></div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">⚡</div>
+    <div><div class="card-title">Who Produces More Per Resource Unit?</div><div class="card-sub">Higher output per worker/capital = absolute advantage</div></div>
+  </div>
+  <div class="results-grid" id="absResults"><div class="empty"><div class="empty-icon">📊</div>Enter data above</div></div>
+  <div id="absExplain" class="explain-box" style="display:none"></div>
+</div>
+
+<!-- ════ OC MATRIX ════ -->
+<div class="section-label">
+  <div class="section-num">STEP 03</div>
+  <div class="section-title">Opportunity Cost Matrix</div>
+  <div class="section-line"></div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">⚖️</div>
+    <div><div class="card-title">What Must Be Given Up?</div><div class="card-sub">The real cost of producing each good in terms of the other</div></div>
+  </div>
+  <div class="formula-strip">
+    <div class="formula">OC of Good 1 = <span>Good 2 ÷ Good 1</span></div>
+    <div class="formula">OC of Good 2 = <span>Good 1 ÷ Good 2</span></div>
+    <div class="formula"><span>Lower OC</span> = Comparative Advantage</div>
+  </div>
+  <div id="ocMatrix"><div class="empty"><div class="empty-icon">🔢</div>Enter data above</div></div>
+  <div id="ocExplain" class="explain-box" style="display:none"></div>
+</div>
+
+<!-- ════ COMPARATIVE ADVANTAGE ════ -->
+<div class="section-label">
+  <div class="section-num">STEP 04</div>
+  <div class="section-title">Comparative Advantage & Specialization</div>
+  <div class="section-line"></div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🎯</div>
+    <div><div class="card-title">Who Should Specialize in What?</div><div class="card-sub">Ricardo's principle: specialize where opportunity cost is lowest</div></div>
+  </div>
+  <div id="caResult"><div class="empty"><div class="empty-icon">🎯</div>Enter data above</div></div>
+</div>
+
+<!-- ════ PPF ════ -->
+<div class="section-label">
+  <div class="section-num">STEP 05</div>
+  <div class="section-title">Production Possibility Frontier</div>
+  <div class="section-line"></div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">📈</div>
+    <div><div class="card-title">Visual Limit of Production</div><div class="card-sub">Redraws live with every input change</div></div>
+  </div>
+  <div class="ppf-wrap">
+    <canvas id="ppfCanvas" width="600" height="480"></canvas>
+    <div class="ppf-controls" id="ppfStats"><div class="empty"><div class="empty-icon">📉</div>Enter data</div></div>
+  </div>
+</div>
+
+<!-- ════ SIMULATOR ════ -->
+<div class="section-label">
+  <div class="section-num">STEP 06</div>
+  <div class="section-title">What-If Trade Simulator</div>
+  <div class="section-line"></div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🔬</div>
+    <div><div class="card-title">Simulate Resource Allocation</div><div class="card-sub">Drag to see how output and world totals shift with specialization</div></div>
+  </div>
+  <div class="simulator-grid" id="simGrid"><div class="empty"><div class="empty-icon">🎮</div>Enter data above</div></div>
+  <div id="worldTotal" class="world-total" style="display:none"></div>
+  <div id="gainsSection" style="margin-top:1.2rem;display:none">
+    <div class="section-label" style="margin:0 0 0.8rem">
+      <div class="section-num">GAINS</div>
+      <div class="section-title" style="font-size:1rem">World Output: Specialization vs No Trade</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="gains-grid" id="gainsGrid"></div>
+    <div id="gainsAlert" class="alert" style="margin-top:0.8rem">
+      <div class="alert-icon">💡</div>
+      <div id="gainsAlertText"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MCQ TEST ════ -->
+<div class="section-label">
+  <div class="section-num">STEP 07</div>
+  <div class="section-title">Context-Based Test</div>
+  <div class="section-line"></div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🧠</div>
+    <div>
+      <div class="card-title">5 MCQs — Generated From YOUR Data</div>
+      <div class="card-sub">Questions are based on the exact numbers and countries you entered above</div>
+    </div>
+    <button class="example-btn" onclick="generateTest()" style="margin-left:auto;border-color:var(--gold);color:var(--gold);background:rgba(255,201,71,0.06);">⚡ Generate Test</button>
+  </div>
+  <div id="testArea">
+    <div class="test-locked">
+      <div class="lock-icon">🔒</div>
+      <div>Enter your data and click Generate Test</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ EXPORT ════ -->
+<div class="section-label">
+  <div class="section-num">STEP 08</div>
+  <div class="section-title">Export Analysis</div>
+  <div class="section-line"></div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">💾</div>
+    <div><div class="card-title">Save or Share Your Results</div><div class="card-sub">Download CSV · Copy text summary · Print report</div></div>
+  </div>
+  <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+  <button class="export-btn" onclick="copySummary()">📋 Copy Summary</button>
+  <button class="export-btn" onclick="window.print()">🖨 Print Report</button>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 3 — EVIDENCE
+═══════════════════════════════════════════════════════════ -->
+<div id="evidence" class="portfolio-marker">
+  <div class="portfolio-marker-num green">03</div>
+  <div class="portfolio-marker-title">Evidence</div>
+  <div class="portfolio-marker-line"></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">📋</div>
+    <div>
+      <div class="card-title">Course Work Evidence</div>
+      <div class="card-sub">Worked example · OC table · PPF diagram · output comparison</div>
+    </div>
+  </div>
+  <p style="font-size:0.88rem;color:var(--text2);line-height:1.8;margin-bottom:1.4rem;">The following evidence reproduces the core calculations and visual outputs from the assignment worksheet, using the in-class example of <strong style="color:var(--accent)">Uzmara</strong> (Country A) vs <strong style="color:var(--gold)">Fleuronne</strong> (Country B) producing <strong>Storm-Iron</strong> and <strong>Sungrain</strong>.</p>
+
+  <!-- Evidence item 1: Worked step-by-step calculation -->
+  <div class="evidence-grid">
+    <div class="evidence-card">
+      <div class="evidence-card-header">
+        <span style="color:var(--accent);font-size:1rem;">🔢</span>
+        <div class="evidence-card-title">Step-by-Step Opportunity Cost Calculation</div>
+      </div>
+      <div class="evidence-card-body">
+        <div class="worked-steps">
+          <div class="worked-step">
+            <div class="step-num">01</div>
+            <div class="step-body"><strong style="color:#fff">Given data:</strong><br>
+              Uzmara: Storm-Iron = <span class="eq">12</span>, Sungrain = <span class="eq">6</span>, Resources = 100<br>
+              Fleuronne: Storm-Iron = <span class="eq">8</span>, Sungrain = <span class="eq">2</span>, Resources = 100
+            </div>
+          </div>
+          <div class="worked-step">
+            <div class="step-num">02</div>
+            <div class="step-body"><strong style="color:#fff">Absolute Advantage check:</strong><br>
+              Storm-Iron: Uzmara 12 &gt; Fleuronne 8 → <span class="res">Uzmara wins</span><br>
+              Sungrain: Uzmara 6 &gt; Fleuronne 2 → <span class="res">Uzmara wins</span><br>
+              <em style="color:var(--text3)">Both goods → Uzmara has absolute advantage in both.</em>
+            </div>
+          </div>
+          <div class="worked-step">
+            <div class="step-num">03</div>
+            <div class="step-body"><strong style="color:#fff">Opportunity Cost — Uzmara:</strong><br>
+              OC(Storm-Iron) = 6 ÷ 12 = <span class="res">0.5 Sungrain</span><br>
+              OC(Sungrain) = 12 ÷ 6 = <span class="res">2.0 Storm-Iron</span>
+            </div>
+          </div>
+          <div class="worked-step">
+            <div class="step-num">04</div>
+            <div class="step-body"><strong style="color:#fff">Opportunity Cost — Fleuronne:</strong><br>
+              OC(Storm-Iron) = 2 ÷ 8 = <span class="res">0.25 Sungrain</span><br>
+              OC(Sungrain) = 8 ÷ 2 = <span class="res">4.0 Storm-Iron</span>
+            </div>
+          </div>
+          <div class="worked-step">
+            <div class="step-num">05</div>
+            <div class="step-body"><strong style="color:#fff">Comparative Advantage:</strong><br>
+              Storm-Iron OC: Fleuronne 0.25 &lt; Uzmara 0.5 → <span class="res">Fleuronne specializes</span><br>
+              Sungrain OC: Uzmara 2.0 &lt; Fleuronne 4.0 → <span class="res">Uzmara specializes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Evidence item 2: OC Matrix recreated as HTML table -->
+    <div class="evidence-card">
+      <div class="evidence-card-header">
+        <span style="color:var(--gold);font-size:1rem;">📊</span>
+        <div class="evidence-card-title">Recreated Opportunity Cost Matrix (Assignment Table)</div>
+      </div>
+      <div class="evidence-card-body">
+        <table class="evi-table" style="margin-bottom:1rem;">
+          <thead>
+            <tr>
+              <th style="text-align:left;">Country</th>
+              <th>OC of 1 Storm-Iron<br><span style="font-weight:400;opacity:0.6;">(in Sungrain)</span></th>
+              <th>OC of 1 Sungrain<br><span style="font-weight:400;opacity:0.6;">(in Storm-Iron)</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="row-head"><span style="color:var(--accent)">▐</span> Uzmara</td>
+              <td><span class="evi-high">0.5000</span><br><span style="font-size:9px;color:var(--text3)">6 ÷ 12</span></td>
+              <td><span class="evi-low">2.0000 ✓</span><br><span style="font-size:9px;color:var(--text3)">12 ÷ 6</span></td>
+            </tr>
+            <tr>
+              <td class="row-head"><span style="color:var(--gold)">▐</span> Fleuronne</td>
+              <td><span class="evi-low">0.2500 ✓</span><br><span style="font-size:9px;color:var(--text3)">2 ÷ 8</span></td>
+              <td><span class="evi-high">4.0000</span><br><span style="font-size:9px;color:var(--text3)">8 ÷ 2</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green);background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.2);border-radius:4px;padding:6px 10px;">
+          ✓ = Lower OC = Comparative Advantage in that column's good
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Evidence item 3: PPF endpoints as table + inline SVG PPF diagram -->
+  <div class="evidence-grid">
+    <div class="evidence-card">
+      <div class="evidence-card-header">
+        <span style="color:var(--green);font-size:1rem;">📈</span>
+        <div class="evidence-card-title">PPF Endpoints Table (Recreated from Worksheet)</div>
+      </div>
+      <div class="evidence-card-body">
+        <table class="evi-table" style="margin-bottom:1rem;">
+          <thead>
+            <tr>
+              <th style="text-align:left;">Country</th>
+              <th>Max Storm-Iron<br><span style="font-weight:400;opacity:0.6;">all resources → SI</span></th>
+              <th>Max Sungrain<br><span style="font-weight:400;opacity:0.6;">all resources → SG</span></th>
+              <th>PPF Slope</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="row-head"><span style="color:var(--accent)">▐</span> Uzmara</td>
+              <td>12 × 100 = <strong>1,200</strong></td>
+              <td>6 × 100 = <strong>600</strong></td>
+              <td style="color:var(--accent)">−0.5</td>
+            </tr>
+            <tr>
+              <td class="row-head"><span style="color:var(--gold)">▐</span> Fleuronne</td>
+              <td>8 × 100 = <strong>800</strong></td>
+              <td>2 × 100 = <strong>200</strong></td>
+              <td style="color:var(--gold)">−0.25</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="handwritten-note">
+          The PPF slope = −OC(Storm-Iron) = −Good2/Good1. Uzmara's steeper slope (−0.5) reflects its higher opportunity cost for Storm-Iron relative to Fleuronne (−0.25), confirming Fleuronne's comparative advantage in Storm-Iron.
+        </div>
+      </div>
+    </div>
+
+    <!-- Inline static PPF diagram (SVG) as evidence -->
+    <div class="evidence-card">
+      <div class="evidence-card-header">
+        <span style="color:var(--purple);font-size:1rem;">🖊️</span>
+        <div class="evidence-card-title">PPF Diagram — Uzmara vs Fleuronne</div>
+      </div>
+      <div class="evidence-card-body">
+        <div class="ppf-svg-wrap">
+          <svg viewBox="0 0 340 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:4px;">
+            <rect width="340" height="280" fill="#111520"/>
+            <!-- grid lines -->
+            <line x1="50" y1="20" x2="50" y2="240" stroke="#2a3348" stroke-width="0.8"/>
+            <line x1="50" y1="240" x2="320" y2="240" stroke="#2a3348" stroke-width="0.8"/>
+            <line x1="50" y1="20" x2="320" y2="20" stroke="#2a3348" stroke-width="0.4" stroke-dasharray="3,4"/>
+            <line x1="50" y1="80" x2="320" y2="80" stroke="#2a3348" stroke-width="0.4" stroke-dasharray="3,4"/>
+            <line x1="50" y1="140" x2="320" y2="140" stroke="#2a3348" stroke-width="0.4" stroke-dasharray="3,4"/>
+            <line x1="50" y1="200" x2="320" y2="200" stroke="#2a3348" stroke-width="0.4" stroke-dasharray="3,4"/>
+            <line x1="117" y1="20" x2="117" y2="240" stroke="#2a3348" stroke-width="0.4" stroke-dasharray="3,4"/>
+            <line x1="184" y1="20" x2="184" y2="240" stroke="#2a3348" stroke-width="0.4" stroke-dasharray="3,4"/>
+            <line x1="252" y1="20" x2="252" y2="240" stroke="#2a3348" stroke-width="0.4" stroke-dasharray="3,4"/>
+            <!-- Uzmara PPF: (0,600)→(1200,0) mapped to canvas: x=50+(v/1300)*270, y=240-(v/700)*220 -->
+            <!-- x-max=1200 → x=50+270*(1200/1300)≈299.2  y-max=600 → y=240-220*(600/700)≈51.4 -->
+            <polygon points="50,240 299,240 50,51" fill="rgba(0,212,255,0.05)"/>
+            <line x1="50" y1="51" x2="299" y2="240" stroke="#00d4ff" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="50" cy="51" r="4" fill="#00d4ff"/>
+            <circle cx="299" cy="240" r="4" fill="#00d4ff"/>
+            <!-- Fleuronne PPF: (0,200)→(800,0) mapped: x=50+270*(800/1300)≈216.2  y=240-220*(200/700)≈177.1 -->
+            <polygon points="50,240 216,240 50,177" fill="rgba(255,201,71,0.05)"/>
+            <line x1="50" y1="177" x2="216" y2="240" stroke="#ffc947" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="50" cy="177" r="4" fill="#ffc947"/>
+            <circle cx="216" cy="240" r="4" fill="#ffc947"/>
+            <!-- Axis labels -->
+            <text x="50" y="258" fill="#5a6478" font-family="JetBrains Mono,monospace" font-size="8" text-anchor="middle">0</text>
+            <text x="117" y="258" fill="#5a6478" font-family="JetBrains Mono,monospace" font-size="8" text-anchor="middle">325</text>
+            <text x="184" y="258" fill="#5a6478" font-family="JetBrains Mono,monospace" font-size="8" text-anchor="middle">650</text>
+            <text x="252" y="258" fill="#5a6478" font-family="JetBrains Mono,monospace" font-size="8" text-anchor="middle">975</text>
+            <text x="299" y="258" fill="#ffc947" font-family="JetBrains Mono,monospace" font-size="8" text-anchor="middle" opacity="0.7">800</text>
+            <text x="44" y="244" fill="#5a6478" font-family="JetBrains Mono,monospace" font-size="8" text-anchor="end">0</text>
+            <text x="44" y="200" fill="#5a6478" font-family="JetBrains Mono,monospace" font-size="8" text-anchor="end">140</text>
+            <text x="44" y="140" fill="#5a6478" font-family="JetBrains Mono,monospace" font-size="8" text-anchor="end">280</text>
+            <text x="44" y="80" fill="#5a6478" font-family="JetBrains Mono,monospace" font-size="8" text-anchor="end">420</text>
+            <text x="44" y="55" fill="#00d4ff" font-family="JetBrains Mono,monospace" font-size="8" text-anchor="end" opacity="0.8">600</text>
+            <text x="44" y="181" fill="#ffc947" font-family="JetBrains Mono,monospace" font-size="8" text-anchor="end" opacity="0.8">200</text>
+            <!-- Axis titles -->
+            <text x="185" y="274" fill="#8892a4" font-family="Lora,serif" font-size="9" text-anchor="middle">Storm-Iron →</text>
+            <text x="14" y="140" fill="#8892a4" font-family="Lora,serif" font-size="9" text-anchor="middle" transform="rotate(-90,14,140)">Sungrain →</text>
+            <!-- Legend -->
+            <rect x="55" y="28" width="18" height="3" fill="#00d4ff" rx="1"/>
+            <text x="78" y="32" fill="#8892a4" font-family="JetBrains Mono,monospace" font-size="9">Uzmara</text>
+            <rect x="55" y="42" width="18" height="3" fill="#ffc947" rx="1"/>
+            <text x="78" y="46" fill="#8892a4" font-family="JetBrains Mono,monospace" font-size="9">Fleuronne</text>
+          </svg>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);margin-top:0.6rem;text-align:center;letter-spacing:1px;">STATIC DIAGRAM — reproduced from assignment worksheet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Evidence item 4: World output gains bar chart -->
+  <div class="evidence-card" style="margin-bottom:0;">
+    <div class="evidence-card-header">
+      <span style="color:var(--gold);font-size:1rem;">📊</span>
+      <div class="evidence-card-title">World Output Gains — Specialization vs Equal Split (Bar Chart)</div>
+    </div>
+    <div class="evidence-card-body">
+      <p style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:1rem;line-height:1.6;">Comparison of world total output when each country splits resources 50/50 (no-trade baseline) versus full specialization per comparative advantage.</p>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <div class="bar-label">Storm-Iron<br>No Trade</div>
+          <div class="bar-track"><div class="bar-fill" style="width:60%;background:var(--border2);"></div></div>
+          <div class="bar-val" style="color:var(--text3)">1,000</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Storm-Iron<br>Specialization</div>
+          <div class="bar-track"><div class="bar-fill" style="width:53%;background:var(--accent);"></div></div>
+          <div class="bar-val" style="color:var(--accent)">800</div>
+        </div>
+        <div class="bar-row" style="margin-top:0.6rem;">
+          <div class="bar-label">Sungrain<br>No Trade</div>
+          <div class="bar-track"><div class="bar-fill" style="width:33%;background:var(--border2);"></div></div>
+          <div class="bar-val" style="color:var(--text3)">400</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Sungrain<br>Specialization</div>
+          <div class="bar-track"><div class="bar-fill" style="width:50%;background:var(--gold);"></div></div>
+          <div class="bar-val" style="color:var(--gold)">600</div>
+        </div>
+      </div>
+      <div class="alert" style="margin-top:1rem;">
+        <div class="alert-icon">📌</div>
+        <div>When Uzmara fully specializes in <strong>Sungrain</strong> (output: 600) and Fleuronne fully specializes in <strong>Storm-Iron</strong> (output: 800), world Sungrain rises by <strong style="color:var(--green)">+50%</strong> compared to the equal-split baseline — a direct illustration of Ricardo's gains from trade. Storm-Iron output falls slightly because Uzmara (the more productive Storm-Iron country) is shifted away, but the trade-off is favourable overall.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 4 — WHAT DID I LEARN?
+═══════════════════════════════════════════════════════════ -->
+<div id="reflection" class="portfolio-marker">
+  <div class="portfolio-marker-num purple">04</div>
+  <div class="portfolio-marker-title">What Did I Learn?</div>
+  <div class="portfolio-marker-line"></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🧩</div>
+    <div>
+      <div class="card-title">Reflection Across Three Dimensions</div>
+      <div class="card-sub">Knowledge · Skills · Reflection</div>
+    </div>
+  </div>
+
+  <div class="reflection-grid">
+    <!-- Knowledge -->
+    <div class="reflection-card" style="--c:var(--accent)">
+      <div class="reflection-label" style="color:var(--accent)">📚 Knowledge</div>
+      <div class="reflection-icon">🔬</div>
+      <div class="reflection-title">Concepts I Learned</div>
+      <div class="reflection-body">
+        <ul>
+          <li><strong>Absolute vs comparative advantage</strong> are fundamentally different. A country can be worse at producing everything and still have a comparative advantage — because advantage is about relative efficiency, not absolute output.</li>
+          <li><strong>Opportunity cost is the correct measure</strong> for trade decisions, not raw productivity. The OC formula (Good B ÷ Good A) translates productivity ratios into trade-off ratios.</li>
+          <li><strong>The PPF's slope equals the opportunity cost</strong> of the good on the x-axis. This gave me an intuitive visual anchor for comparing OC values across countries.</li>
+          <li><strong>Specialization increases total world output</strong>, even when one country holds absolute advantage in both goods. Ricardo proved this mathematically and I verified it through the simulator.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Skills -->
+    <div class="reflection-card" style="--c:var(--green)">
+      <div class="reflection-label" style="color:var(--green)">🛠 Skills</div>
+      <div class="reflection-icon">⚙️</div>
+      <div class="reflection-title">Analytical & Technical Skills Built</div>
+      <div class="reflection-body">
+        <ul>
+          <li><strong>Quantitative analysis:</strong> Setting up and computing a 2×2 opportunity cost matrix from raw productivity data — a skill that generalizes to any resource allocation comparison.</li>
+          <li><strong>Data interpretation:</strong> Reading a comparative advantage result correctly — lower OC cell = specialization recommendation.</li>
+          <li><strong>Critical thinking:</strong> Questioning why the country with absolute advantage in both goods still benefits from specializing in just one. The answer required understanding the concept of scarcity of resources.</li>
+          <li><strong>Visualization:</strong> Translating a linear production equation into PPF coordinates — plotting intercepts and interpreting the slope as an economic trade-off ratio.</li>
+          <li><strong>Decision modeling:</strong> Using the "what-if" simulator to test how world output changes across different resource allocation scenarios, building intuition beyond the textbook case.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Reflection -->
+    <div class="reflection-card" style="--c:var(--purple);grid-column:1/-1;">
+      <div class="reflection-label" style="color:var(--purple)">💭 Reflection</div>
+      <div class="reflection-icon">🌍</div>
+      <div class="reflection-title">What Was Difficult, What Surprised Me, Real-World Applications</div>
+      <div class="reflection-body">
+        <p style="margin-bottom:0.8rem;"><strong>What was difficult:</strong> The hardest part was accepting that absolute advantage is irrelevant to the specialization decision. My initial instinct was "the better country should produce everything." Working through the opportunity cost matrix numerically — and seeing that Fleuronne's OC of Storm-Iron (0.25) is half of Uzmara's (0.5) even though Uzmara produces more of it — is what finally made Ricardo's argument concrete.</p>
+        <p style="margin-bottom:0.8rem;"><strong>What surprised me:</strong> The gains from trade do not always mean every country produces more of every good. Uzmara produces less Storm-Iron under full specialization than in the no-trade baseline. What improves is world Sungrain — the country with the comparative advantage concentrates fully there. This subtlety is often lost in high-level summaries of the theory.</p>
+        <p><strong>Real-world applications:</strong> Bangladesh exports ready-made garments — not because it has the world's highest garment productivity, but because the opportunity cost of garment production relative to alternatives is lower than in richer countries. Similarly, Singapore trades financial services and technology rather than food, even though food production would be physically possible. The model also explains why trade restrictions can harm both parties: tariffs and quotas force countries to produce outside their comparative advantage, reducing global output. This directly applies to Bangladesh's own import tariff policies — restricting imports of goods other countries produce at lower OC creates production inefficiency at home.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="takeaway-strip">
+    <div class="takeaway k">🔑 Comparative Advantage Theory</div>
+    <div class="takeaway k">🔑 Opportunity Cost Matrix</div>
+    <div class="takeaway k">🔑 PPF Equations & Slopes</div>
+    <div class="takeaway s">⚙️ Quantitative Analysis</div>
+    <div class="takeaway s">⚙️ Trade-off Modeling</div>
+    <div class="takeaway s">⚙️ Data Visualization</div>
+    <div class="takeaway r">💭 Questioned Intuition</div>
+    <div class="takeaway r">💭 Applied to Bangladesh Trade</div>
+    <div class="takeaway r">💭 Policy Implications</div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// ════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════
+function V(id,val){document.getElementById(id).value=val;}
+function G(id){return parseFloat(document.getElementById(id).value)||0;}
+function S(id){return document.getElementById(id).value.trim();}
+function fmt(n,d=2){if(!isFinite(n))return'—';if(n===0)return'0';if(Number.isInteger(n))return n.toLocaleString();return parseFloat(n.toFixed(d)).toLocaleString();}
+
+let lastData={};
+let allocA=50,allocB=50;
+
+// ════════════════════════════════════════════════
+// EXAMPLE LOADER
+// ════════════════════════════════════════════════
+function loadExample(){
+  V('nameA','Uzmara'); V('nameB','Fleuronne');
+  V('good1Name','Storm-Iron'); V('good2Name','Sungrain');
+  V('aGood1',12); V('aGood2',6);
+  V('bGood1',8);  V('bGood2',2);
+  V('aRes',100);  V('bRes',100);
+  updateGoodLabels(); calculate();
+  showToast('Example loaded — Uzmara vs Fleuronne');
+}
+
+// ════════════════════════════════════════════════
+// GOOD LABELS
+// ════════════════════════════════════════════════
+function updateGoodLabels(){
+  const g1=document.getElementById('good1Name').value||'Good 1';
+  const g2=document.getElementById('good2Name').value||'Good 2';
+  ['good1Label','good1LabelB'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=g1;});
+  ['good2Label','good2LabelB'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=g2;});
+  calculate();
+}
+
+// ════════════════════════════════════════════════
+// MAIN CALCULATE
+// ════════════════════════════════════════════════
+function calculate(){
+  const nA=S('nameA')||'Country A', nB=S('nameB')||'Country B';
+  const g1=S('good1Name')||'Good 1', g2=S('good2Name')||'Good 2';
+  const aG1=G('aGood1'),aG2=G('aGood2'),bG1=G('bGood1'),bG2=G('bGood2');
+  const aRes=G('aRes')||100, bRes=G('bRes')||100;
+  const valid=aG1>0&&aG2>0&&bG1>0&&bG2>0;
+  if(!valid){
+    setEmpty('absResults');setEmpty('ocMatrix');setEmpty('caResult');setEmpty('ppfStats');setEmpty('simGrid');
+    document.getElementById('absExplain').style.display='none';
+    document.getElementById('ocExplain').style.display='none';
+    document.getElementById('worldTotal').style.display='none';
+    document.getElementById('gainsSection').style.display='none';
+    drawEmptyPPF(); return;
+  }
+  const absG1=aG1>bG1?nA:(bG1>aG1?nB:'Tied');
+  const absG2=aG2>bG2?nA:(bG2>aG2?nB:'Tied');
+  const aOC1=aG2/aG1, aOC2=aG1/aG2;
+  const bOC1=bG2/bG1, bOC2=bG1/bG2;
+  const caG1=aOC1<=bOC1?nA:nB;
+  const caG2=aOC2<=bOC2?nA:nB;
+  const aMaxG1=aG1*aRes,aMaxG2=aG2*aRes,bMaxG1=bG1*bRes,bMaxG2=bG2*bRes;
+  lastData={nA,nB,g1,g2,aG1,aG2,bG1,bG2,aRes,bRes,absG1,absG2,aOC1,aOC2,bOC1,bOC2,caG1,caG2,aMaxG1,aMaxG2,bMaxG1,bMaxG2};
+  renderAbsolute(); renderOC(); renderCA(); drawPPF(); renderSimulator();
+}
+
+// ════════════════════════════════════════════════
+// ABSOLUTE
+// ════════════════════════════════════════════════
+function renderAbsolute(){
+  const{nA,nB,g1,g2,aG1,aG2,bG1,bG2,absG1,absG2}=lastData;
+  function card(good,aVal,bVal,winner){
+    const aWin=winner===nA,bWin=winner===nB,tied=winner==='Tied';
+    const cA=aWin?'var(--green)':tied?'var(--gold)':'var(--text3)';
+    const cB=bWin?'var(--green)':tied?'var(--gold)':'var(--text3)';
+    return`<div class="result-card" style="--c:${aWin?'var(--green)':bWin?'var(--gold)':'var(--accent)'}">
+      <div class="result-card-label">${good}</div>
+      <div style="display:flex;justify-content:space-between;margin:6px 0">
+        <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);margin-bottom:2px">${nA}</div><div class="result-card-value" style="font-size:1.3rem;color:${cA}">${fmt(aVal)}</div></div>
+        <div style="display:flex;align-items:center;font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--border2)">vs</div>
+        <div style="text-align:right"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);margin-bottom:2px">${nB}</div><div class="result-card-value" style="font-size:1.3rem;color:${cB}">${fmt(bVal)}</div></div>
+      </div>
+      <div class="result-card-unit">units per resource unit</div>
+      <div style="background:${tied?'rgba(255,201,71,0.12)':aWin?'rgba(0,229,160,0.1)':'rgba(255,201,71,0.1)'};color:${tied?'var(--gold)':aWin?'var(--green)':'var(--gold)'};border:1px solid ${tied?'rgba(255,201,71,0.3)':aWin?'rgba(0,229,160,0.3)':'rgba(255,201,71,0.3)'};border-radius:4px;display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;padding:3px 9px;margin-top:6px;">${tied?'TIED':winner+' WINS'}</div>
+    </div>`;}
+  document.getElementById('absResults').innerHTML=card(g1,aG1,bG1,absG1)+card(g2,aG2,bG2,absG2);
+  const bothA=absG1===nA&&absG2===nA, bothB=absG1===nB&&absG2===nB;
+  let explain=bothA?`<strong>${nA}</strong> holds absolute advantage in <em>both</em> goods. Yet Ricardo's insight: <span class="highlight">trade still benefits both</span> — what matters is comparative, not absolute, advantage.`:bothB?`<strong>${nB}</strong> holds absolute advantage in both goods. Trade is still mutually beneficial through comparative advantage.`:`Each country has absolute advantage in one good — this is the <span class="highlight">ideal trade scenario</span>. Specialization and trade will raise total world output.`;
+  const box=document.getElementById('absExplain');box.innerHTML=explain;box.style.display='block';
+}
+
+// ════════════════════════════════════════════════
+// OC MATRIX
+// ════════════════════════════════════════════════
+function renderOC(){
+  const{nA,nB,g1,g2,aG1,aG2,bG1,bG2,aOC1,aOC2,bOC1,bOC2}=lastData;
+  const aLowG1=aOC1<=bOC1,bLowG1=bOC1<aOC1,aLowG2=aOC2<=bOC2,bLowG2=bOC2<aOC2;
+  document.getElementById('ocMatrix').innerHTML=`<table class="oc-matrix">
+    <thead><tr><th style="text-align:left">Country</th><th>OC of 1 ${g1}<br><span style="font-size:9px;opacity:0.5">in ${g2}</span></th><th>OC of 1 ${g2}<br><span style="font-size:9px;opacity:0.5">in ${g1}</span></th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="country-cell"><span style="color:var(--accent)">▐</span> ${nA}</td>
+        <td><div class="oc-val ${aLowG1?'oc-lower':'oc-higher'}">${fmt(aOC1,4)}</div><span class="oc-formula">${fmt(aG2)} ÷ ${fmt(aG1)}</span><div><span class="oc-badge ${aLowG1?'winner':'loser'}">${aLowG1?'✓ LOWER':'higher'}</span></div></td>
+        <td><div class="oc-val ${aLowG2?'oc-lower':'oc-higher'}">${fmt(aOC2,4)}</div><span class="oc-formula">${fmt(aG1)} ÷ ${fmt(aG2)}</span><div><span class="oc-badge ${aLowG2?'winner':'loser'}">${aLowG2?'✓ LOWER':'higher'}</span></div></td>
+      </tr>
+      <tr>
+        <td class="country-cell"><span style="color:var(--gold)">▐</span> ${nB}</td>
+        <td><div class="oc-val ${bLowG1?'oc-lower':'oc-higher'}">${fmt(bOC1,4)}</div><span class="oc-formula">${fmt(bG2)} ÷ ${fmt(bG1)}</span><div><span class="oc-badge ${bLowG1?'winner':'loser'}">${bLowG1?'✓ LOWER':'higher'}</span></div></td>
+        <td><div class="oc-val ${bLowG2?'oc-lower':'oc-higher'}">${fmt(bOC2,4)}</div><span class="oc-formula">${fmt(bG1)} ÷ ${fmt(bG2)}</span><div><span class="oc-badge ${bLowG2?'winner':'loser'}">${bLowG2?'✓ LOWER':'higher'}</span></div></td>
+      </tr>
+    </tbody></table>`;
+  const box=document.getElementById('ocExplain');
+  box.innerHTML=`To produce 1 <strong>${g1}</strong>: ${nA} gives up <strong style="color:${aLowG1?'var(--green)':'var(--red2)'}">${fmt(aOC1,4)} ${g2}</strong> vs ${nB} gives up <strong style="color:${bLowG1?'var(--green)':'var(--red2)'}">${fmt(bOC1,4)} ${g2}</strong>.<br>
+  To produce 1 <strong>${g2}</strong>: ${nA} gives up <strong style="color:${aLowG2?'var(--green)':'var(--red2)'}">${fmt(aOC2,4)} ${g1}</strong> vs ${nB} gives up <strong style="color:${bLowG2?'var(--green)':'var(--red2)'}">${fmt(bOC2,4)} ${g1}</strong>.<br><br>
+  <span class="highlight">Green = lower opportunity cost = comparative advantage in that good.</span>`;
+  box.style.display='block';
+}
+
+// ════════════════════════════════════════════════
+// COMPARATIVE ADVANTAGE
+// ════════════════════════════════════════════════
+function renderCA(){
+  const{nA,nB,g1,g2,aOC1,aOC2,bOC1,bOC2,caG1,caG2}=lastData;
+  const aSpecGood=caG1===nA?g1:g2;
+  const bSpecGood=caG2===nB?g2:g1;
+  const aOC=caG1===nA?fmt(aOC1,4):fmt(aOC2,4);
+  const bOC=caG2===nB?fmt(bOC2,4):fmt(bOC1,4);
+  document.getElementById('caResult').innerHTML=`
+    <div class="ca-result">
+      <div class="ca-card" style="border-color:rgba(0,212,255,0.3)"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent)"></div>
+        <div class="ca-country">▐ ${nA}</div><div class="ca-specializes">should specialize in</div>
+        <div class="ca-good" style="color:var(--accent)">${aSpecGood}</div>
+        <div class="ca-oc">OC = ${aOC} ${aSpecGood===g1?g2:g1} per unit</div>
+        <div class="ca-reason">Lower opportunity cost than ${nB} for ${aSpecGood}</div></div>
+      <div class="ca-card" style="border-color:rgba(255,201,71,0.3)"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold)"></div>
+        <div class="ca-country">▐ ${nB}</div><div class="ca-specializes">should specialize in</div>
+        <div class="ca-good" style="color:var(--gold)">${bSpecGood}</div>
+        <div class="ca-oc">OC = ${bOC} ${bSpecGood===g1?g2:g1} per unit</div>
+        <div class="ca-reason">Lower opportunity cost than ${nA} for ${bSpecGood}</div></div>
+    </div>
+    <div class="alert" style="border-color:rgba(0,229,160,0.2);background:rgba(0,229,160,0.04)">
+      <div class="alert-icon">📖</div>
+      <div><strong style="color:var(--green)">Ricardo's Principle:</strong> Even if one country produces everything more efficiently, both nations gain from trade when each specializes in their comparative advantage. This is why international trade makes every country wealthier.</div>
+    </div>`;
+}
+
+// ════════════════════════════════════════════════
+// PPF
+// ════════════════════════════════════════════════
+const canvas=document.getElementById('ppfCanvas');
+const ctx=canvas.getContext('2d');
+function drawEmptyPPF(){
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#111520';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#2a3348';ctx.font='13px JetBrains Mono,monospace';ctx.textAlign='center';
+  ctx.fillText('Enter data to see PPF chart',W/2,H/2);
+}
+function drawPPF(){
+  const{nA,nB,g1,g2,aG1,aG2,bG1,bG2,aRes,bRes,aOC1,bOC1,aMaxG1,aMaxG2,bMaxG1,bMaxG2}=lastData;
+  const W=canvas.width,H=canvas.height;
+  const pad={top:40,right:40,bot:70,left:80};
+  const cW=W-pad.left-pad.right,cH=H-pad.top-pad.bot;
+  const maxX=Math.max(aMaxG1,bMaxG1)*1.15,maxY=Math.max(aMaxG2,bMaxG2)*1.15;
+  function sx(v){return pad.left+(v/maxX)*cW;}
+  function sy(v){return pad.top+cH-(v/maxY)*cH;}
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#111520';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(42,51,72,0.8)';ctx.lineWidth=1;
+  for(let i=0;i<=6;i++){
+    ctx.beginPath();ctx.moveTo(pad.left+(i/6)*cW,pad.top);ctx.lineTo(pad.left+(i/6)*cW,pad.top+cH);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pad.left,pad.top+(i/6)*cH);ctx.lineTo(pad.left+cW,pad.top+(i/6)*cH);ctx.stroke();
+  }
+  const gA=ctx.createLinearGradient(pad.left,pad.top,pad.left+cW,pad.top+cH);gA.addColorStop(0,'rgba(0,212,255,0.06)');gA.addColorStop(1,'rgba(0,212,255,0.01)');
+  ctx.fillStyle=gA;ctx.beginPath();ctx.moveTo(sx(0),sy(0));ctx.lineTo(sx(aMaxG1),sy(0));ctx.lineTo(sx(0),sy(aMaxG2));ctx.closePath();ctx.fill();
+  const gB=ctx.createLinearGradient(pad.left,pad.top,pad.left+cW,pad.top+cH);gB.addColorStop(0,'rgba(255,201,71,0.05)');gB.addColorStop(1,'rgba(255,201,71,0.01)');
+  ctx.fillStyle=gB;ctx.beginPath();ctx.moveTo(sx(0),sy(0));ctx.lineTo(sx(bMaxG1),sy(0));ctx.lineTo(sx(0),sy(bMaxG2));ctx.closePath();ctx.fill();
+  function drawLine(x1,y1,x2,y2,color,name){
+    ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.setLineDash([]);ctx.shadowColor=color;ctx.shadowBlur=8;
+    ctx.beginPath();ctx.moveTo(sx(x1),sy(y1));ctx.lineTo(sx(x2),sy(y2));ctx.stroke();ctx.shadowBlur=0;
+    [[x1,y1],[x2,y2]].forEach(([x,y])=>{ctx.fillStyle=color;ctx.beginPath();ctx.arc(sx(x),sy(y),5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(sx(x),sy(y),2,0,Math.PI*2);ctx.fill();});
+    ctx.fillStyle=color;ctx.font='bold 10px JetBrains Mono,monospace';ctx.textAlign='left';ctx.fillText(name,sx((x1+x2)/2)+8,sy((y1+y2)/2)-8);
+  }
+  drawLine(aMaxG1,0,0,aMaxG2,'#00d4ff',nA);
+  drawLine(bMaxG1,0,0,bMaxG2,'#ffc947',nB);
+  ctx.strokeStyle='#4a5568';ctx.lineWidth=1.5;ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(pad.left,pad.top);ctx.lineTo(pad.left,pad.top+cH+8);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(pad.left-8,pad.top+cH);ctx.lineTo(pad.left+cW,pad.top+cH);ctx.stroke();
+  ctx.fillStyle='#5a6478';ctx.font='11px JetBrains Mono,monospace';ctx.textAlign='center';
+  for(let i=0;i<=5;i++){const v=maxX/5*i;ctx.fillText(Math.round(v),sx(v),pad.top+cH+20);}
+  ctx.textAlign='right';
+  for(let i=0;i<=5;i++){const v=maxY/5*i;ctx.fillText(Math.round(v),pad.left-10,sy(v)+4);}
+  ctx.fillStyle='#8892a4';ctx.font='12px Lora,serif';ctx.textAlign='center';
+  ctx.fillText(g1+' Output →',pad.left+cW/2,H-10);
+  ctx.save();ctx.translate(16,pad.top+cH/2);ctx.rotate(-Math.PI/2);ctx.fillText(g2+' Output →',0,0);ctx.restore();
+  [['#00d4ff',nA],['#ffc947',nB]].forEach(([c,n],i)=>{
+    ctx.fillStyle=c;ctx.fillRect(pad.left+12,pad.top+10+i*22,20,3);
+    ctx.fillStyle='#8892a4';ctx.font='11px JetBrains Mono,monospace';ctx.textAlign='left';ctx.fillText(n,pad.left+38,pad.top+15+i*22);
+  });
+  document.getElementById('ppfStats').innerHTML=`
+    <div class="ppf-stat"><div class="ppf-stat-label">Max Production</div>
+      <div class="ppf-stat-row"><div class="ppf-stat-name" style="color:var(--accent)">${nA} max ${g1}</div><div class="ppf-stat-val">${fmt(aMaxG1)}</div></div>
+      <div class="ppf-stat-row"><div class="ppf-stat-name" style="color:var(--accent)">${nA} max ${g2}</div><div class="ppf-stat-val">${fmt(aMaxG2)}</div></div>
+      <div class="ppf-stat-row"><div class="ppf-stat-name" style="color:var(--gold)">${nB} max ${g1}</div><div class="ppf-stat-val">${fmt(bMaxG1)}</div></div>
+      <div class="ppf-stat-row"><div class="ppf-stat-name" style="color:var(--gold)">${nB} max ${g2}</div><div class="ppf-stat-val">${fmt(bMaxG2)}</div></div>
+    </div>
+    <div class="ppf-stat"><div class="ppf-stat-label">PPF Equations</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);line-height:2">
+        <div style="color:var(--accent)">${nA}:</div><div>x/${fmt(aG1)} + y/${fmt(aG2)} = ${fmt(aRes)}</div>
+        <div style="color:var(--gold);margin-top:4px">${nB}:</div><div>x/${fmt(bG1)} + y/${fmt(bG2)} = ${fmt(bRes)}</div>
+      </div></div>
+    <div class="ppf-stat"><div class="ppf-stat-label">OC Ratio (Slope)</div>
+      <div class="ppf-stat-row"><div class="ppf-stat-name" style="color:var(--accent)">${nA}</div><div class="ppf-stat-val">−${fmt(aOC1,4)}</div></div>
+      <div class="ppf-stat-row"><div class="ppf-stat-name" style="color:var(--gold)">${nB}</div><div class="ppf-stat-val">−${fmt(bOC1,4)}</div></div>
+    </div>`;
+}
+
+// ════════════════════════════════════════════════
+// SIMULATOR
+// ════════════════════════════════════════════════
+function renderSimulator(){
+  const{nA,nB,g1,g2,caG1}=lastData;
+  const aSpecG1=(caG1===nA),bSpecG1=(caG1===nB);
+  document.getElementById('simGrid').innerHTML=`
+    <div class="sim-block">
+      <div class="sim-title"><div class="sim-dot" style="background:var(--accent)"></div>${nA}</div>
+      <div class="allocation-slider">
+        <div class="alloc-header"><span>${g1}: <strong id="aPctG1">50</strong>%</span><span>${g2}: <strong id="aPctG2">50</strong>%</span></div>
+        <input type="range" class="a-range" id="aAlloc" min="0" max="100" value="50" oninput="updateAlloc('a',this.value)">
+      </div>
+      <div class="alloc-output">
+        <div class="alloc-out-val"><span class="alloc-out-label">${g1}</span><span class="alloc-out-num" id="aOut1" style="color:var(--accent)">—</span></div>
+        <div class="alloc-out-val"><span class="alloc-out-label">${g2}</span><span class="alloc-out-num" id="aOut2" style="color:var(--accent)">—</span></div>
+      </div>
+    </div>
+    <div class="sim-block">
+      <div class="sim-title"><div class="sim-dot" style="background:var(--gold)"></div>${nB}</div>
+      <div class="allocation-slider">
+        <div class="alloc-header"><span>${g1}: <strong id="bPctG1">50</strong>%</span><span>${g2}: <strong id="bPctG2">50</strong>%</span></div>
+        <input type="range" class="b-range" id="bAlloc" min="0" max="100" value="50" oninput="updateAlloc('b',this.value)">
+      </div>
+      <div class="alloc-output">
+        <div class="alloc-out-val"><span class="alloc-out-label">${g1}</span><span class="alloc-out-num" id="bOut1" style="color:var(--gold)">—</span></div>
+        <div class="alloc-out-val"><span class="alloc-out-label">${g2}</span><span class="alloc-out-num" id="bOut2" style="color:var(--gold)">—</span></div>
+      </div>
+    </div>`;
+  const qd=document.createElement('div');qd.style='margin-top:0.8rem;';
+  qd.innerHTML=`<div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:0.5rem;">Quick scenarios</div>
+    <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
+      <span class="scenario-badge" onclick="setAlloc(50,50)">⚖ Equal Split</span>
+      <span class="scenario-badge" onclick="setAlloc(${aSpecG1?100:0},${bSpecG1?100:0})">🎯 Full Specialization</span>
+      <span class="scenario-badge" onclick="setAlloc(${aSpecG1?80:20},${bSpecG1?80:20})">⚡ 80% Spec</span>
+      <span class="scenario-badge" onclick="setAlloc(${aSpecG1?0:100},${bSpecG1?0:100})">🔄 Reverse</span>
+    </div>`;
+  document.getElementById('simGrid').appendChild(qd);
+  updateAlloc('a',50);updateAlloc('b',50);updateWorldTotal();
+}
+function setAlloc(a,b){
+  if(document.getElementById('aAlloc')){V('aAlloc',a);V('bAlloc',b);updateAlloc('a',a);updateAlloc('b',b);}
+}
+function updateAlloc(side,val){
+  val=parseInt(val);
+  const{aG1,aG2,bG1,bG2,aRes,bRes}=lastData;if(!aG1)return;
+  if(side==='a'){
+    allocA=val;
+    document.getElementById('aPctG1').textContent=val;
+    document.getElementById('aPctG2').textContent=100-val;
+    document.getElementById('aOut1').textContent=fmt(aG1*(aRes*val/100));
+    document.getElementById('aOut2').textContent=fmt(aG2*(aRes*(100-val)/100));
+    const r=document.getElementById('aAlloc');if(r)r.style.setProperty('--pct',val+'%');
+  } else {
+    allocB=val;
+    document.getElementById('bPctG1').textContent=val;
+    document.getElementById('bPctG2').textContent=100-val;
+    document.getElementById('bOut1').textContent=fmt(bG1*(bRes*val/100));
+    document.getElementById('bOut2').textContent=fmt(bG2*(bRes*(100-val)/100));
+    const r=document.getElementById('bAlloc');if(r)r.style.setProperty('--pct',val+'%');
+  }
+  updateWorldTotal();
+}
+function updateWorldTotal(){
+  const{nA,nB,g1,g2,aG1,aG2,bG1,bG2,aRes,bRes,caG1,aMaxG1,aMaxG2,bMaxG1,bMaxG2}=lastData;
+  if(!aG1)return;
+  const totalG1=aG1*(aRes*allocA/100)+bG1*(bRes*allocB/100);
+  const totalG2=aG2*(aRes*(100-allocA)/100)+bG2*(bRes*(100-allocB)/100);
+  const aSpecG1=(caG1===nA);
+  const specG1=(aSpecG1?aMaxG1:0)+(!aSpecG1?bMaxG1:0);
+  const specG2=(aSpecG1?0:aMaxG2)+(!aSpecG1?0:bMaxG2);
+  const baseG1=aG1*aRes*0.5+bG1*bRes*0.5,baseG2=aG2*aRes*0.5+bG2*bRes*0.5;
+  const wt=document.getElementById('worldTotal');wt.style.display='block';
+  wt.innerHTML=`<div class="world-total-title">🌐 World Total Output (current allocation)</div>
+    <div class="world-total-grid">
+      <div class="wt-item"><div class="wt-label">Total ${g1}</div><div class="wt-val" style="color:var(--accent)">${fmt(totalG1)}</div></div>
+      <div class="wt-item"><div class="wt-label">Total ${g2}</div><div class="wt-val" style="color:var(--accent)">${fmt(totalG2)}</div></div>
+      <div class="wt-item"><div class="wt-label">Full-spec ${g1}</div><div class="wt-val" style="color:var(--green)">${fmt(specG1)}</div></div>
+      <div class="wt-item"><div class="wt-label">Full-spec ${g2}</div><div class="wt-val" style="color:var(--green)">${fmt(specG2)}</div></div>
+    </div>`;
+  const gs=document.getElementById('gainsSection');gs.style.display='block';
+  const g1Gain=((specG1-baseG1)/Math.max(baseG1,1)*100).toFixed(1);
+  const g2Gain=((specG2-baseG2)/Math.max(baseG2,1)*100).toFixed(1);
+  document.getElementById('gainsGrid').innerHTML=`
+    <div class="gain-card"><div class="gain-title">📊 ${g1} — Specialization vs No Trade</div>
+      <div class="gain-row"><div class="gain-label">Equal split baseline</div><div class="gain-val">${fmt(baseG1)}</div></div>
+      <div class="gain-row"><div class="gain-label">Full specialization</div><div class="gain-val" style="color:var(--green)">${fmt(specG1)} <span class="gain-delta ${parseFloat(g1Gain)>=0?'delta-pos':'delta-neg'}">${parseFloat(g1Gain)>=0?'+':''}${g1Gain}%</span></div></div>
+      <div class="gain-row"><div class="gain-label">Current slider</div><div class="gain-val" style="color:var(--accent)">${fmt(totalG1)}</div></div></div>
+    <div class="gain-card"><div class="gain-title">📊 ${g2} — Specialization vs No Trade</div>
+      <div class="gain-row"><div class="gain-label">Equal split baseline</div><div class="gain-val">${fmt(baseG2)}</div></div>
+      <div class="gain-row"><div class="gain-label">Full specialization</div><div class="gain-val" style="color:var(--green)">${fmt(specG2)} <span class="gain-delta ${parseFloat(g2Gain)>=0?'delta-pos':'delta-neg'}">${parseFloat(g2Gain)>=0?'+':''}${g2Gain}%</span></div></div>
+      <div class="gain-row"><div class="gain-label">Current slider</div><div class="gain-val" style="color:var(--gold)">${fmt(totalG2)}</div></div></div>`;
+  const tot=parseFloat(g1Gain)+parseFloat(g2Gain);
+  document.getElementById('gainsAlertText').innerHTML=tot>0
+    ?`Full specialization raises world ${g1} by <strong style="color:var(--green)">${g1Gain}%</strong> and ${g2} by <strong style="color:var(--green)">${g2Gain}%</strong> vs no-trade baseline. This is the core gain from international trade under comparative advantage.`
+    :`With these inputs, specialization gains are minimal — productivity ratios are near-identical, implying weak comparative advantages and limited incentive to trade.`;
+}
+
+// ════════════════════════════════════════════════
+// MCQ TEST — CONTEXT AWARE
+// ════════════════════════════════════════════════
+let testQuestions=[], testAnswered={}, testSubmitted=false;
+
+function generateTest(){
+  const{nA,nB,g1,g2,aG1,aG2,bG1,bG2,aOC1,aOC2,bOC1,bOC2,caG1,caG2,absG1,absG2,aMaxG1,aMaxG2,bMaxG1,bMaxG2,aRes,bRes}=lastData;
+  if(!aG1){showToast('Enter data first!');return;}
+
+  const caG1Country=caG1, caG2Country=caG2;
+  const aSpecGood=caG1===nA?g1:g2;
+  const bSpecGood=caG2===nB?g2:g1;
+
+  testQuestions=[
+    {
+      q:`Which country has the absolute advantage in producing <strong>${g1}</strong>?`,
+      options:shuffleKeepCorrect([nA,nB,'Both equally','Neither'],absG1==='Tied'?'Both equally':absG1),
+      answer:absG1==='Tied'?'Both equally':absG1,
+      explain:`${nA} produces ${fmt(aG1)} units of ${g1} per resource unit vs ${nB}'s ${fmt(bG1)} units. ${absG1==='Tied'?'They are equal.':absG1+' is higher, so it holds the absolute advantage.'}`
+    },
+    {
+      q:`What is the opportunity cost of producing 1 unit of <strong>${g1}</strong> for <strong>${nA}</strong>?`,
+      options:shuffleKeepCorrect([fmt(aOC1,4)+' '+g2, fmt(bOC1,4)+' '+g2, fmt(aOC2,4)+' '+g1, fmt(bOC2,4)+' '+g1], fmt(aOC1,4)+' '+g2),
+      answer:fmt(aOC1,4)+' '+g2,
+      explain:`OC = ${g2} output ÷ ${g1} output = ${fmt(aG2)} ÷ ${fmt(aG1)} = ${fmt(aOC1,4)} ${g2}. This means ${nA} gives up ${fmt(aOC1,4)} units of ${g2} for every unit of ${g1} produced.`
+    },
+    {
+      q:`Which country has the comparative advantage in producing <strong>${g2}</strong>?`,
+      options:shuffleKeepCorrect([nA,nB,'Both have equal advantage','Cannot be determined'],caG2Country),
+      answer:caG2Country,
+      explain:`OC of ${g2} — ${nA}: ${fmt(aOC2,4)} vs ${nB}: ${fmt(bOC2,4)}. ${caG2Country} has the lower OC, so it holds the comparative advantage in ${g2}.`
+    },
+    {
+      q:`According to comparative advantage theory, <strong>${nB}</strong> should specialize in which good?`,
+      options:shuffleKeepCorrect([g1,g2,'Both goods equally','Neither good'],bSpecGood),
+      answer:bSpecGood,
+      explain:`${nB}'s comparative advantage lies in ${bSpecGood} because its OC of ${bSpecGood} (${bSpecGood===g1?fmt(bOC1,4)+' '+g2:fmt(bOC2,4)+' '+g1}) is lower than ${nA}'s.`
+    },
+    {
+      q:`If <strong>${nA}</strong> devotes ALL its ${fmt(aRes)} resource units only to <strong>${g2}</strong>, how much ${g2} can it produce?`,
+      options:shuffleKeepCorrect([fmt(aMaxG2),fmt(aMaxG1),fmt(bMaxG2),fmt(aG2*aRes*0.5)],fmt(aMaxG2)),
+      answer:fmt(aMaxG2),
+      explain:`Max ${g2} = output per unit × total resources = ${fmt(aG2)} × ${fmt(aRes)} = ${fmt(aMaxG2)} units.`
+    }
+  ];
+
+  testAnswered={};testSubmitted=false;
+  renderTest();
+}
+
+function shuffleKeepCorrect(opts,correct){
+  let others=opts.filter(o=>o!==correct);
+  for(let i=others.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[others[i],others[j]]=[others[j],others[i]];}
+  const pool=[correct,...others.slice(0,3)];
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  return pool;
+}
+
+function renderTest(){
+  const keys=['A','B','C','D'];
+  const html=testQuestions.map((q,qi)=>`
+    <div class="mcq-card" id="mcq-card-${qi}">
+      <div class="mcq-q-header">
+        <div class="mcq-q-num">Q${qi+1}</div>
+        <div class="mcq-q-text">${q.q}</div>
+      </div>
+      <div class="mcq-options">
+        ${q.options.map((opt,oi)=>`
+          <div class="mcq-opt" id="opt-${qi}-${oi}" onclick="selectOpt(${qi},${oi})">
+            <span class="mcq-opt-key">${keys[oi]}</span>${opt}
+          </div>`).join('')}
+      </div>
+      <div class="mcq-feedback" id="fb-${qi}"></div>
+    </div>`).join('');
+  document.getElementById('testArea').innerHTML=`
+    <div class="mcq-wrap">${html}</div>
+    <button class="submit-test-btn" id="submitTestBtn" onclick="submitTest()">Submit Answers →</button>
+    <div class="test-score-box" id="testScoreBox"></div>`;
+}
+
+function selectOpt(qi,oi){
+  if(testSubmitted)return;
+  testQuestions[qi].options.forEach((_,i)=>{
+    const el=document.getElementById(`opt-${qi}-${i}`);
+    if(el){el.classList.remove('selected');}
+  });
+  document.getElementById(`opt-${qi}-${oi}`).classList.add('selected');
+  testAnswered[qi]=oi;
+}
+
+function submitTest(){
+  if(testSubmitted)return;
+  if(Object.keys(testAnswered).length<testQuestions.length){
+    showToast('Answer all 5 questions first!');return;
+  }
+  testSubmitted=true;
+  document.getElementById('submitTestBtn').disabled=true;
+
+  let score=0;
+  let anyWrong=false;
+  const keys=['A','B','C','D'];
+
+  testQuestions.forEach((q,qi)=>{
+    const chosenIdx=testAnswered[qi];
+    const chosenAns=q.options[chosenIdx];
+    const isCorrect=chosenAns===q.answer;
+    if(isCorrect)score++;else anyWrong=true;
+
+    q.options.forEach((opt,oi)=>{
+      const el=document.getElementById(`opt-${qi}-${oi}`);
+      if(!el)return;
+      el.style.cursor='default';
+      if(opt===q.answer){el.classList.add('correct-ans');}
+      else if(oi===chosenIdx&&!isCorrect){el.classList.add('wrong-ans');}
+    });
+
+    const fb=document.getElementById(`fb-${qi}`);
+    fb.className=`mcq-feedback show ${isCorrect?'correct':'wrong'}`;
+    fb.innerHTML=`${isCorrect?'✓ Correct!':'✗ Wrong.'} ${q.explain}`;
+  });
+
+  const pct=Math.round(score/5*100);
+  const grade=pct===100?'PERFECT':pct>=80?'GREAT':pct>=60?'PASS':'FAIL';
+  const gradeColor=pct===100?'var(--green)':pct>=80?'var(--accent)':pct>=60?'var(--gold)':'var(--red)';
+  const box=document.getElementById('testScoreBox');
+  box.className='test-score-box show';
+  box.style=`background:${pct>=60?'rgba(0,229,160,0.05)':'rgba(255,77,109,0.05)'};border-color:${pct>=60?'rgba(0,229,160,0.2)':'rgba(255,77,109,0.2)'};`;
+  box.innerHTML=`<div class="score-title" style="color:${gradeColor}">${score} / 5 — ${grade}</div>
+    <div class="score-sub">${pct}% score · Based on your own data</div>
+    <div style="font-size:0.85rem;color:var(--text2);margin-top:0.5rem">${pct===100?'Outstanding! You fully understand comparative advantage with your data.':pct>=80?'Strong performance. Review the questions you missed above.':pct>=60?'Passing score. Go back, re-read the analysis, then retry.':'Study the OC matrix and CA sections carefully before retrying.'}</div>
+    <button class="retry-btn" onclick="retryTest()">↺ Retry Test</button>`;
+
+  if(anyWrong){
+    setTimeout(()=>{document.getElementById('angryOverlay').classList.add('show');},600);
+  }
+}
+
+function retryTest(){
+  testAnswered={};testSubmitted=false;
+  generateTest();
+  window.scrollTo({top:document.getElementById('testArea').getBoundingClientRect().top+window.scrollY-80,behavior:'smooth'});
+}
+
+function closeAngry(){
+  document.getElementById('angryOverlay').classList.remove('show');
+}
+
+// ════════════════════════════════════════════════
+// EXPORT
+// ════════════════════════════════════════════════
+function exportCSV(){
+  const d=lastData;if(!d.aG1){showToast('Enter data first');return;}
+  const rows=[['RICARDEX — Trade Advantage Analysis'],[''],
+    ['INPUTS','',d.nA,d.nB],[d.g1+' output','',d.aG1,d.bG1],[d.g2+' output','',d.aG2,d.bG2],['Resources','',d.aRes,d.bRes],[''],
+    ['ABSOLUTE ADVANTAGE'],[d.g1,'',d.absG1],[d.g2,'',d.absG2],[''],
+    ['OC MATRIX','OC of '+d.g1,'OC of '+d.g2],[d.nA,d.aOC1.toFixed(4),d.aOC2.toFixed(4)],[d.nB,d.bOC1.toFixed(4),d.bOC2.toFixed(4)],[''],
+    ['COMPARATIVE ADVANTAGE'],[d.g1,'',d.caG1],[d.g2,'',d.caG2],[''],
+    ['PPF ENDPOINTS','Max '+d.g1,'Max '+d.g2],[d.nA,d.aMaxG1,d.aMaxG2],[d.nB,d.bMaxG1,d.bMaxG2]];
+  const csv=rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='ricardex_analysis.csv';a.click();showToast('CSV downloaded!');
+}
+function copySummary(){
+  const d=lastData;if(!d.aG1){showToast('Enter data first');return;}
+  const t=`RICARDEX — Trade Advantage Analysis\n${'═'.repeat(38)}\nCountries: ${d.nA} vs ${d.nB}\nGoods: ${d.g1} & ${d.g2}\n\nDATA:\n${d.nA}: ${d.g1}=${d.aG1}, ${d.g2}=${d.aG2}\n${d.nB}: ${d.g1}=${d.bG1}, ${d.g2}=${d.bG2}\n\nABSOLUTE ADVANTAGE:\n${d.g1}: ${d.absG1}\n${d.g2}: ${d.absG2}\n\nOPPORTUNITY COSTS:\n${d.nA}: OC(${d.g1})=${d.aOC1.toFixed(3)}, OC(${d.g2})=${d.aOC2.toFixed(3)}\n${d.nB}: OC(${d.g1})=${d.bOC1.toFixed(3)}, OC(${d.g2})=${d.bOC2.toFixed(3)}\n\nCOMPARATIVE ADVANTAGE:\n${d.g1}: ${d.caG1}\n${d.g2}: ${d.caG2}\n\nSPECIALIZATION:\n${d.nA} → ${d.caG1===d.nA?d.g1:d.g2}\n${d.nB} → ${d.caG2===d.nB?d.g2:d.g1}\n${'═'.repeat(38)}`;
+  navigator.clipboard.writeText(t).then(()=>showToast('Copied!')).catch(()=>showToast('Copy failed'));
+}
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent='✓ '+msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);
+}
+function setEmpty(id){const el=document.getElementById(id);if(el)el.innerHTML='<div class="empty"><div class="empty-icon">📊</div>Enter data above</div>';}
+
+// INIT
+drawEmptyPPF();
+</script>
+
+<button id="backToTop" onclick="window.scrollTo({top:0,behavior:\'smooth\'})">↑ Top</button>
+
+<script>
+const backToTopBtn=document.getElementById('backToTop');
+window.addEventListener('scroll',()=>{
+  backToTopBtn.style.display=window.scrollY>300?'block':'none';
+});
+</script>
+</body>
+</html>

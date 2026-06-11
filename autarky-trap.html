@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The Autarky Trap — Trade Theory Project</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IBM+Plex+Mono:wght@300;400;500;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+<style>
+/* ══════════════════════════════════════════
+   ROOT & RESET
+══════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06080d;
+  --surface:#0c0f18;
+  --surface2:#12161f;
+  --border:rgba(255,255,255,0.07);
+  --amber:#e8a43c;
+  --rust:#c0442a;
+  --teal:#3dbfb0;
+  --blue:#2a6cbf;
+  --mist:#9ba8b8;
+  --bright:#eef0f5;
+  --gold:#f0c040;
+  --serif:'Playfair Display',Georgia,serif;
+  --body:'Libre Baskerville',Georgia,serif;
+  --mono:'IBM Plex Mono',monospace;
+  --ease-expo:cubic-bezier(0.16,1,0.3,1);
+}
+html{scroll-behavior:smooth;scroll-padding-top:2rem}
+body{
+  background:var(--bg);
+  color:var(--bright);
+  font-family:var(--body);
+  font-size:16px;
+  line-height:1.85;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── Grain ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:1000;opacity:0.45;mix-blend-mode:overlay;
+}
+
+/* ── Progress Bar ── */
+#pbar{
+  position:fixed;top:0;left:0;height:2px;width:0%;
+  background:linear-gradient(90deg,var(--rust),var(--amber),var(--gold));
+  z-index:2000;transition:width 0.1s linear;
+}
+
+/* ── Nav ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:900;
+  padding:0.9rem 2rem;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(6,8,13,0.85);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  transition:background 0.3s;
+}
+.nav-brand{
+  font-family:var(--mono);font-size:0.7rem;letter-spacing:0.25em;
+  text-transform:uppercase;color:var(--amber);
+}
+.nav-links{display:flex;gap:1.6rem;}
+.nav-links a{
+  font-family:var(--mono);font-size:0.6rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--mist);text-decoration:none;
+  transition:color 0.2s;
+}
+.nav-links a:hover{color:var(--amber);}
+
+/* ══════════════════════════════════════════
+   HERO
+══════════════════════════════════════════ */
+.hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  justify-content:center;align-items:center;
+  text-align:center;
+  padding:7rem 2rem 4rem;
+  background:
+    radial-gradient(ellipse at 30% 70%, rgba(192,68,42,0.1) 0%, transparent 55%),
+    radial-gradient(ellipse at 70% 30%, rgba(42,108,191,0.1) 0%, transparent 55%),
+    linear-gradient(175deg, #06080d 0%, #0a0d16 60%, #06080d 100%);
+  position:relative;overflow:hidden;
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size:52px 52px;
+  pointer-events:none;
+}
+.hero-content{position:relative;z-index:2;max-width:860px;}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:0.7rem;
+  font-family:var(--mono);font-size:0.62rem;letter-spacing:0.3em;
+  text-transform:uppercase;color:var(--amber);
+  border:1px solid rgba(232,164,60,0.3);
+  padding:0.35rem 1rem;border-radius:2px;
+  margin-bottom:1.8rem;
+  opacity:0;animation:fadeUp 0.9s 0.2s var(--ease-expo) forwards;
+}
+.hero-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--amber);}
+.hero-title{
+  font-family:var(--serif);
+  font-size:clamp(2.8rem,8vw,6rem);
+  font-weight:900;line-height:1.06;
+  color:var(--bright);
+  text-shadow:0 0 80px rgba(42,108,191,0.3),0 4px 40px rgba(0,0,0,0.7);
+  opacity:0;animation:fadeUp 0.9s 0.4s var(--ease-expo) forwards;
+}
+.hero-title em{
+  display:block;font-style:italic;
+  background:linear-gradient(120deg,var(--amber),var(--gold),var(--rust));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-sub{
+  margin-top:1.4rem;
+  font-family:var(--mono);font-size:0.78rem;
+  color:var(--mist);letter-spacing:0.08em;line-height:1.7;
+  opacity:0;animation:fadeUp 0.9s 0.65s var(--ease-expo) forwards;
+}
+.hero-badges{
+  margin-top:2rem;display:flex;gap:0.7rem;flex-wrap:wrap;justify-content:center;
+  opacity:0;animation:fadeUp 0.9s 0.9s var(--ease-expo) forwards;
+}
+.badge{
+  font-family:var(--mono);font-size:0.58rem;letter-spacing:0.12em;
+  text-transform:uppercase;padding:0.3rem 0.8rem;border-radius:2px;
+}
+.badge-amber{background:rgba(232,164,60,0.12);border:1px solid rgba(232,164,60,0.3);color:var(--amber);}
+.badge-rust{background:rgba(192,68,42,0.12);border:1px solid rgba(192,68,42,0.3);color:#e8705a;}
+.badge-teal{background:rgba(61,191,176,0.1);border:1px solid rgba(61,191,176,0.25);color:var(--teal);}
+.hero-scroll{
+  position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);
+  opacity:0;animation:fadeUp 0.9s 1.4s ease forwards, floatY 2.8s ease-in-out infinite 2s;
+  color:var(--mist);font-family:var(--mono);font-size:0.55rem;letter-spacing:0.2em;
+  text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:0.5rem;
+}
+@keyframes floatY{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══════════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════════ */
+.container{max-width:860px;margin:0 auto;padding:0 2rem;}
+.section{padding:5rem 0;}
+.section+.section{border-top:1px solid var(--border);}
+
+/* Section Label */
+.section-label{
+  display:flex;align-items:center;gap:1rem;margin-bottom:2.4rem;
+}
+.section-label .num{
+  font-family:var(--mono);font-size:0.6rem;
+  color:var(--amber);letter-spacing:0.2em;
+  border:1px solid rgba(232,164,60,0.3);
+  padding:0.2rem 0.6rem;border-radius:2px;
+}
+.section-label h2{
+  font-family:var(--serif);font-size:1.85rem;font-weight:700;
+  color:var(--bright);
+}
+.section-label .line{flex:1;height:1px;background:var(--border);}
+
+/* ══════════════════════════════════════════
+   SECTION 1 — OVERVIEW
+══════════════════════════════════════════ */
+.overview-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:2rem;
+}
+.overview-card{
+  padding:1.8rem;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:4px;
+  transition:border-color 0.3s,background 0.3s;
+}
+.overview-card:hover{border-color:rgba(232,164,60,0.3);background:var(--surface2);}
+.overview-card .oc-icon{font-size:1.4rem;margin-bottom:0.8rem;}
+.overview-card h3{
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--amber);margin-bottom:0.7rem;
+}
+.overview-card p{font-size:0.88rem;color:var(--mist);line-height:1.75;}
+.lead-text{
+  font-family:var(--body);font-size:1.05rem;
+  color:#d0d8e4;line-height:1.9;
+  border-left:3px solid var(--amber);
+  padding-left:1.5rem;margin-bottom:2rem;
+}
+.concept-box{
+  margin-top:2rem;padding:2rem;
+  background:linear-gradient(135deg,rgba(192,68,42,0.08),rgba(42,108,191,0.06));
+  border:1px solid rgba(192,68,42,0.2);border-radius:4px;
+}
+.concept-box h3{
+  font-family:var(--serif);font-style:italic;font-size:1.15rem;
+  color:var(--gold);margin-bottom:0.8rem;
+}
+.concept-box p{font-size:0.9rem;color:var(--mist);line-height:1.8;}
+
+/* ══════════════════════════════════════════
+   SECTION 2 — DEMONSTRATION (SIMULATOR)
+══════════════════════════════════════════ */
+.demo-intro{
+  font-size:0.9rem;color:var(--mist);margin-bottom:2rem;line-height:1.8;
+}
+
+/* Tabs */
+.demo-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:2rem;}
+.demo-tab{
+  font-family:var(--mono);font-size:0.65rem;letter-spacing:0.15em;
+  text-transform:uppercase;padding:0.75rem 1.4rem;
+  background:none;border:none;color:var(--mist);cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-2px;
+  transition:color 0.2s,border-color 0.2s;
+}
+.demo-tab.active{color:var(--amber);border-bottom-color:var(--amber);}
+.demo-pane{display:none;}
+.demo-pane.active{display:block;}
+
+/* ── Trade Simulator ── */
+.sim-layout{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+.sim-controls{
+  padding:1.8rem;background:var(--surface);
+  border:1px solid var(--border);border-radius:4px;
+}
+.sim-controls h4{
+  font-family:var(--mono);font-size:0.65rem;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--teal);margin-bottom:1.2rem;
+}
+.slider-group{margin-bottom:1.2rem;}
+.slider-label{
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:0.65rem;letter-spacing:0.08em;
+  color:var(--mist);margin-bottom:0.4rem;
+}
+.slider-label span{color:var(--gold);font-weight:500;}
+input[type=range]{
+  width:100%;-webkit-appearance:none;height:3px;
+  background:rgba(255,255,255,0.1);border-radius:2px;outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--amber);cursor:pointer;
+  box-shadow:0 0 8px rgba(232,164,60,0.5);
+  transition:transform 0.15s;
+}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.25);}
+.sim-crisis-btns{display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;}
+.crisis-btn{
+  font-family:var(--mono);font-size:0.55rem;letter-spacing:0.1em;
+  text-transform:uppercase;padding:0.35rem 0.7rem;
+  border-radius:2px;border:1px solid;cursor:pointer;
+  background:transparent;transition:all 0.2s;
+}
+.crisis-btn[data-type="supply"]{color:#e85d3a;border-color:rgba(232,93,58,0.4);}
+.crisis-btn[data-type="supply"]:hover{background:rgba(232,93,58,0.15);}
+.crisis-btn[data-type="pandemic"]{color:#b06ad4;border-color:rgba(176,106,212,0.4);}
+.crisis-btn[data-type="pandemic"]:hover{background:rgba(176,106,212,0.15);}
+.crisis-btn[data-type="flood"]{color:var(--teal);border-color:rgba(61,191,176,0.4);}
+.crisis-btn[data-type="flood"]:hover{background:rgba(61,191,176,0.15);}
+.crisis-btn[data-type="war"]{color:var(--rust);border-color:rgba(192,68,42,0.4);}
+.crisis-btn[data-type="war"]:hover{background:rgba(192,68,42,0.15);}
+.sim-output{
+  padding:1.8rem;background:var(--surface2);
+  border:1px solid var(--border);border-radius:4px;
+}
+.sim-output h4{
+  font-family:var(--mono);font-size:0.65rem;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--amber);margin-bottom:1.2rem;
+}
+.meter-row{margin-bottom:1rem;}
+.meter-label{
+  display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:0.62rem;color:var(--mist);margin-bottom:0.4rem;
+}
+.meter-label .val{font-weight:500;}
+.meter-track{
+  height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;
+}
+.meter-fill{
+  height:100%;border-radius:3px;transition:width 0.7s var(--ease-expo),background 0.5s;
+}
+.verdict{
+  margin-top:1.4rem;padding:1rem 1.2rem;
+  border-radius:3px;font-size:0.82rem;line-height:1.7;
+  font-family:var(--mono);letter-spacing:0.03em;
+  border-left:3px solid;
+}
+.verdict.good{background:rgba(61,191,176,0.07);border-color:var(--teal);color:var(--teal);}
+.verdict.bad{background:rgba(232,93,58,0.07);border-color:#e85d3a;color:#e88070;}
+.verdict.neutral{background:rgba(240,192,64,0.07);border-color:var(--gold);color:var(--gold);}
+.sim-crisis-log{
+  margin-top:1rem;min-height:40px;
+  font-family:var(--mono);font-size:0.65rem;color:var(--mist);
+  opacity:0.7;line-height:1.6;
+}
+
+/* ── Timeline Viz ── */
+.timeline-wrap{padding:1.5rem 0;}
+.timeline-chart{
+  position:relative;height:220px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:4px;padding:1.5rem 1.5rem 2.5rem;overflow:hidden;
+}
+.tc-label{
+  position:absolute;bottom:0.6rem;left:0;right:0;
+  display:flex;justify-content:space-around;
+  font-family:var(--mono);font-size:0.52rem;color:var(--mist);
+}
+canvas#tradeChart{width:100%;height:100%;}
+.tl-legend{
+  display:flex;gap:1.5rem;margin-top:1rem;flex-wrap:wrap;
+}
+.tl-legend-item{
+  display:flex;align-items:center;gap:0.5rem;
+  font-family:var(--mono);font-size:0.6rem;color:var(--mist);
+}
+.tl-legend-dot{width:10px;height:3px;border-radius:2px;}
+
+/* ── Debate Viewer ── */
+.debate-track{position:relative;}
+.debate-exchange{
+  margin-bottom:0.7rem;
+  opacity:0;transform:translateY(12px);
+  animation:fadeUp 0.5s ease forwards;
+}
+.debate-header{
+  display:flex;align-items:center;gap:0.8rem;
+  padding:0.9rem 1.2rem;cursor:pointer;
+  background:var(--surface);border:1px solid var(--border);border-radius:4px;
+  transition:background 0.15s;user-select:none;
+}
+.debate-header:hover{background:var(--surface2);}
+.debate-num{font-family:var(--mono);font-size:0.55rem;color:var(--mist);opacity:0.5;min-width:24px;}
+.chip{font-family:var(--mono);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;
+  text-transform:uppercase;padding:0.2rem 0.6rem;border-radius:2px;flex-shrink:0;}
+.chip-ai{background:rgba(232,93,58,0.15);color:#e85d3a;border:1px solid rgba(232,93,58,0.3);}
+.chip-you{background:rgba(61,191,176,0.1);color:var(--teal);border:1px solid rgba(61,191,176,0.25);}
+.debate-preview{font-family:var(--mono);font-size:0.62rem;color:var(--mist);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+.debate-chevron{color:var(--mist);opacity:0.4;transition:transform 0.2s;flex-shrink:0;}
+.debate-exchange.open .debate-chevron{transform:rotate(180deg);}
+.debate-body{
+  display:none;border:1px solid var(--border);border-top:none;
+  border-radius:0 0 4px 4px;overflow:hidden;
+}
+.debate-exchange.open .debate-body{display:block;}
+.debate-msg{padding:1.4rem 1.6rem;font-size:0.88rem;line-height:1.8;color:#ccd4e0;}
+.debate-msg.ai-msg{background:var(--surface);border-left:3px solid #e85d3a;}
+.debate-msg.you-msg{background:var(--surface2);border-left:3px solid var(--teal);}
+.debate-msg .speaker{
+  font-family:var(--mono);font-size:0.6rem;font-weight:700;letter-spacing:0.12em;
+  text-transform:uppercase;margin-bottom:0.7rem;
+}
+.ai-msg .speaker{color:#e85d3a;}
+.you-msg .speaker{color:var(--teal);}
+
+/* ══════════════════════════════════════════
+   SECTION 3 — EVIDENCE
+══════════════════════════════════════════ */
+.evidence-intro{font-size:0.9rem;color:var(--mist);margin-bottom:2rem;line-height:1.8;}
+
+/* Story display */
+.story-panel{
+  background:var(--surface);border:1px solid var(--border);border-radius:4px;
+  overflow:hidden;margin-bottom:1.5rem;
+}
+.story-panel-header{
+  padding:1rem 1.5rem;
+  background:linear-gradient(90deg,rgba(232,164,60,0.08),transparent);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:0.8rem;
+}
+.story-panel-header .sph-label{
+  font-family:var(--mono);font-size:0.62rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--amber);
+}
+.story-panel-header .sph-sub{font-family:var(--mono);font-size:0.58rem;color:var(--mist);}
+.story-chapters{padding:1.5rem;}
+.story-act{
+  padding:0.9rem 1rem 0.9rem 1.5rem;
+  margin-bottom:0.7rem;border-left:2px solid rgba(232,164,60,0.25);
+  background:rgba(255,255,255,0.02);border-radius:0 4px 4px 0;
+  transition:border-color 0.3s;
+}
+.story-act:hover{border-left-color:var(--amber);}
+.act-tag{font-family:var(--mono);font-size:0.55rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--amber);margin-bottom:0.4rem;}
+.act-text{font-size:0.85rem;color:var(--mist);line-height:1.7;}
+.act-text em{color:var(--gold);font-style:italic;}
+
+/* Data table */
+.evidence-table{
+  width:100%;border-collapse:collapse;
+  font-family:var(--mono);font-size:0.75rem;margin:1.5rem 0;
+}
+.evidence-table th{
+  text-align:left;padding:0.7rem 1rem;
+  background:rgba(232,164,60,0.07);border-bottom:2px solid rgba(232,164,60,0.3);
+  color:var(--amber);letter-spacing:0.1em;text-transform:uppercase;font-size:0.62rem;
+}
+.evidence-table td{
+  padding:0.65rem 1rem;border-bottom:1px solid var(--border);
+  color:var(--mist);
+}
+.evidence-table tr:hover td{background:rgba(255,255,255,0.025);color:var(--bright);}
+.td-neg{color:#e88070;}
+.td-pos{color:var(--teal);}
+.td-warn{color:var(--gold);}
+
+/* Trade chart bars - evidence */
+.bar-chart-container{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:4px;padding:1.5rem;margin:1.5rem 0;
+}
+.bar-chart-title{
+  font-family:var(--mono);font-size:0.62rem;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--amber);margin-bottom:1.2rem;
+}
+.bar-chart-row{
+  display:flex;align-items:center;gap:0.8rem;margin-bottom:0.65rem;
+}
+.bar-chart-year{
+  font-family:var(--mono);font-size:0.6rem;color:var(--mist);
+  min-width:38px;text-align:right;
+}
+.bar-chart-track{
+  flex:1;height:18px;background:rgba(255,255,255,0.05);
+  border-radius:2px;overflow:hidden;position:relative;
+}
+.bar-chart-fill{
+  height:100%;border-radius:2px;
+  display:flex;align-items:center;padding-left:0.5rem;
+  font-family:var(--mono);font-size:0.55rem;color:rgba(255,255,255,0.7);
+  transition:width 1.2s var(--ease-expo);
+}
+
+/* ══════════════════════════════════════════
+   SECTION 4 — REFLECTION
+══════════════════════════════════════════ */
+.reflection-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-bottom:2rem;
+}
+.reflection-card{
+  padding:1.8rem;background:var(--surface);border:1px solid var(--border);border-radius:4px;
+  position:relative;overflow:hidden;transition:border-color 0.3s,transform 0.3s;
+}
+.reflection-card:hover{border-color:rgba(232,164,60,0.3);transform:translateY(-2px);}
+.reflection-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+}
+.rc-k::before{background:var(--amber);}
+.rc-s::before{background:var(--teal);}
+.rc-r::before{background:var(--rust);}
+.rc-icon{font-size:1.5rem;margin-bottom:0.8rem;}
+.rc-title{
+  font-family:var(--mono);font-size:0.62rem;letter-spacing:0.15em;
+  text-transform:uppercase;margin-bottom:0.7rem;
+}
+.rc-k .rc-title{color:var(--amber);}
+.rc-s .rc-title{color:var(--teal);}
+.rc-r .rc-title{color:#e88070;}
+.rc-body{font-size:0.85rem;color:var(--mist);line-height:1.75;}
+.rc-body ul{padding-left:1.1rem;margin-top:0.4rem;}
+.rc-body li{margin-bottom:0.3rem;}
+
+.key-lesson{
+  padding:2rem;margin-top:2rem;
+  background:linear-gradient(135deg,rgba(232,164,60,0.07),rgba(192,68,42,0.05));
+  border:1px solid rgba(232,164,60,0.2);border-radius:4px;
+  text-align:center;
+}
+.key-lesson blockquote{
+  font-family:var(--serif);font-style:italic;
+  font-size:clamp(1.15rem,2.8vw,1.5rem);color:var(--gold);line-height:1.5;
+  margin-bottom:0.8rem;
+}
+.key-lesson cite{
+  font-family:var(--mono);font-size:0.62rem;color:var(--mist);
+  letter-spacing:0.12em;text-transform:uppercase;
+}
+
+/* ── Real World Applications ── */
+.applications{
+  display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem;
+}
+.app-card{
+  padding:1.2rem 1.4rem;background:var(--surface);
+  border:1px solid var(--border);border-radius:4px;
+  transition:border-color 0.3s;
+}
+.app-card:hover{border-color:rgba(61,191,176,0.25);}
+.app-card h4{
+  font-family:var(--mono);font-size:0.62rem;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--teal);margin-bottom:0.5rem;
+}
+.app-card p{font-size:0.83rem;color:var(--mist);line-height:1.7;}
+
+/* ══════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════ */
+footer{
+  padding:3rem 2rem;text-align:center;
+  border-top:1px solid var(--border);
+  font-family:var(--mono);font-size:0.58rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:rgba(155,168,184,0.4);
+}
+footer span{color:var(--amber);opacity:0.5;}
+
+/* ── Scroll to Top ── */
+#scrollTop{
+  position:fixed;bottom:2rem;right:2rem;z-index:999;
+  width:42px;height:42px;border-radius:50%;
+  border:1px solid rgba(232,164,60,0.3);background:rgba(6,8,13,0.9);
+  backdrop-filter:blur(8px);color:var(--amber);font-size:1rem;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:translateY(16px) scale(0.8);
+  transition:opacity 0.3s,transform 0.3s,border-color 0.2s;
+  pointer-events:none;box-shadow:0 4px 24px rgba(0,0,0,0.5);
+}
+#scrollTop.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+#scrollTop:hover{border-color:var(--gold);background:rgba(232,164,60,0.12);}
+
+/* ── Responsive ── */
+@media(max-width:700px){
+  .overview-grid,.sim-layout,.reflection-grid,.applications{grid-template-columns:1fr;}
+  .nav-links{display:none;}
+  .hero-title{font-size:clamp(2.2rem,10vw,3.5rem);}
+  .section{padding:3rem 0;}
+}
+@media(max-width:440px){
+  .container{padding:0 1.2rem;}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:0.01ms !important;transition-duration:0.01ms !important;}
+  html{scroll-behavior:auto;}
+}
+::selection{background:rgba(232,164,60,0.35);color:var(--bright);}
+</style>
+</head>
+<body>
+
+<div id="pbar" role="progressbar" aria-label="Reading progress"></div>
+
+<nav>
+  <span class="nav-brand">Trade Theory — Project</span>
+  <div class="nav-links">
+    <a href="#overview">Overview</a>
+    <a href="#demo">Demo</a>
+    <a href="#evidence">Evidence</a>
+    <a href="#reflection">Reflection</a>
+  </div>
+</nav>
+
+<button id="scrollTop" aria-label="Back to top">↑</button>
+
+<!-- ══ HERO ══ -->
+<section class="hero" id="top">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow"><span class="dot"></span>Trade Theory &amp; International Economics</div>
+    <h1 class="hero-title">The Autarky<em>Trap</em></h1>
+    <p class="hero-sub">When isolation becomes a nation's greatest vulnerability<br>— a study in trade theory, economic interdependence, and consequence</p>
+    <div class="hero-badges">
+      <span class="badge badge-amber">Trade Theory</span>
+      <span class="badge badge-rust">Autarky &amp; Isolation</span>
+      <span class="badge badge-teal">Speculative Modeling</span>
+    </div>
+  </div>
+  <div class="hero-scroll">Scroll to explore ↓</div>
+</section>
+
+<!-- ══ SECTION 1 — OVERVIEW ══ -->
+<section class="section" id="overview">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">01</span>
+      <h2>Project Overview</h2>
+      <div class="line"></div>
+    </div>
+
+    <p class="lead-text">
+      This project emerged from an assignment asking us to explore the real-world consequences of trade policy through storytelling and structured argumentation. Two works were created: a speculative fiction narrative set in Bangladesh 2043, and a structured debate guide on autarky. Together, they demonstrate why nations that close themselves off from global trade tend to suffer — even when the intention is self-reliance.
+    </p>
+
+    <div class="overview-grid">
+      <div class="overview-card">
+        <div class="oc-icon">📖</div>
+        <h3>What Inspired This</h3>
+        <p>An assignment combining narrative writing with economic theory — using speculative fiction to model what happens when a nation abandons international trade and imposes economic isolation.</p>
+      </div>
+      <div class="overview-card">
+        <div class="oc-icon">⚖️</div>
+        <h3>What Concept Is Demonstrated</h3>
+        <p><strong>Autarky</strong> — a policy of economic self-sufficiency that eliminates or minimizes foreign trade. The project explores why autarky fails across multiple dimensions: supply chains, innovation, crisis response, and welfare.</p>
+      </div>
+      <div class="overview-card">
+        <div class="oc-icon">🌐</div>
+        <h3>Why It Matters</h3>
+        <p>Trade is not optional infrastructure — it's a survival network. Comparative advantage, supply chain resilience, and technology transfer all depend on openness. Autarky severs these lifelines.</p>
+      </div>
+      <div class="overview-card">
+        <div class="oc-icon">🔑</div>
+        <h3>Core Argument</h3>
+        <p>Even under autarky's own goals — maximum resilience, survival continuity — interdependence often outperforms isolation because it expands the solution space for novel crises.</p>
+      </div>
+    </div>
+
+    <div class="concept-box">
+      <h3>"Autarky purchases predictable degradation at the cost of unpredictable recovery."</h3>
+      <p>An autarkic nation trades the risk of external dependency for the risk of internal capability ceilings. In a world of complex crises — pandemics, floods, technology gaps — internal ceilings are often the more dangerous constraint. This project traces exactly how that plays out through the fictional lens of Bangladesh in 2043.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SECTION 2 — DEMONSTRATION ══ -->
+<section class="section" id="demo">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">02</span>
+      <h2>Demonstration</h2>
+      <div class="line"></div>
+    </div>
+
+    <p class="demo-intro">
+      Three interactive demonstrations: a live trade-vs-autarky crisis simulator, a trade collapse visualizer based on the Bangladesh 2043 scenario, and the full debate transcript between an AI autarky advocate and a human challenger.
+    </p>
+
+    <div class="demo-tabs">
+      <button class="demo-tab active" onclick="switchTab(event,'sim')">⚙ Crisis Simulator</button>
+      <button class="demo-tab" onclick="switchTab(event,'viz')">📊 Trade Collapse Chart</button>
+      <button class="demo-tab" onclick="switchTab(event,'debate')">↯ Debate Transcript</button>
+    </div>
+
+    <!-- TAB: SIMULATOR -->
+    <div class="demo-pane active" id="pane-sim">
+      <div class="sim-layout">
+        <div class="sim-controls">
+          <h4>▸ Country Configuration</h4>
+
+          <div class="slider-group">
+            <div class="slider-label">Trade Openness <span id="lbl-trade">50%</span></div>
+            <input type="range" id="sl-trade" min="0" max="100" value="50" oninput="updateSim()"/>
+          </div>
+          <div class="slider-group">
+            <div class="slider-label">Domestic Capability <span id="lbl-cap">60%</span></div>
+            <input type="range" id="sl-cap" min="0" max="100" value="60" oninput="updateSim()"/>
+          </div>
+          <div class="slider-group">
+            <div class="slider-label">Emergency Reserves <span id="lbl-res">40%</span></div>
+            <input type="range" id="sl-res" min="0" max="100" value="40" oninput="updateSim()"/>
+          </div>
+
+          <div style="height:1px;background:var(--border);margin:1.2rem 0;"></div>
+          <h4>▸ Trigger Crisis Event</h4>
+          <div class="sim-crisis-btns">
+            <button class="crisis-btn" data-type="supply" onclick="triggerCrisis('supply')">Supply Shock</button>
+            <button class="crisis-btn" data-type="pandemic" onclick="triggerCrisis('pandemic')">Pandemic</button>
+            <button class="crisis-btn" data-type="flood" onclick="triggerCrisis('flood')">Flood Disaster</button>
+            <button class="crisis-btn" data-type="war" onclick="triggerCrisis('war')">Trade War</button>
+          </div>
+          <div class="sim-crisis-log" id="crisis-log">— No event triggered —</div>
+        </div>
+
+        <div class="sim-output">
+          <h4>▸ System Health Metrics</h4>
+          <div class="meter-row">
+            <div class="meter-label"><span>Welfare Score</span><span class="val" id="m-welfare">--</span></div>
+            <div class="meter-track"><div class="meter-fill" id="mf-welfare" style="width:0%"></div></div>
+          </div>
+          <div class="meter-row">
+            <div class="meter-label"><span>Crisis Resilience</span><span class="val" id="m-resilience">--</span></div>
+            <div class="meter-track"><div class="meter-fill" id="mf-resilience" style="width:0%"></div></div>
+          </div>
+          <div class="meter-row">
+            <div class="meter-label"><span>Innovation Rate</span><span class="val" id="m-innovation">--</span></div>
+            <div class="meter-track"><div class="meter-fill" id="mf-innovation" style="width:0%"></div></div>
+          </div>
+          <div class="meter-row">
+            <div class="meter-label"><span>Supply Security</span><span class="val" id="m-supply">--</span></div>
+            <div class="meter-track"><div class="meter-fill" id="mf-supply" style="width:0%"></div></div>
+          </div>
+          <div class="meter-row">
+            <div class="meter-label"><span>Recovery Speed</span><span class="val" id="m-recovery">--</span></div>
+            <div class="meter-track"><div class="meter-fill" id="mf-recovery" style="width:0%"></div></div>
+          </div>
+          <div class="verdict neutral" id="verdict-box">
+            Adjust sliders to model a trade regime and observe how it performs.
+          </div>
+        </div>
+      </div>
+
+      <p style="font-family:var(--mono);font-size:0.62rem;color:var(--mist);opacity:0.6;margin-top:1rem;text-align:center;">
+        This is a simplified model for conceptual illustration. Real economies involve far greater complexity.
+      </p>
+    </div>
+
+    <!-- TAB: TRADE COLLAPSE VIZ -->
+    <div class="demo-pane" id="pane-viz">
+      <div class="timeline-wrap">
+        <p style="font-size:0.88rem;color:var(--mist);margin-bottom:1.2rem;line-height:1.75;">
+          The chart below recreates the Bangladesh 2043 trade collapse scenario from the speculative narrative. The red line shows what happens to trade volume under autarky; the teal line shows the counterfactual — what a maintained open-trade policy would have looked like.
+        </p>
+        <div class="bar-chart-container">
+          <div class="bar-chart-title">Bangladesh Trade Volume Index — Speculative (2038 = 100)</div>
+
+          <div class="bar-chart-row">
+            <div class="bar-chart-year">2038</div>
+            <div class="bar-chart-track">
+              <div class="bar-chart-fill bv-bar" style="width:0%;background:linear-gradient(90deg,var(--rust),#e86040);" data-w="98">98</div>
+            </div>
+          </div>
+          <div class="bar-chart-row">
+            <div class="bar-chart-year">2039</div>
+            <div class="bar-chart-track">
+              <div class="bar-chart-fill bv-bar" style="width:0%;background:linear-gradient(90deg,var(--rust),#e86040);" data-w="90">90 — Trade wars begin</div>
+            </div>
+          </div>
+          <div class="bar-chart-row">
+            <div class="bar-chart-year">2040</div>
+            <div class="bar-chart-track">
+              <div class="bar-chart-fill bv-bar" style="width:0%;background:linear-gradient(90deg,#b04020,var(--rust));" data-w="82">82 — Tariq gains power</div>
+            </div>
+          </div>
+          <div class="bar-chart-row">
+            <div class="bar-chart-year">2042</div>
+            <div class="bar-chart-track">
+              <div class="bar-chart-fill bv-bar" style="width:0%;background:linear-gradient(90deg,#802010,#b04020);" data-w="55">55 — Borders closed</div>
+            </div>
+          </div>
+          <div class="bar-chart-row">
+            <div class="bar-chart-year">2044</div>
+            <div class="bar-chart-track">
+              <div class="bar-chart-fill bv-bar" style="width:0%;background:linear-gradient(90deg,#601008,#902010);" data-w="28">28 — Collapse deepens</div>
+            </div>
+          </div>
+          <div class="bar-chart-row">
+            <div class="bar-chart-year">2046</div>
+            <div class="bar-chart-track">
+              <div class="bar-chart-fill bv-bar" style="width:0%;background:linear-gradient(90deg,#400808,#700808);" data-w="9">9 — Near-zero trade</div>
+            </div>
+          </div>
+          <div class="bar-chart-row">
+            <div class="bar-chart-year">2047</div>
+            <div class="bar-chart-track">
+              <div class="bar-chart-fill bv-bar" style="width:0%;background:linear-gradient(90deg,#300606,#550808);" data-w="3">3 — Flood disaster</div>
+            </div>
+          </div>
+          <div style="height:1px;background:var(--border);margin:0.8rem 0;"></div>
+          <div class="bar-chart-row">
+            <div class="bar-chart-year" style="color:var(--teal)">2047*</div>
+            <div class="bar-chart-track">
+              <div class="bar-chart-fill bv-cf" style="width:0%;background:linear-gradient(90deg,var(--teal),#5ad0c8);" data-w="88">88 — Counterfactual (open trade)</div>
+            </div>
+          </div>
+          <p style="font-family:var(--mono);font-size:0.58rem;color:var(--mist);margin-top:0.8rem;opacity:0.6;">
+            * Counterfactual index: estimated trade volume had Bangladesh maintained open policy. Source: narrative model, student construction.
+          </p>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:1.5rem;margin-top:0.5rem;flex-wrap:wrap;">
+          <div class="tl-legend-item"><div class="tl-legend-dot" style="background:var(--rust);"></div>Autarky path</div>
+          <div class="tl-legend-item"><div class="tl-legend-dot" style="background:var(--teal);"></div>Open-trade counterfactual</div>
+          <div class="tl-legend-item"><div class="tl-legend-dot" style="background:var(--amber);"></div>Policy change point</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: DEBATE -->
+    <div class="demo-pane" id="pane-debate">
+      <p style="font-size:0.88rem;color:var(--mist);margin-bottom:1.5rem;line-height:1.75;">
+        This is an excerpt from the structured debate assignment. The AI (<strong style="color:#e85d3a">DAH-Snarky</strong>) plays devil's advocate for autarky; the student (<strong style="color:var(--teal)">You</strong>) argues for interdependence. Click exchanges to expand them.
+      </p>
+      <div class="debate-track">
+
+        <div class="debate-exchange open" style="animation-delay:0ms">
+          <div class="debate-header" onclick="toggleDebate(this)">
+            <span class="debate-num">01</span>
+            <span class="chip chip-ai">DAH-Snarky</span>
+            <span class="debate-preview">You're redefining "ideal" into something no system can meet…</span>
+            <svg class="debate-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="debate-body">
+            <div class="debate-msg ai-msg">
+              <div class="speaker">↯ DAH-Snarky — Pro-Autarky</div>
+              If "ideal" means maximal capability in all conditions with zero trade-offs, then sure — autarky isn't ideal. But neither is global trade. Neither is anything physical. You've set a criterion that collapses every strategy equally. Autarky's real case: we retain usable capability when external systems degrade. Trade systems buy higher average capability and faster innovation — but introduce external dependency as a single point of failure. Calling autarky "not ideal" only works if you assume <em>ideal = maximizes capability everywhere</em>.
+            </div>
+          </div>
+        </div>
+
+        <div class="debate-exchange" style="animation-delay:80ms">
+          <div class="debate-header" onclick="toggleDebate(this)">
+            <span class="debate-num">02</span>
+            <span class="chip chip-you">You</span>
+            <span class="debate-preview">Autarky reduces external risk, but increases internal limitation risk…</span>
+            <svg class="debate-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="debate-body">
+            <div class="debate-msg you-msg">
+              <div class="speaker">⬡ You — Pro-Interdependence</div>
+              I'm not defining ideal as "perfect in all cases." I'm defining it as the system that gives the highest overall chance of survival across <em>different types</em> of crises. Autarky reduces external risk, but it increases internal limitation risk. Because it trades one type of failure for another, it cannot be the ideal system — it is just one side of a trade-off.
+            </div>
+          </div>
+        </div>
+
+        <div class="debate-exchange" style="animation-delay:160ms">
+          <div class="debate-header" onclick="toggleDebate(this)">
+            <span class="debate-num">03</span>
+            <span class="chip chip-ai">DAH-Snarky</span>
+            <span class="debate-preview">"It's a trade-off, therefore not ideal" is a non sequitur…</span>
+            <svg class="debate-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="debate-body">
+            <div class="debate-msg ai-msg">
+              <div class="speaker">↯ DAH-Snarky — Pro-Autarky</div>
+              Saying "it's a trade-off, therefore it cannot be ideal" is a non sequitur. Everything becomes disqualified under that logic. The existence of trade-offs doesn't decide optimality; it <em>defines the search space</em>. In survival theory, continuity is not a side variable. It's often the variable that decides whether the system is still participating in the game at all. External-risk systems fail in <em>correlated</em> ways. Internal-limited systems fail in <em>degraded</em> ways — but degrade gracefully.
+            </div>
+          </div>
+        </div>
+
+        <div class="debate-exchange" style="animation-delay:240ms">
+          <div class="debate-header" onclick="toggleDebate(this)">
+            <span class="debate-num">04</span>
+            <span class="chip chip-you">You</span>
+            <span class="debate-preview">Continuity without sufficient capability doesn't guarantee survival either…</span>
+            <svg class="debate-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="debate-body">
+            <div class="debate-msg you-msg">
+              <div class="speaker">⬡ You — Pro-Interdependence</div>
+              Yes, autarky gives continuity — but if the system <em>lacks enough capability</em> in some crises, that continuity doesn't guarantee survival. The 2047 Bangladesh flood is the clearest example: foreign aid arrived at the border, the capability existed in the network — but autarky's own rules prevented accessing it. Continuity of an isolated state is not survival. It's just a slower path to collapse.
+            </div>
+          </div>
+        </div>
+
+        <div class="debate-exchange" style="animation-delay:320ms">
+          <div class="debate-header" onclick="toggleDebate(this)">
+            <span class="debate-num">05</span>
+            <span class="chip chip-ai">DAH-Snarky</span>
+            <span class="debate-preview">A three-way impossibility constraint — you can only shift weight between them…</span>
+            <svg class="debate-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="debate-body">
+            <div class="debate-msg ai-msg">
+              <div class="speaker">↯ DAH-Snarky — Pro-Autarky</div>
+              You cannot maximize peak capability AND eliminate external dependency AND guarantee survival across all extreme scenarios simultaneously. A system with higher theoretical capability that <em>cannot access it under stress</em> doesn't outperform a lower-capability system that can actually deploy. At best, you've shown that no single axis dominates all extreme cases — which pushes toward "survival optimization is about balancing failure modes," not eliminating one side and declaring the problem solved.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══ SECTION 3 — EVIDENCE ══ -->
+<section class="section" id="evidence">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">03</span>
+      <h2>Evidence</h2>
+      <div class="line"></div>
+    </div>
+
+    <p class="evidence-intro">
+      The following evidence is drawn directly from the two course assignments: <em>The Closed Delta</em> (speculative narrative) and the <em>Autarky Debate</em> guide. Tables, story excerpts, and recreated data visualizations demonstrate the economic concepts explored.
+    </p>
+
+    <!-- Story excerpts -->
+    <div class="story-panel">
+      <div class="story-panel-header">
+        <div>
+          <div class="sph-label">Story Evidence — The Closed Delta</div>
+          <div class="sph-sub">Bangladesh 2043 · Speculative Narrative Assignment</div>
+        </div>
+      </div>
+      <div class="story-chapters">
+        <div class="story-act">
+          <div class="act-tag">Act II — The Trade Wars</div>
+          <div class="act-text">The USA taxed Chinese goods. China replied. India taxed Bangladeshi clothes, and Bangladesh responded. Soon many countries were fighting with trade, and global trade became weak. <em>Silong Sala's rule stopped working.</em> — Direct illustration of how retaliatory tariffs create welfare losses across all participants.</div>
+        </div>
+        <div class="story-act">
+          <div class="act-tag">Act III — The Demagogue</div>
+          <div class="act-text"><em>"We don't need other countries."</em> — The government closed borders, stopped imports, and limited foreign money. Bangladesh became isolated. This mirrors historical autarky cases: North Korea post-1950s, Myanmar 1960–1988, Maoist China 1949–1978.</div>
+        </div>
+        <div class="story-act">
+          <div class="act-tag">Act IV — The Collapse</div>
+          <div class="act-text">Medicine disappeared. Machines broke. Power plants stopped. Farmers had rice, but tractors failed. — Demonstrates <em>intermediate goods dependency</em>: even food production requires imported inputs. No modern economy is truly autarkic in its supply chain.</div>
+        </div>
+        <div class="story-act">
+          <div class="act-tag">Act V — The Flood (2047)</div>
+          <div class="act-text">A big flood destroyed everything. Other countries sent help, <em>but it stopped at the border</em> — because foreign aid was not allowed. — The most powerful illustration: autarky's rules blocked survival resources that already existed at the border.</div>
+        </div>
+        <div class="story-act">
+          <div class="act-tag">Epilogue — Recovery</div>
+          <div class="act-text">Trade returned slowly. The economy improved. <em>"Closing the country was a big mistake."</em> — The economist's verdict validates the core thesis: openness is not vulnerability. It is the foundation of resilience.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tradeoff Table -->
+    <table class="evidence-table">
+      <thead>
+        <tr>
+          <th>Dimension</th>
+          <th>Autarky (Isolated)</th>
+          <th>Open Trade</th>
+          <th>Verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Average Welfare</td>
+          <td class="td-neg">Lower — misses gains from specialization</td>
+          <td class="td-pos">Higher — comparative advantage realized</td>
+          <td class="td-pos">Open Trade ✓</td>
+        </tr>
+        <tr>
+          <td>Innovation Speed</td>
+          <td class="td-neg">Slow — no technology transfer</td>
+          <td class="td-pos">Fast — knowledge spillovers</td>
+          <td class="td-pos">Open Trade ✓</td>
+        </tr>
+        <tr>
+          <td>External Shock</td>
+          <td class="td-pos">Insulated from global contagion</td>
+          <td class="td-neg">Correlated failure risk</td>
+          <td class="td-warn">Autarky ✓ (narrow)</td>
+        </tr>
+        <tr>
+          <td>Supply Security</td>
+          <td class="td-neg">Dependent on domestic production ceiling</td>
+          <td class="td-pos">Diversified sourcing</td>
+          <td class="td-pos">Open Trade ✓</td>
+        </tr>
+        <tr>
+          <td>Crisis Aid Access</td>
+          <td class="td-neg">Blocked by own policy (flood example)</td>
+          <td class="td-pos">Full access to international response</td>
+          <td class="td-pos">Open Trade ✓</td>
+        </tr>
+        <tr>
+          <td>Recovery Speed</td>
+          <td class="td-neg">Slow — no external capital injection</td>
+          <td class="td-pos">Fast — FDI, aid, trade resumption</td>
+          <td class="td-pos">Open Trade ✓</td>
+        </tr>
+        <tr>
+          <td>Strategic Autonomy</td>
+          <td class="td-pos">High — no external leverage points</td>
+          <td class="td-neg">Lower — trading partners hold some leverage</td>
+          <td class="td-warn">Autarky ✓ (narrow)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Debate tradeoff matrix evidence -->
+    <div class="bar-chart-container">
+      <div class="bar-chart-title">Debate Assignment — Core Tradeoff Matrix (reproduced from course material)</div>
+      <p style="font-family:var(--mono);font-size:0.65rem;color:var(--mist);margin-bottom:1.2rem;opacity:0.8;">
+        From the structured debate guide: seven dimensions scored for autarky vs. trade (0–10 scale, student model)
+      </p>
+      <div class="bar-chart-row">
+        <div class="bar-chart-year" style="min-width:110px;text-align:left;font-size:0.58rem;">Peak Capability</div>
+        <div class="bar-chart-track">
+          <div class="bar-chart-fill bv-bar" style="width:0%;background:linear-gradient(90deg,var(--rust),#e06040);" data-w="35">Autarky: 3.5/10</div>
+        </div>
+      </div>
+      <div class="bar-chart-row">
+        <div class="bar-chart-year" style="min-width:110px;text-align:left;font-size:0.58rem;">Peak Capability</div>
+        <div class="bar-chart-track">
+          <div class="bar-chart-fill bv-cf" style="width:0%;background:linear-gradient(90deg,var(--teal),#5ad0c8);" data-w="85">Open Trade: 8.5/10</div>
+        </div>
+      </div>
+      <div style="height:6px;"></div>
+      <div class="bar-chart-row">
+        <div class="bar-chart-year" style="min-width:110px;text-align:left;font-size:0.58rem;">Continuity</div>
+        <div class="bar-chart-track">
+          <div class="bar-chart-fill bv-bar" style="width:0%;background:linear-gradient(90deg,var(--rust),#e06040);" data-w="72">Autarky: 7.2/10</div>
+        </div>
+      </div>
+      <div class="bar-chart-row">
+        <div class="bar-chart-year" style="min-width:110px;text-align:left;font-size:0.58rem;">Continuity</div>
+        <div class="bar-chart-track">
+          <div class="bar-chart-fill bv-cf" style="width:0%;background:linear-gradient(90deg,var(--teal),#5ad0c8);" data-w="55">Open Trade: 5.5/10</div>
+        </div>
+      </div>
+      <div style="height:6px;"></div>
+      <div class="bar-chart-row">
+        <div class="bar-chart-year" style="min-width:110px;text-align:left;font-size:0.58rem;">Crisis Solve Rate</div>
+        <div class="bar-chart-track">
+          <div class="bar-chart-fill bv-bar" style="width:0%;background:linear-gradient(90deg,var(--rust),#e06040);" data-w="28">Autarky: 2.8/10</div>
+        </div>
+      </div>
+      <div class="bar-chart-row">
+        <div class="bar-chart-year" style="min-width:110px;text-align:left;font-size:0.58rem;">Crisis Solve Rate</div>
+        <div class="bar-chart-track">
+          <div class="bar-chart-fill bv-cf" style="width:0%;background:linear-gradient(90deg,var(--teal),#5ad0c8);" data-w="78">Open Trade: 7.8/10</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══ SECTION 4 — REFLECTION ══ -->
+<section class="section" id="reflection">
+  <div class="container">
+    <div class="section-label">
+      <span class="num">04</span>
+      <h2>What Did I Learn?</h2>
+      <div class="line"></div>
+    </div>
+
+    <div class="reflection-grid">
+      <div class="reflection-card rc-k">
+        <div class="rc-icon">📚</div>
+        <div class="rc-title">Knowledge</div>
+        <div class="rc-body">
+          <ul>
+            <li>Comparative advantage explains why trade generates surplus for all parties even when one party is more productive at everything</li>
+            <li>Autarky's definition distinguishes trade from dependence — and that distinction is precisely where its internal logic breaks down in practice</li>
+            <li>Intermediate goods mean that even "basic" production (food, medicine) is globally interdependent at the supply chain level</li>
+            <li>Historical cases — North Korea, Maoist China, Myanmar — show that autarky consistently produces welfare loss and technology stagnation</li>
+          </ul>
+        </div>
+      </div>
+      <div class="reflection-card rc-s">
+        <div class="rc-icon">⚙️</div>
+        <div class="rc-title">Skills</div>
+        <div class="rc-body">
+          <ul>
+            <li>Structured argumentation — building and attacking positions using defined criteria</li>
+            <li>Scenario modeling — translating economic theory into narrative and simulation</li>
+            <li>Critical thinking — identifying when an argument's premises undermine its own conclusions</li>
+            <li>Data visualization — converting qualitative outcomes into comparative visual evidence</li>
+            <li>Trade-off analysis — thinking in systems rather than in single-dimension optimization</li>
+          </ul>
+        </div>
+      </div>
+      <div class="reflection-card rc-r">
+        <div class="rc-icon">💡</div>
+        <div class="rc-title">Reflection</div>
+        <div class="rc-body">
+          <p>The hardest part was the debate format. DAH-Snarky's point that <em>"trading one failure mode for another doesn't disqualify either system"</em> forced me to think more carefully about evaluation criteria. I initially argued that trade was simply better — but I had to learn to argue on autarky's own terms first.</p>
+          <p style="margin-top:0.5rem;">What surprised me most was how the narrative format made the economic consequences more visceral than a table of statistics ever could. The flood scene — aid stopped at the border — crystallized the concept instantly.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="key-lesson">
+      <blockquote>"Closing the country was a big mistake."</blockquote>
+      <cite>— Silong Sala, Economist · The Closed Delta, Bangladesh 2043</cite>
+    </div>
+
+    <div class="applications">
+      <div class="app-card">
+        <h4>🌍 Real-World Application</h4>
+        <p>China's partial decoupling from Western tech supply chains (2019–present) shows that even the world's second-largest economy cannot fully insulate itself from interdependence. Semiconductor self-sufficiency remains elusive despite massive state investment.</p>
+      </div>
+      <div class="app-card">
+        <h4>🏭 Supply Chain Lesson</h4>
+        <p>COVID-19 (2020–2022) demonstrated both sides simultaneously: countries with diverse trade networks had more sourcing options for PPE and vaccines; countries with high concentration on single suppliers were most vulnerable.</p>
+      </div>
+      <div class="app-card">
+        <h4>🔬 Pandemic Attack Vector</h4>
+        <p>The pandemic vaccine scenario from the debate — where critical synthesis ingredients are distributed across five countries — is not hypothetical. mRNA vaccine production genuinely requires globally distributed rare chemical inputs that no single nation produces independently.</p>
+      </div>
+      <div class="app-card">
+        <h4>🌾 Bangladesh Context</h4>
+        <p>Bangladesh's real economy is one of the great success stories of export-led growth. The RMG (ready-made garment) sector, built on comparative advantage, lifted millions out of poverty. The scenario in the story is a direct inversion of this actual history.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  The Autarky Trap <span>·</span> Trade Theory Project <span>·</span> Student Portfolio <span>·</span> 2025
+</footer>
+
+<script>
+// ── Progress Bar ──
+const pbar = document.getElementById('pbar');
+function updatePbar(){
+  const pct = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100;
+  pbar.style.width = Math.min(pct, 100) + '%';
+}
+window.addEventListener('scroll', updatePbar, {passive:true});
+
+// ── Scroll Top Button ──
+const stBtn = document.getElementById('scrollTop');
+window.addEventListener('scroll', () => {
+  stBtn.classList.toggle('show', window.scrollY > 500);
+}, {passive:true});
+stBtn.addEventListener('click', () => window.scrollTo({top:0,behavior:'smooth'}));
+
+// ── Tab switching ──
+function switchTab(e, id){
+  document.querySelectorAll('.demo-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.demo-pane').forEach(p => p.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById('pane-'+id).classList.add('active');
+  if(id==='viz') animateBars();
+}
+
+// ── Debate toggles ──
+function toggleDebate(header){
+  const ex = header.closest('.debate-exchange');
+  const isOpen = ex.classList.contains('open');
+  document.querySelectorAll('.debate-exchange').forEach(e => e.classList.remove('open'));
+  if(!isOpen) ex.classList.add('open');
+}
+
+// ── Bar animations ──
+function animateBars(){
+  document.querySelectorAll('.bv-bar, .bv-cf').forEach((b, i) => {
+    setTimeout(() => {
+      b.style.width = b.dataset.w + '%';
+    }, i * 80 + 100);
+  });
+}
+
+// ── Intersection Observer for bar charts ──
+const barObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.bv-bar, .bv-cf').forEach((b, i) => {
+        setTimeout(() => { b.style.width = b.dataset.w + '%'; }, i * 80 + 200);
+      });
+      barObs.unobserve(e.target);
+    }
+  });
+}, {threshold:0.2});
+document.querySelectorAll('.bar-chart-container').forEach(c => barObs.observe(c));
+
+// ── Simulator ──
+let activeCrisis = null;
+let crisisTimeout = null;
+
+function updateSim(){
+  const trade = parseInt(document.getElementById('sl-trade').value);
+  const cap = parseInt(document.getElementById('sl-cap').value);
+  const res = parseInt(document.getElementById('sl-res').value);
+
+  document.getElementById('lbl-trade').textContent = trade + '%';
+  document.getElementById('lbl-cap').textContent = cap + '%';
+  document.getElementById('lbl-res').textContent = res + '%';
+
+  computeMetrics(trade, cap, res, activeCrisis);
+}
+
+function computeMetrics(trade, cap, res, crisis){
+  // Base formulas
+  let welfare = 0.45 * trade + 0.35 * cap + 0.2 * res;
+  let resilience = 0.15 * trade + 0.4 * cap + 0.45 * res;
+  let innovation = 0.6 * trade + 0.3 * cap + 0.1 * res;
+  let supply = 0.35 * trade + 0.5 * cap + 0.15 * res;
+  let recovery = 0.5 * trade + 0.2 * cap + 0.3 * res;
+
+  // Crisis penalties
+  if(crisis === 'supply'){
+    welfare -= (100 - trade) * 0.3;
+    supply -= (100 - trade) * 0.4;
+    recovery -= (100 - trade) * 0.25;
+  } else if(crisis === 'pandemic'){
+    welfare -= (100 - trade) * 0.35;
+    supply -= (100 - trade) * 0.45;
+    recovery += trade * 0.2;
+  } else if(crisis === 'flood'){
+    welfare -= (100 - trade) * 0.4;
+    resilience += trade * 0.15;
+    recovery -= (100 - trade) * 0.35;
+  } else if(crisis === 'war'){
+    welfare -= trade * 0.2;
+    resilience += (100 - trade) * 0.1;
+    supply -= trade * 0.15;
+  }
+
+  // Clamp
+  const clamp = v => Math.max(2, Math.min(100, Math.round(v)));
+  welfare = clamp(welfare); resilience = clamp(resilience);
+  innovation = clamp(innovation); supply = clamp(supply); recovery = clamp(recovery);
+
+  setMeter('welfare', welfare);
+  setMeter('resilience', resilience);
+  setMeter('innovation', innovation);
+  setMeter('supply', supply);
+  setMeter('recovery', recovery);
+
+  // Verdict
+  const avg = (welfare + resilience + innovation + supply + recovery) / 5;
+  const box = document.getElementById('verdict-box');
+  const isAutarkic = trade < 30;
+
+  if(isAutarkic && crisis === 'flood'){
+    box.className = 'verdict bad';
+    box.textContent = '✕ Critical: Flood aid blocked at border. Autarkic isolation prevents access to external relief resources. This is the Bangladesh 2047 scenario.';
+  } else if(isAutarkic && crisis === 'pandemic'){
+    box.className = 'verdict bad';
+    box.textContent = '✕ Critical: Vaccine synthesis ingredients unavailable domestically. Pandemic response compromised by trade isolation.';
+  } else if(avg >= 70){
+    box.className = 'verdict good';
+    box.textContent = `✓ System performing well (avg ${avg.toFixed(0)}/100). High trade openness and domestic capability are complementary — not substitutes.`;
+  } else if(avg >= 45){
+    box.className = 'verdict neutral';
+    box.textContent = `△ Moderate performance (avg ${avg.toFixed(0)}/100). Consider whether resilience or welfare is the priority for this configuration.`;
+  } else {
+    box.className = 'verdict bad';
+    box.textContent = `✕ System underperforming (avg ${avg.toFixed(0)}/100). Low capability and low trade openness compound each other — there is no autarkic safety net here.`;
+  }
+}
+
+function setMeter(id, val){
+  const pct = val + '%';
+  const label = document.getElementById('m-'+id);
+  const fill = document.getElementById('mf-'+id);
+  label.textContent = val + '/100';
+  fill.style.width = pct;
+  const h = val > 65 ? '160,200,160' : val > 35 ? '200,180,80' : '200,100,80';
+  fill.style.background = `linear-gradient(90deg, rgba(${h},0.9), rgba(${h},0.6))`;
+}
+
+const crisisMessages = {
+  supply: '⚡ Supply shock triggered. External sourcing blocked under autarky — domestic alternatives insufficient.',
+  pandemic: '🦠 Pandemic scenario active. Vaccine ingredient synthesis requires multi-country supply chains.',
+  flood: '🌊 Flood disaster active. International aid queued at border — policy prevents acceptance.',
+  war: '⚔ Trade war active. Retaliatory tariffs fracture export markets; open economies diversify faster.'
+};
+
+function triggerCrisis(type){
+  activeCrisis = type;
+  document.getElementById('crisis-log').textContent = crisisMessages[type];
+  updateSim();
+  if(crisisTimeout) clearTimeout(crisisTimeout);
+  crisisTimeout = setTimeout(() => {
+    activeCrisis = null;
+    document.getElementById('crisis-log').textContent = '— Crisis resolved —';
+    updateSim();
+  }, 8000);
+}
+
+// Initialize
+updateSim();
+
+// ── Section reveal ──
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
+    }
+  });
+}, {threshold:0.08});
+
+document.querySelectorAll('.overview-card,.reflection-card,.app-card').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(20px)';
+  el.style.transition = 'opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)';
+  revealObs.observe(el);
+});
+</script>
+</body>
+</html>
